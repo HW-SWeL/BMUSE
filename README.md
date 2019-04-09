@@ -1,2 +1,4 @@
 # Scraper
-Bioschemas scraper
+
+Please add issues to the *Scraper* project.
+
