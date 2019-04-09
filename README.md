@@ -1,0 +1,2 @@
+# Scraper
+Bioschemas scraper
