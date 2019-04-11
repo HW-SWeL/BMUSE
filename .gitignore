@@ -99,6 +99,21 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+### Eclipse ###
+.metadata
+.classpath
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.project
+.settings/
+.loadpath
+.recommenders
+
 # End of https://www.gitignore.io/api/java,linux,macos,windows,java-web
 
 
