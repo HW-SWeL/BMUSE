@@ -5,9 +5,9 @@ Please add issues relating to the front end to the *WebApp* project. Issues rega
 ## Build instructions
 
 Requirements:
-* maven
-* mysql
-* virtuoso; see here: https://github.com/HW-SWeL/Scraper/wiki/Building-scraper:-Adding-virtuoso-to-local-maven-repo
+* maven v3.6.0
+* mysql v8.0.13
+* virtuoso v7.2.5; see here: https://github.com/HW-SWeL/Scraper/wiki/Building-scraper:-Adding-virtuoso-to-local-maven-repo
 * other requirements are provided through pom file
 
 ### Instructions for running
