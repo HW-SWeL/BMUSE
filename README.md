@@ -1,8 +1,21 @@
 # Scraper
 
-Please add issues relating to the front end to the *WebApp* project.
+Please add issues relating to the front end to the *WebApp* project. Issues regarding the scraper should be given to the *Scraper* project.
 
-## Details
+## Build instructions
+
+Requirements:
+* maven
+* mysql
+* virtuoso; see here: https://github.com/HW-SWeL/Scraper/wiki/Building-scraper:-Adding-virtuoso-to-local-maven-repo
+* other requirements are provided through pom file
+
+### Instructions for running
+
+*to do*
+
+
+## Funding
 
 A project by [SWeL](http://www.macs.hw.ac.uk/SWeL/) funded through [Elixir-Excelerate](https://elixir-europe.org/about-us/how-funded/eu-projects/excelerate). 
 
