@@ -1,13 +1,25 @@
 # Scraper
 
-Please add issues relating to the front end to the *WebApp* project. Issues regarding the scraper should be given to the *Scraper* project.
+## Description
+
+Reads URLs from a mysql database, scrapes the JSON-LD or RDFa from that page and produces quads which are saved to a file.
+
+Currently there is no automatic process to load the quads into a triplestore.
+
+Browsing the resulting triplestore is done through [Bischemas Knowledge Graph Explorer](https://github.com/HW-SWeL/BSKgE).
+
+### Design decisions
+
+* Virtuoso was selected as the triplestore because it can handle very large numbers of triples with the free version.
+
+* Quads are not automatically loaded into the triplestore as that is very slow, and scraping is slow enough. Saving to file then bulk importing is much quicker.
+
 
 ## Build instructions
 
 Requirements:
 * maven v3.6.0
 * mysql v8.0.13
-* virtuoso v7.2.5; see here: https://github.com/HW-SWeL/Scraper/wiki/Building-scraper:-Adding-virtuoso-to-local-maven-repo
 * other requirements are provided through pom file
 
 ### Instructions for running
