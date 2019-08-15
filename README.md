@@ -37,7 +37,7 @@ src > test > resources > META-INF > persistence.xml
     2. Set ```htmlExtractorServiceURI``` to specify the location of the fallback HTML extractor. You don't have to do this, and you can ignore the generated errors if you wish.
     3. [OPTIONAL] Set ```waitTime``` to determine how long each thread waits before starting a new crawl. Currently 1 second.
     4. [OPTIONAL] Set ```totalNumberOfPagesToCrawlInASession``` to determine how many URLs are crawled in a single run. Currently set to 100,000.
-    5. [OPTIONAL] A number of URLs are taken into memory at once and crawled. Then written to the DBMS before another set are obtained (provided the total number of URLs is less than ```totalNumberOfPagesToCrawlInASession```). To determine how many are scraped in each loop set ```numberOfPagesToCrawlInALoop```. Currently 1000 URLs are scraped each loop until 100,000 have been scraped at which point the program closes.
+    5. [OPTIONAL] A number of URLs are taken into memory at once and crawled. Once scraped their updated status is written to the DBMS before another set are obtained (provided the total number of URLs is less than ```totalNumberOfPagesToCrawlInASession```). To determine how many are scraped in each loop set ```numberOfPagesToCrawlInALoop```. Currently 1000 URLs are scraped each loop until 100,000 have been scraped at which point the program closes.
 4. Run maven compile (or package)
 5. You should then be able to run the code, e.g.,
 ```
