@@ -1,0 +1,31 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>RDFa Test Page</title>
+  <meta name="description" content="RDFa Test Page">
+  <meta name="author" content="Bioschemas Markup Generator">
+
+  <link rel="stylesheet" href="css/styles.css?v=1.0">
+
+</head>
+
+<body>
+<div xmlns="http://www.w3.org/1999/xhtml"
+  prefix="
+    schema: http://schema.org/
+    dct: http://purl.org/dc/terms/
+    rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+    rdfs: http://www.w3.org/2000/01/rdf-schema#"
+  >
+  <div vocab="https://schema.org/" typeof="schema:Person" about="http://www.macs.hw.ac.uk/~ajg33/">
+    <div rel="schema:mainEntityOfPage" resource="http://www.macs.hw.ac.uk/SWeL/BioschemasGenerator/"></div>
+    <div property="schema:name" content="Alasdair Gray"></div>
+    <div property="dct:conformsTo" content="https://bioschemas.org/specifications/Person/0.2-DRAFT"></div>
+    <div property="schema:description" content="Homepage of Alasdair Gray"></div>
+  </div>
+</div>
+</body>
+</html>
