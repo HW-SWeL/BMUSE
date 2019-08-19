@@ -115,6 +115,3 @@ local.properties
 .recommenders
 
 # End of https://www.gitignore.io/api/java,linux,macos,windows,java-web
-
-
-*.nq

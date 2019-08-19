@@ -1,0 +1,43 @@
+<https://bioschemas.org/crawl/v1/100000> <http://purl.org/pav/retrievedFrom> <https://hamap.expasy.org> <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000> <http://purl.org/pav/retrievedOn> "2019-08-15T11:24:57"^^<http://www.w3.org/2001/XMLSchema#dateTime> <https://bioschemas.org/crawl/v1/100000> .
+<https://hamap.expasy.org> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://schema.org/Organization> <https://bioschemas.org/crawl/v1/100000> .
+<https://hamap.expasy.org> <https://schema.org/logo> <https://hamap.expasy.org//images/hamap/HAMAP_Red_Logo.png> <https://bioschemas.org/crawl/v1/100000> .
+<https://hamap.expasy.org> <https://schema.org/memberof> <https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/1781910553> <https://bioschemas.org/crawl/v1/100000> .
+<https://hamap.expasy.org> <https://schema.org/name> "HAMAP" <https://bioschemas.org/crawl/v1/100000> .
+<https://hamap.expasy.org> <https://schema.org/parentOrganization> <https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/306226025> <https://bioschemas.org/crawl/v1/100000> .
+<https://hamap.expasy.org> <https://schema.org/url> <https://hamap.expasy.org> <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/1781910553> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://schema.org/NGO> <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/1781910553> <https://schema.org/name> "SIB Swiss Institute of Bioinformatics" <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/1781910553> <https://schema.org/url> <https://sib.swiss> <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/306226025> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://schema.org/Organization> <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/306226025> <https://schema.org/name> "ExPASy" <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/306226025> <https://schema.org/url> <https://www.expasy.org> <https://bioschemas.org/crawl/v1/100000> .
+<https://hamap.expasy.org> <http://purl.org/dc/terms/title> "HAMAP home" <https://bioschemas.org/crawl/v1/100000> .
+<https://hamap.expasy.org> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://schema.org/WebPage> <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/1715407498> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://schema.org/CreativeWork> <https://bioschemas.org/crawl/v1/100000> .
+<https://hamap.expasy.org> <https://schema.org/isPartOf> <https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/1715407498> <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/1715407498> <https://schema.org/url> <https://www.expasy.org> <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/344762063> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://schema.org/SearchAction> <https://bioschemas.org/crawl/v1/100000> .
+<https://hamap.expasy.org> <https://schema.org/potentialAction> <https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/344762063> <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/344762063> <https://schema.org/target> "/cgi-bin/unirule/unirule_search.cgi?search={search}&context=HAMAP" <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/344762063> <https://schema.org/query-input> "" <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/344762063> <https://schema.org/name> "" <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/703728868> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://schema.org/WebPage> <https://bioschemas.org/crawl/v1/100000> .
+<https://hamap.expasy.org> <https://schema.org/subjectOf> <https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/703728868> <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/703728868> <https://schema.org/url> <https://www.uniprot.org/help/unirule> <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/703728868> <https://schema.org/name> "UniProt's automatic annotation pipeline" <https://bioschemas.org/crawl/v1/100000> .
+<https://hamap.expasy.org> <https://schema.org/description> " HAMAP is a system for the classification and annotation of protein sequences. It consists of a collection of manually curated family profiles for protein classification, and associated, manually created annotation rules that specify annotations that apply to family members. HAMAP is used to annotate protein records in UniProtKB via . We also provide an interface to scan user sequences against HAMAP family profiles []. " <https://bioschemas.org/crawl/v1/100000> .
+<https://hamap.expasy.org> <https://schema.org/dateModified> "" <https://bioschemas.org/crawl/v1/100000> .
+<https://hamap.expasy.org> <https://schema.org/version> "2019_07" <https://bioschemas.org/crawl/v1/100000> .
+<https://hamap.expasy.org> <https://schema.org/potentialAction> "" <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/1530888691> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://schema.org/WebPage> <https://bioschemas.org/crawl/v1/100000> .
+<https://hamap.expasy.org> <https://schema.org/about> <https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/1530888691> <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/1530888691> <https://schema.org/url> <https://hamap.expasy.org/hamap_scan.html> <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/1530888691> <https://schema.org/name> "Advanced HAMAP-Scan submission form" <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/685749645> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://schema.org/ScholarlyArticle> <https://bioschemas.org/crawl/v1/100000> .
+<https://hamap.expasy.org> <https://schema.org/citation> <https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/685749645> <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/685749645> <https://schema.org/url> " HAMAP in 2015: updates to the protein family classification and annotation system.\" Nucleic Acids Res. 43:D1064-D1070(2015)." <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/1538696456> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://schema.org/NGO> <https://bioschemas.org/crawl/v1/100000> .
+<http://nar.oxfordjournals.org/content/43/D1/D1064.full> <https://schema.org/creator> <https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/1538696456> <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/1538696456> <https://schema.org/url> <https://sib.swiss> <https://bioschemas.org/crawl/v1/100000> .
+<https://bioschemas.org/crawl/v1/100000/hamap.expasy.org/1538696456> <https://schema.org/name> "SIB Swiss Institute of Bioinformatics" <https://bioschemas.org/crawl/v1/100000> .
