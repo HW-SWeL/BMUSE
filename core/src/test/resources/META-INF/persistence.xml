@@ -14,9 +14,9 @@
 			<property name="javax.persistence.jdbc.url"
 				value="jdbc:mysql://localhost:3306/scrapeDB?allowPublicKeyRetrieval=true&amp;useSSL=false" />
 
-			<property name="javax.persistence.jdbc.user" value="scrapeDBUsername" />
+			<property name="javax.persistence.jdbc.user" value="userName" />
 			<property name="javax.persistence.jdbc.password"
-				value="scrapeDBPassword" />
+				value="password" />
 
 			<!-- SQL dialect -->
 			<property name="hibernate.dialect"
