@@ -446,11 +446,13 @@ public class SimpleScraperImpl implements Scraper {
 		try {
 			SimpleScraperImpl scraper = new SimpleScraperImpl();
 //			scraper.scrape("https://www.bbc.co.uk", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);  // works
-			scraper.scrape("https://www.ebi.ac.uk/chembl/compound_report_card/CHEMBL59/", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);  // works
+//			scraper.scrape("https://www.ebi.ac.uk/chembl/compound_report_card/CHEMBL59/", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);  // works
 //			scraper.scrape("https://www.ebi.ac.uk/biosamples/samples/SAMEA4999347", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);  // works
 //			scraper.scrape("https://www.ebi.ac.uk/biosamples/samples/SAMN00025378", 100000L, "/Users/kcm/",StateOfCrawl.UNTRIED); // 404s
 //			scraper.scrape("https://www.alliancegenome.org/gene/MGI:2442292", 100000L, "/Users/kcm/",StateOfCrawl.FAILED_TWICE); // AllianceGenome
 //			scraper.scrape("https://hamap.expasy.org/", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);
+//			scraper.scrape("http://biotea.github.io/bioschemas/?pmc=35353", 100000L, "/Users/kcm/", StateOfCrawl.FAILED_TWICE);
+			scraper.scrape("http://biotea.github.io/bioschemas", 100000L, "/Users/kcm/", StateOfCrawl.FAILED_TWICE);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
