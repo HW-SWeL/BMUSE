@@ -29,6 +29,8 @@ public class ThreadedScrapeDriver {
 	private static int pagesCounter = 0;
 
 	private DBAccess dba;
+	
+	private static SimpleDateFormat formatter= new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
 
 	private static Logger logger = LoggerFactory.getLogger("hwu.elixir.scrape.siteSpecific.ThreadedScrapeDriver");
 
@@ -41,7 +43,8 @@ public class ThreadedScrapeDriver {
 	public static void main(String[] args) {
 		ThreadedScrapeDriver driver = new ThreadedScrapeDriver();
 
-		logger.info("STARTING CRAWL");
+		Date date = new Date(System.currentTimeMillis());
+		logger.info("STARTING CRAWL: " + formatter.format(date));
 		driver.processProperties();
 		driver.runScrape();
 	}
@@ -114,7 +117,8 @@ public class ThreadedScrapeDriver {
 			System.out.println("ENDED loop");
 		}
 		dba.shutdown();
-		logger.info("ENDING CRAWL");
+		Date date = new Date(System.currentTimeMillis());
+		logger.info("ENDING CRAWL: " + formatter.format(date));		
 		System.out.println("CRAWL OVER!");
 	}
 
