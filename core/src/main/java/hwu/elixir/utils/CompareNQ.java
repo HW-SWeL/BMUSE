@@ -14,7 +14,7 @@ import java.util.StringTokenizer;
  * Quads have 4 parts: subject, predicate, object & context. These should all be
  * identical, bar the following exceptions:
  * <ol>
- * <li>The the predicate is 'http://purl.org/pav/retrievedOn' the object will be
+ * <li>When the predicate is 'http://purl.org/pav/retrievedOn' the object will be
  * a date. The value of the date is irrelevant and thus not checked.</li>
  * <li>Bnodes have a random value at the end of the IRI. These random parts are
  * not compared. The rest of the IRI is.</li>
@@ -24,7 +24,7 @@ import java.util.StringTokenizer;
  * 
  * When quads are not identical the 2 quads are displayed and the first
  * non-matching element type (i.e., subject, predicate, object or context) is
- * displayed. *
+ * displayed.
  * 
  * @author kcm
  *
@@ -64,7 +64,7 @@ public class CompareNQ {
 	 * 
 	 * A list of all IRI parts identified as 'random' are displayed to console.
 	 * 
-	 * When quads are not identical the 2 quads are displayed and the first
+	 * When quads are not identical the quads are displayed and the first
 	 * non-matching element type (i.e., subject, predicate, object or context) is
 	 * displayed.
 	 * 
@@ -168,6 +168,14 @@ public class CompareNQ {
 		return true;
 	}
 
+	/**
+	 * Reads quads from a given file
+	 * 
+	 * @param file
+	 * @return ArrayList where each element is a String, and each String is quad
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
 	private ArrayList<String> getQuadsFromFile(File file) throws FileNotFoundException, IOException {
 		ArrayList<String> temp = new ArrayList<String>();
 

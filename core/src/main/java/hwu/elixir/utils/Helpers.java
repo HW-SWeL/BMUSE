@@ -11,12 +11,24 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 public class Helpers {
 
+	/**
+	 * Generates a date in the format yyyy-MM-dd.
+	 * Time is not included
+	 * 
+	 * @return
+	 */
 	public static String getDateForName() {
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 		LocalDateTime now = LocalDateTime.now();
 		return (dtf.format(now));
 	}
-
+	
+	/**
+	 * Generates a date in the format yyyy-MM-dd'T'HH:mm:ss.
+	 * 
+	 * 
+	 * @return
+	 */
 	public static XMLGregorianCalendar getFullDateWithTime() {
 		try {
 			return DatatypeFactory.newInstance()

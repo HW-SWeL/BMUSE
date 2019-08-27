@@ -9,6 +9,6 @@ public class HtmlExtractorServiceException extends Exception {
 	
 	
 	public HtmlExtractorServiceException(String url) {
-		super("Problem with HtmlExtractor service; cannot obtain: " + url);
+		super("Problem with backup HtmlExtractor service; cannot obtain: " + url);
 	}
 }

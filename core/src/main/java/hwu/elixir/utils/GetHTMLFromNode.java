@@ -16,7 +16,6 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import hwu.elixir.scrape.ThreadedScrapeDriver;
 import hwu.elixir.scrape.exceptions.HtmlExtractorServiceException;
 
 public class GetHTMLFromNode {
@@ -78,7 +77,7 @@ public class GetHTMLFromNode {
 	
 	
 	private void processProperties() {
-		ClassLoader classLoader = ThreadedScrapeDriver.class.getClassLoader();
+		ClassLoader classLoader = GetHTMLFromNode.class.getClassLoader();
 
 		URL resource = classLoader.getResource(propertiesFile);
 		if (resource == null) {
