@@ -3,7 +3,6 @@ package hwu.elixir.webapp;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
@@ -20,7 +19,7 @@ import hwu.elixir.scrape.exceptions.HtmlExtractorServiceException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingContextException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
-import hwu.elixir.scrape.scraper.Scraper;
+import hwu.elixir.scrape.scraper.WebScraper;
 import hwu.elixir.utils.Validation;
 
 
@@ -96,7 +95,7 @@ public class SimpleServlet extends HttpServlet {
 		}
 		
 		logger.info("About to create scraper");		
-		Scraper scraper = new Scraper();
+		WebScraper scraper = new WebScraper();
 		JSONObject json = new JSONObject();
 		JSONArray result = new JSONArray();
 		try {
