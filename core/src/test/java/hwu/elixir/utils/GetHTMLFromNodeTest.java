@@ -18,16 +18,14 @@ public class GetHTMLFromNodeTest {
 
 	@Ignore
 	@Test (expected = HtmlExtractorServiceException.class)
-	public void test_getHtml_shouldFail() throws HtmlExtractorServiceException {
-		GetHTMLFromNode getter = new GetHTMLFromNode();
-		getter.getHtml("http://www.hw.ac.uk/~kcm");
+	public void test_getHtml_shouldFail() throws HtmlExtractorServiceException {		
+		GetHTMLFromNode.getHtml("http://www.hw.ac.uk/~kcm");
 	}
 
 	@Ignore
 	@Test
-	public void test_getHtml_shouldWork() throws HtmlExtractorServiceException {
-		GetHTMLFromNode getter = new GetHTMLFromNode();
-		String source = getter.getHtml("http://www.hw.ac.uk/").trim();
+	public void test_getHtml_shouldWork() throws HtmlExtractorServiceException {		
+		String source = GetHTMLFromNode.getHtml("http://www.hw.ac.uk/").trim();
 		assertTrue(source.startsWith("<!DOCTYPE html>"));
 		assertTrue(source.contains("\"@context\": \"https://schema.org\","));
 		assertTrue(source.endsWith("</body></html>"));
@@ -35,8 +33,7 @@ public class GetHTMLFromNodeTest {
 	
 	@Ignore
 	@Test (expected = HtmlExtractorServiceException.class)
-	public void test_getHtml_shouldFail_badUrl() throws HtmlExtractorServiceException {
-		GetHTMLFromNode getter = new GetHTMLFromNode();
-		getter.getHtml("http://www.......m");
+	public void test_getHtml_shouldFail_badUrl() throws HtmlExtractorServiceException {		
+		GetHTMLFromNode.getHtml("http://www.......m");
 	}	
 }

@@ -22,14 +22,21 @@ public class GetHTMLFromNode {
 	
 	private static final String propertiesFile = "application.properties";	
 	private static Logger logger = LoggerFactory.getLogger("hwu.elixir.utils.GetHTMLFromNode");	
-	
-	private String nodeUrl = "";
+	private static String nodeUrl = "";
 	
 	public GetHTMLFromNode() {
 		processProperties();
 	}
 
-	public String getHtml(String url) throws HtmlExtractorServiceException {
+	/**
+	 * Gets HTML from given URL by using a service; location of service in properties file.
+	 * All errors from the service (eg, not a 200 etc) are wrapped in a HtmlExtractorServiceException
+	 * 
+	 * @param url URL to fetch HTML from
+	 * @return The HTML 
+	 * @throws HtmlExtractorServiceException 
+	 */
+	public static String getHtml(String url) throws HtmlExtractorServiceException {
 		BufferedReader reader = null;
 
 		try {
@@ -75,7 +82,10 @@ public class GetHTMLFromNode {
 		}
 	}
 	
-	
+	/**
+	 * Updates properties based on properties file in src > main > resources
+	 * 
+	 */
 	private void processProperties() {
 		ClassLoader classLoader = GetHTMLFromNode.class.getClassLoader();
 
