@@ -13,8 +13,7 @@
 	<packaging>war</packaging>
 
 	<name>Elixir scraper webapp</name>
-	<!-- FIXME change it to the project's website -->
-	<url>http://www.example.com</url>
+	<url>www.bioschemas.org</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -37,6 +36,6 @@
 	</dependencies>
 
 	<build>
-		<finalName>webapp</finalName>
+		<finalName>scraper</finalName>
 	</build>
 </project>
