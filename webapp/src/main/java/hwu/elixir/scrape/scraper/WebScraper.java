@@ -18,7 +18,6 @@ import hwu.elixir.utils.GetHTMLFromNode;
 public class WebScraper extends ScraperCore {
 
 	private static final Logger logger = LoggerFactory.getLogger(System.class.getName());
-	private GetHTMLFromNode getHtmlFromNode = new GetHTMLFromNode();
 
 	public JSONArray scrape(String url)
 			throws HtmlExtractorServiceException, FourZeroFourException, JsonLDInspectionException, MissingContextException, MissingHTMLException {
@@ -47,7 +46,7 @@ public class WebScraper extends ScraperCore {
 	}
 
 	private JSONArray scrapeWithPupeteer(String url) throws HtmlExtractorServiceException, JsonLDInspectionException, MissingContextException, MissingHTMLException {
-		String html = getHtmlFromNode.getHtml(url);
+		String html = GetHTMLFromNode.getHtml(url);
 
 		html = injectId(html, url);
 		
