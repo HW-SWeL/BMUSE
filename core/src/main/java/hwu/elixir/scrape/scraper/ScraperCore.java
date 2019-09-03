@@ -231,6 +231,58 @@ public abstract class ScraperCore {
 		return builder.build();
 	}
 
+
+	/**
+	 * Takes a series of N3 triples as a string and filters them removing triples
+	 * with the following predicates:
+	 * <ol>
+	 * <li>nofollow</li>
+	 * <li>ogp.me/...</li>
+	 * <li>xhtml/vocab</li>
+	 * <li>vocab.sindice</li>
+	 * </ol>
+	 * DOES NOT replace blank nodes.
+	 * 
+	 * Triples are NOT placed in a context.
+	 * 
+	 * Ultimately produces an RDF4J Model based on the filtered triples
+	 * 
+	 * @param n3             The triples to be processed
+	 * @return An RDF4J model containing the processed triples
+	 * @see Model	
+	 */ 
+	public Model processTriplesLeaveBlankNodes(String n3) {
+		InputStream input = new ByteArrayInputStream(n3.getBytes(StandardCharsets.UTF_8));
+
+		Model model;
+		try {
+			model = Rio.parse(input, "", RDFFormat.N3);
+		} catch (RDFParseException | UnsupportedRDFormatException | IOException e) {
+			System.out.println("Cannot parse N3 into model");
+			logger.error("Cannot parse n3 into a model", e);
+			return null;
+		}
+		Iterator<Statement> it = model.iterator();
+
+		ModelBuilder builder = new ModelBuilder();
+
+		while (it.hasNext()) {
+			Statement temp = it.next();
+			Resource subject = temp.getSubject();
+			IRI predicate = temp.getPredicate();
+			Value object = temp.getObject();
+
+			predicate = fixPredicate(predicate);
+
+			object = fixObject(object);
+
+			builder.add(subject, predicate, object);
+		}
+
+		return builder.build();
+	}	
+	
+	
 	/**
 	 * Removes changes made to allow Any23 to parse the html
 	 * 
@@ -364,7 +416,6 @@ public abstract class ScraperCore {
 		}
 
 		return html;
-
 	}
 
 	/**
