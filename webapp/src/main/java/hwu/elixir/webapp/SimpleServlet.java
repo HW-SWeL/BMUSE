@@ -166,7 +166,7 @@ public class SimpleServlet extends HttpServlet {
 		
 		if(result == null) {
 			json.put("result", "error");
-			json.put("message", "cannot find any triples");
+			json.put("message", "cannot find any markup");
 			
 			response.setStatus(500);
 			response.setHeader("Access-Control-Allow-Origin", "*");
