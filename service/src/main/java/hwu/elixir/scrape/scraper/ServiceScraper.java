@@ -54,9 +54,6 @@ public class ServiceScraper extends ScraperCore {
 
 		String html = "";
 		if (status.equals(StateOfCrawl.UNTRIED) || status.equals(StateOfCrawl.FAILED)) {
-			html = getHtml(url);
-		} else if (status.equals(StateOfCrawl.FAILED_TWICE) || status.equals(StateOfCrawl.NODE_FAILED)) {
-			System.out.println("using puppetter");
 			html = GetHTMLFromNode.getHtml(url);
 		} else {
 			return false;
@@ -110,7 +107,8 @@ public class ServiceScraper extends ScraperCore {
 //			scraper.scrape("https://www.alliancegenome.org/gene/MGI:2442292", 100000L, "/Users/kcm/",StateOfCrawl.FAILED_TWICE); // AllianceGenome
 //			scraper.scrape("https://hamap.expasy.org/", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);
 //			scraper.scrape("http://biotea.github.io/bioschemas/?pmc=35353", 100000L, "/Users/kcm/", StateOfCrawl.FAILED_TWICE);
-			scraper.scrape("http://biotea.github.io/bioschemas", 100000L, "/Users/kcm/", StateOfCrawl.FAILED_TWICE);
+//			scraper.scrape("http://biotea.github.io/bioschemas", 100000L, "/Users/kcm/", StateOfCrawl.FAILED_TWICE);
+			scraper.scrape("http://www.macs.hw.ac.uk/~kcm/g2p.html", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

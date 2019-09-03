@@ -61,10 +61,6 @@ public class ScrapeState {
 	 */
 	public synchronized void addFailedToScrapeURL(CrawlRecord record) {
 		if (record.getStatus().equals(StateOfCrawl.FAILED)) {
-			record.setStatus(StateOfCrawl.FAILED_TWICE);
-		} else if (record.getStatus().equals(StateOfCrawl.FAILED_TWICE)) {
-			record.setStatus(StateOfCrawl.NODE_FAILED);
-		} else if (record.getStatus().equals(StateOfCrawl.NODE_FAILED)) {
 			record.setStatus(StateOfCrawl.GIVEN_UP);
 		} else {
 			record.setStatus(StateOfCrawl.FAILED);
