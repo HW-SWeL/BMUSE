@@ -10,7 +10,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -22,10 +21,35 @@ public class GetHTMLFromNode {
 	
 	private static final String propertiesFile = "application.properties";	
 	private static Logger logger = LoggerFactory.getLogger("hwu.elixir.utils.GetHTMLFromNode");	
-	private static String nodeUrl = "";
+	private static String nodeUrl = null;
 	
-	public GetHTMLFromNode() {
-		processProperties();
+	static	{
+		ClassLoader classLoader = GetHTMLFromNode.class.getClassLoader();
+
+		URL resource = classLoader.getResource(propertiesFile);
+		if (resource == null) {
+			logger.error("     Cannot find " + propertiesFile + " file");
+			throw new IllegalArgumentException(propertiesFile + "file is not found!");
+		}
+
+		FileInputStream in = null;
+		try {
+			in = new FileInputStream(new File(resource.getFile()));
+		} catch (FileNotFoundException e) {
+			logger.error("     Cannot read application.properties file", e);
+			System.exit(0);
+		}
+		Properties prop = new Properties();
+
+		try {
+			prop.load(in);
+		} catch (IOException e) {
+			logger.error("     Cannot load application.properties", e);
+			System.exit(0);
+		}
+
+		nodeUrl = prop.getProperty("htmlExtractorServiceURI").trim();
+		logger.info("     HtmlExtractor URL: " + nodeUrl);		
 	}
 
 	/**
@@ -39,10 +63,12 @@ public class GetHTMLFromNode {
 	public static String getHtml(String url) throws HtmlExtractorServiceException {
 		BufferedReader reader = null;
 
-		try {
-			String myUrl = URLEncoder.encode(nodeUrl + url, "UTF-8");
-			myUrl = nodeUrl + url;
-			URL queryURL = new URL(myUrl);
+		if(nodeUrl == null) {
+			throw new HtmlExtractorServiceException("Cannot read extractor service URL");
+		}
+		
+		try {			
+			URL queryURL = new URL(nodeUrl + url);
 			HttpURLConnection connection = (HttpURLConnection) queryURL.openConnection();
 			connection.setRequestMethod("GET");
 			connection.setReadTimeout(10 * 1000);
@@ -82,36 +108,5 @@ public class GetHTMLFromNode {
 		}
 	}
 	
-	/**
-	 * Updates properties based on properties file in src > main > resources
-	 * 
-	 */
-	private void processProperties() {
-		ClassLoader classLoader = GetHTMLFromNode.class.getClassLoader();
-
-		URL resource = classLoader.getResource(propertiesFile);
-		if (resource == null) {
-			logger.error("     Cannot find " + propertiesFile + " file");
-			throw new IllegalArgumentException(propertiesFile + "file is not found!");
-		}
-
-		FileInputStream in = null;
-		try {
-			in = new FileInputStream(new File(resource.getFile()));
-		} catch (FileNotFoundException e) {
-			logger.error("     Cannot read application.properties file", e);
-			System.exit(0);
-		}
-		Properties prop = new Properties();
-
-		try {
-			prop.load(in);
-		} catch (IOException e) {
-			logger.error("     Cannot load application.properties", e);
-			System.exit(0);
-		}
-
-		nodeUrl = prop.getProperty("htmlExtractorServiceURI").trim();
-		logger.info("     backup HtmlExtractor URL: " + nodeUrl);		
-	}	
+	
 }
