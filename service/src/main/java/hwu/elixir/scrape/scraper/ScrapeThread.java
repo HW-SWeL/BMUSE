@@ -67,7 +67,7 @@ public class ScrapeThread extends Thread {
 					scrapeState.addFailedToScrapeURL(record);
 				}
 			} catch (HtmlExtractorServiceException serviceException) {
-				// do nothing? 
+				scrapeState.addFailedToScrapeURL(record);
 			} catch(FourZeroFourException fourZeroFourException) {
 				scrapeState.setStatusTo404(record);
 			} catch (JsonLDInspectionException je) {
