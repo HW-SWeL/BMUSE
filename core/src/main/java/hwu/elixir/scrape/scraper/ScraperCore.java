@@ -1,8 +1,10 @@
 package hwu.elixir.scrape.scraper;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -31,6 +33,12 @@ import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.jsoup.Connection.Response;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.slf4j.Logger;
@@ -43,7 +51,7 @@ import hwu.elixir.scrape.exceptions.MissingHTMLException;
 import hwu.elixir.utils.Helpers;
 
 /**
- * Provides core functionality for scraping, but is not an actual scraper 
+ * Provides core functionality for scraping, but is not an actual scraper
  * 
  * 
  * @author kcm
@@ -53,6 +61,14 @@ import hwu.elixir.utils.Helpers;
 public abstract class ScraperCore {
 
 	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
+	private static WebDriver driver;
+	private static ChromeOptions chromeOptions = new ChromeOptions();
+	
+	static {
+		System.setProperty("webdriver.chrome.driver", "/Users/kcm/Applications/chromedriver");		
+		chromeOptions.addArguments("--headless");
+		driver = new ChromeDriver(chromeOptions);
+	}
 
 	/**
 	 * Uses JSoup to pull the HTML of a NON dynamic web page
@@ -79,6 +95,29 @@ public abstract class ScraperCore {
 			System.out.println(url + " produced a " + e1.getMessage());
 		}
 		return null;
+	}
+
+	/**
+	 * Uses Selenium to pull the HTML of a NON dynamic web page
+	 * 
+	 * @param url The address of the site to parse
+	 * @return The HTML as a string
+	 * @throws FourZeroFourException when page title is 404
+	 */
+	public String getHtmlViaSelenium(String url) throws FourZeroFourException {
+		driver.get(url);
+
+		// possibly worthless as Selenium do not support HTTP codes: https://github.com/seleniumhq/selenium-google-code-issue-archive/issues/141
+		if(driver.getTitle().contains("404")) {
+			logger.error(url + " produced a 404");
+			throw new FourZeroFourException(url);
+		}
+		
+		WebDriverWait wait = new WebDriverWait(driver, 10);
+		wait.until(
+				ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath("//script[@type=\"application/ld+json\"]")));
+		
+		return fixAny23WeirdIssues(driver.getPageSource());
 	}
 
 	/**
@@ -109,8 +148,7 @@ public abstract class ScraperCore {
 
 		return null;
 	}
-	
-	
+
 	/**
 	 * Takes an Any23 DocumentSource and converts into triples in quads form.
 	 * 
@@ -121,8 +159,7 @@ public abstract class ScraperCore {
 	public String getTriplesInNQ(DocumentSource source) {
 
 		Any23 runner = new Any23();
-		try (ByteArrayOutputStream out = new ByteArrayOutputStream();
-				TripleHandler handler = new NQuadsWriter(out);) {
+		try (ByteArrayOutputStream out = new ByteArrayOutputStream(); TripleHandler handler = new NQuadsWriter(out);) {
 
 			runner.extract(source, handler);
 			return out.toString("UTF-8");
@@ -138,7 +175,7 @@ public abstract class ScraperCore {
 		}
 
 		return null;
-	}	
+	}
 
 	/**
 	 * Takes a series of N3 triples as a string and filters them removing triples
@@ -159,7 +196,9 @@ public abstract class ScraperCore {
 	 * @param n3             The triples to be processed
 	 * @param sourceIRI      The URL of the page from which the triples were
 	 *                       obtained
-	 * @param contextCounter The current counter for the context. Assumes the triples will be placed into crawl repo. If not, any number can be used here.
+	 * @param contextCounter The current counter for the context. Assumes the
+	 *                       triples will be placed into crawl repo. If not, any
+	 *                       number can be used here.
 	 * @return An RDF4J model containing the processed triples
 	 * @see Model
 	 */
@@ -231,7 +270,6 @@ public abstract class ScraperCore {
 		return builder.build();
 	}
 
-
 	/**
 	 * Takes a series of N3 triples as a string and filters them removing triples
 	 * with the following predicates:
@@ -247,10 +285,10 @@ public abstract class ScraperCore {
 	 * 
 	 * Ultimately produces an RDF4J Model based on the filtered triples
 	 * 
-	 * @param n3             The triples to be processed
+	 * @param n3 The triples to be processed
 	 * @return An RDF4J model containing the processed triples
-	 * @see Model	
-	 */ 
+	 * @see Model
+	 */
 	public Model processTriplesLeaveBlankNodes(String n3) {
 		InputStream input = new ByteArrayInputStream(n3.getBytes(StandardCharsets.UTF_8));
 
@@ -280,9 +318,8 @@ public abstract class ScraperCore {
 		}
 
 		return builder.build();
-	}	
-	
-	
+	}
+
 	/**
 	 * Removes changes made to allow Any23 to parse the html
 	 * 
@@ -419,13 +456,14 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Changes the HTML such that Any23 can parse it. Bugs in Any23 mean that some predicates (that should work) break the parser.
+	 * Changes the HTML such that Any23 can parse it. Bugs in Any23 mean that some
+	 * predicates (that should work) break the parser.
 	 * 
 	 * 
 	 * @param html HTML to be corrected
 	 * @return Corrected HTML
 	 * @see #fixAny23WeirdIssues(String)
-	 */	
+	 */
 	public String fixAny23WeirdIssues(String html) {
 		// any23 has problems with license & fileFormat
 		return html.replaceAll("license", "licensE").replaceAll("fileFormat", "FileFormat").replaceAll("additionalType",
@@ -433,7 +471,9 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Generates a new IRI based on the named graph and the source's IRI. Includes a random element based on time to ensure no collisions.
+	 * Generates a new IRI based on the named graph and the source's IRI. Includes a
+	 * random element based on time to ensure no collisions.
+	 * 
 	 * @param ngraph
 	 * @param sourceIRI
 	 * @return New IRI
