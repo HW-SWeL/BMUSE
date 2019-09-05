@@ -63,9 +63,9 @@ public abstract class ScraperCore {
 	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
 	private static WebDriver driver;
 	private static ChromeOptions chromeOptions = new ChromeOptions();
-	
+
 	static {
-		System.setProperty("webdriver.chrome.driver", "/Users/kcm/Applications/chromedriver");		
+		System.setProperty("webdriver.chrome.driver", "/Users/kcm/Applications/chromedriver");
 		chromeOptions.addArguments("--headless");
 		driver = new ChromeDriver(chromeOptions);
 	}
@@ -107,16 +107,17 @@ public abstract class ScraperCore {
 	public String getHtmlViaSelenium(String url) throws FourZeroFourException {
 		driver.get(url);
 
-		// possibly worthless as Selenium do not support HTTP codes: https://github.com/seleniumhq/selenium-google-code-issue-archive/issues/141
-		if(driver.getTitle().contains("404")) {
+		// possibly worthless as Selenium do not support HTTP codes:
+		// https://github.com/seleniumhq/selenium-google-code-issue-archive/issues/141
+		if (driver.getTitle().contains("404")) {
 			logger.error(url + " produced a 404");
 			throw new FourZeroFourException(url);
 		}
-		
+
 		WebDriverWait wait = new WebDriverWait(driver, 10);
 		wait.until(
 				ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath("//script[@type=\"application/ld+json\"]")));
-		
+
 		return fixAny23WeirdIssues(driver.getPageSource());
 	}
 
@@ -391,7 +392,7 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Injects an @ id attribute into the given html source. Thus prevents Any23
+	 * Injects an @ id attribute into the given html source; prevents Any23
 	 * creating blank nodes at the top of the graph
 	 * 
 	 * Problems: only works with json-ld not rdfa etc AND only deals with 1st block
@@ -421,34 +422,41 @@ public abstract class ScraperCore {
 		if (html == null)
 			throw new MissingHTMLException(url);
 
-		if (html.indexOf("vocab=\"http://schema.org") != -1 || html.indexOf("vocab=\"https://schema.org") != -1) {
-			logger.info("Appears to be RDFa; no injection for: " + url);
-			return html;
-		}
-
 		int posContext = html.indexOf("@context");
 		if (posContext == -1) {
-			logger.info("Missing context in " + url);
+			if (html.indexOf("vocab=\"http://schema.org") != -1 || html.indexOf("vocab=\"https://schema.org") != -1) {
+				logger.info("No @context, but a vocab; appears to be RDFa with no JSON-LD: " + url);
+				return html;
+			}
+			logger.info("Does not appear to be rdfa, but there is no @context in: " + url);
 			throw new MissingContextException(url);
 		} else {
-			if (html.indexOf("@id") != -1) {
-				logger.info("Not injecting id into: " + url);
+			// there may be multiple blocks of JSON-LD & thus contexts, only some may have
+			// an at ID.
+
+			if (posContext != html.lastIndexOf("@context")) {
+				logger.info("Multiple @context blocks in: " + url);
+				throw new JsonLDInspectionException("Multiple @context blocks in: " + url);
 			} else {
+				// only 1 context block
+				if (html.indexOf("@id") != -1) {
+					logger.info("Not injecting id into: " + url);
+				} else {
+					String toInject = "\"@id\": \"" + url + "\"";
 
-				String toInject = "\"@id\": \"" + url + "\"";
+					Pattern pattern = Pattern.compile("\"?@context\"?\\s*:\\s*\"?");
+					Matcher matcher = pattern.matcher(html);
+					if (matcher.find()) {
+						String tempStart = html.substring(0, matcher.start());
+						tempStart += " " + toInject + ", ";
+						tempStart += html.substring(matcher.start());
+						return tempStart;
+					}
 
-				Pattern pattern = Pattern.compile("\"?@context\"?\\s*:\\s*\"?");
-				Matcher matcher = pattern.matcher(html);
-				if (matcher.find()) {
-					String tempStart = html.substring(0, matcher.start());
-					tempStart += " " + toInject + ", ";
-					tempStart += html.substring(matcher.start());
-					return tempStart;
+					// should never happen
+					logger.warn(url + " has a @context, but no @id yet did not have an @id injected!");
+					throw new JsonLDInspectionException(url);
 				}
-
-				// should never happen
-				logger.warn(url + " did not receive any injection! posContext is " + posContext);
-				throw new JsonLDInspectionException(url);
 			}
 		}
 
