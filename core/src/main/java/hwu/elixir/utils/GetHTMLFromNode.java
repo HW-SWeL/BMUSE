@@ -5,8 +5,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -26,33 +28,26 @@ public class GetHTMLFromNode {
 	static	{
 		ClassLoader classLoader = GetHTMLFromNode.class.getClassLoader();
 
-		URL resource = classLoader.getResource(propertiesFile);
-		if (resource == null) {
+		InputStream is = classLoader.getResourceAsStream(propertiesFile);
+		if(is == null) {
 			logger.error("     Cannot find " + propertiesFile + " file");
 			throw new IllegalArgumentException(propertiesFile + "file is not found!");
 		}
 
-		FileInputStream in = null;
-		try {
-			in = new FileInputStream(new File(resource.getFile()));
-		} catch (FileNotFoundException e) {
-			logger.error("     Cannot read application.properties file", e);
-			System.exit(0);
-		}
 		Properties prop = new Properties();
 
 		try {
-			prop.load(in);
+			prop.load(is);
 		} catch (IOException e) {
 			logger.error("     Cannot load application.properties", e);
 			System.exit(0);
 		}
-
+		
 		nodeUrl = prop.getProperty("htmlExtractorServiceURI").trim();
 		logger.info("     HtmlExtractor URL: " + nodeUrl);		
 	}
 
-	/**
+	/** 
 	 * Gets HTML from given URL by using a service; location of service in properties file.
 	 * All errors from the service (eg, not a 200 etc) are wrapped in a HtmlExtractorServiceException
 	 * 
@@ -60,7 +55,7 @@ public class GetHTMLFromNode {
 	 * @return The HTML 
 	 * @throws HtmlExtractorServiceException 
 	 */
-	public static String getHtml(String url) throws HtmlExtractorServiceException {
+	public static synchronized String getHtml(String url) throws HtmlExtractorServiceException {
 		BufferedReader reader = null;
 
 		if(nodeUrl == null) {
@@ -94,7 +89,11 @@ public class GetHTMLFromNode {
 		} catch (MalformedURLException e) {
 			logger.error("Malformed url for "+url);
 			throw new HtmlExtractorServiceException(url);
-		} catch (IOException e) {
+		} catch(ConnectException ce) {
+			logger.error("HtmlExtractor is down; cannot proceed");
+			System.exit(0);
+			return null;
+		} catch (IOException e) {			
 			logger.error("IO exception for "+url);
 			throw new HtmlExtractorServiceException(url);
 		} finally {
@@ -107,6 +106,4 @@ public class GetHTMLFromNode {
 			}
 		}
 	}
-	
-	
 }
