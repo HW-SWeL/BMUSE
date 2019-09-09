@@ -63,8 +63,9 @@ public class ThreadedScrapeDriver {
 	 * 
 	 */
 	private void runScrape() {
-		while (pagesCounter <= totalNumberOfPagesToCrawlInASession) {
+		while (pagesCounter < totalNumberOfPagesToCrawlInASession) {
 			System.out.println(pagesCounter + " is less than " + totalNumberOfPagesToCrawlInASession);
+			logger.info(pagesCounter + " scraped of " + totalNumberOfPagesToCrawlInASession);
 			List<CrawlRecord> pagesToPull = generatePagesToPull();
 			if (pagesToPull.isEmpty()) {
 				break;
@@ -76,44 +77,14 @@ public class ThreadedScrapeDriver {
 
 			ScrapeThread scrape2 = new ScrapeThread(new ServiceScraper(), scrapeState, waitTime, outputFolder);
 			scrape2.setName("S2");
-
-			ScrapeThread scrape3 = new ScrapeThread(new ServiceScraper(), scrapeState, waitTime, outputFolder);
-			scrape3.setName("S3");
-
-			ScrapeThread scrape4 = new ScrapeThread(new ServiceScraper(), scrapeState, waitTime, outputFolder);
-			scrape4.setName("S4");
-
-			ScrapeThread scrape5 = new ScrapeThread(new ServiceScraper(), scrapeState, waitTime, outputFolder);
-			scrape5.setName("S5");
-
-			ScrapeThread scrape6 = new ScrapeThread(new ServiceScraper(), scrapeState, waitTime, outputFolder);
-			scrape6.setName("S6");
-
-			ScrapeThread scrape7 = new ScrapeThread(new ServiceScraper(), scrapeState, waitTime, outputFolder);
-			scrape7.setName("S7");
-
-			ScrapeThread scrape8 = new ScrapeThread(new ServiceScraper(), scrapeState, waitTime, outputFolder);
-			scrape8.setName("S8");
-
+			
 			scrape1.start();
 			scrape2.start();
-			scrape3.start();
-			scrape4.start();
-			scrape5.start();
-			scrape6.start();
-			scrape7.start();
-			scrape8.start();
 			long startTime = System.nanoTime();
 			
 			try {
 				scrape1.join();
 				scrape2.join();
-				scrape3.join();
-				scrape4.join();
-				scrape5.join();
-				scrape6.join();
-				scrape7.join();
-				scrape8.join();
 			} catch (InterruptedException e) {
 				System.out.println("Unexpected interruption of thread when trying to join");
 				e.printStackTrace();
