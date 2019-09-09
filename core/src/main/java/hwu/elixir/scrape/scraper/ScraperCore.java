@@ -1,10 +1,8 @@
 package hwu.elixir.scrape.scraper;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -33,14 +31,14 @@ import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.jsoup.Connection.Response;
+import org.jsoup.HttpStatusException;
+import org.jsoup.Jsoup;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import org.jsoup.HttpStatusException;
-import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +46,7 @@ import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingContextException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
+import hwu.elixir.utils.ChromeDriverFactory;
 import hwu.elixir.utils.Helpers;
 
 /**
@@ -61,15 +60,9 @@ import hwu.elixir.utils.Helpers;
 public abstract class ScraperCore {
 
 	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
-	private static WebDriver driver;
-	private static ChromeOptions chromeOptions = new ChromeOptions();
-
-	static {
-		System.setProperty("webdriver.chrome.driver", "/Users/kcm/Applications/chromedriver");
-		chromeOptions.addArguments("--headless");
-		driver = new ChromeDriver(chromeOptions);
-	}
-
+	private WebDriver driver = ChromeDriverFactory.getInstance();
+	
+	
 	/**
 	 * Uses JSoup to pull the HTML of a NON dynamic web page
 	 * 
@@ -105,6 +98,7 @@ public abstract class ScraperCore {
 	 * @throws FourZeroFourException when page title is 404
 	 */
 	public String getHtmlViaSelenium(String url) throws FourZeroFourException {
+		try {
 		driver.get(url);
 
 		// possibly worthless as Selenium do not support HTTP codes:
@@ -117,6 +111,12 @@ public abstract class ScraperCore {
 		WebDriverWait wait = new WebDriverWait(driver, 10);
 		wait.until(
 				ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath("//script[@type=\"application/ld+json\"]")));
+		
+		} catch(org.openqa.selenium.WebDriverException crashed) {
+			
+			logger.error("Selenium crashed - shutting down");
+			System.exit(0);
+		}
 
 		return fixAny23WeirdIssues(driver.getPageSource());
 	}

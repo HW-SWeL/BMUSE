@@ -19,7 +19,6 @@ import hwu.elixir.scrape.exceptions.HtmlExtractorServiceException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingContextException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
-import hwu.elixir.utils.GetHTMLFromNode;
 
 /**
  * Scrapes a given URL, converts into NQuads and writes to a file (name derived
@@ -54,7 +53,8 @@ public class ServiceScraper extends ScraperCore {
 
 		String html = "";
 		if (status.equals(StateOfCrawl.UNTRIED) || status.equals(StateOfCrawl.FAILED)) {
-			html = GetHTMLFromNode.getHtml(url);
+//			html = GetHTMLFromNode.getHtml(url);
+			html = getHtmlViaSelenium(url);
 		} else {
 			return false;
 		}
