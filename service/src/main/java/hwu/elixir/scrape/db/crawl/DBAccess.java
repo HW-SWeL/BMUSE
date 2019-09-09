@@ -173,7 +173,7 @@ public class DBAccess {
 		}
 
 		try {
-			String queryString = "FROM CrawlRecord WHERE status NOT IN ('GIVEN_UP', 'SUCCESS', 'DOES_NOT_EXIST') ";
+			String queryString = "FROM CrawlRecord WHERE status NOT IN ('GIVEN_UP', 'SUCCESS', 'DOES_NOT_EXIST', 'HUMAN_INSPECTION') ";
 			Query query = em.createQuery(queryString);
 			query.setMaxResults(amount);
 			List<CrawlRecord> allRecords = query.getResultList();
