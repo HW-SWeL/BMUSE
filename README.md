@@ -5,9 +5,10 @@
 
 ### Design decisions
 
-* Virtuoso was selected as the triplestore because it can handle very large numbers of triples with the free version.
-
-* Quads are not automatically loaded into the triplestore as that is very slow, and scraping is slow enough. Saving to file then bulk importing is much quicker.
+* Using Apache Any23 to parse structured data from HTML.
+* Using [chromium headless driver](https://chromedriver.chromium.org/) with [Selenium](https://www.seleniumhq.org/) to load pages.
+* Quads are used as basic provenance is captured at the page/context/graph level.
+* Quads are not automatically loaded into the triplestore as that is very slow, and scraping is slow enough. Saving to file then bulk importing is much quicker. This also means the enduser can choose their own triplestore.
 
 
 ## Build instructions
