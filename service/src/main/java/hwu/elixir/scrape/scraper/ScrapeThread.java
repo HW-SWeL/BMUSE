@@ -80,5 +80,4 @@ public class ScrapeThread extends Thread {
 			}
 		}
 	}
-
 }
