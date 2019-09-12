@@ -16,6 +16,7 @@
 Requirements:
 * maven v3.6.0
 * mysql v8.0.13
+* appropriate [chromium driver](https://chromedriver.chromium.org/) for your version of chrome 
 * other requirements are provided through pom file
 
 ### Instructions for running
