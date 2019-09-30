@@ -68,6 +68,7 @@ public class ThreadedScrapeDriver {
 			logger.info(pagesCounter + " scraped of " + totalNumberOfPagesToCrawlInASession);
 			List<CrawlRecord> pagesToPull = generatePagesToPull();
 			if (pagesToPull.isEmpty()) {
+				logger.error("Cannot retrieve URLs from DBMS");
 				break;
 			}
 			ScrapeState scrapeState = new ScrapeState(pagesToPull);
