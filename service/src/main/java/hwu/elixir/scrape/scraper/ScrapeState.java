@@ -104,4 +104,16 @@ public class ScrapeState {
 	public synchronized List<CrawlRecord> getPagesProcessed() {
 		return urlsProcessed;
 	}
+	
+	/**
+	 * Gets the full list of pages regardless of whether scraped or not
+	 * 
+	 * @return
+	 */
+	public synchronized List<CrawlRecord> getPagesProcessedAndUnprocessed() {
+		List<CrawlRecord> urlsCombined = Collections.synchronizedList(new ArrayList<CrawlRecord>());
+		urlsCombined.addAll(urlsProcessed);
+		urlsCombined.addAll(urlsToScrape);
+		return urlsCombined;
+	}	
 }

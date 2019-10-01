@@ -93,6 +93,16 @@ public class ThreadedScrapeDriver {
 				System.out.println("Unexpected interruption of thread when trying to join");
 				e.printStackTrace();
 			}
+			
+			if(!scrape1.isWorked()) {
+				logger.error("Could not write output file so shutting down!");
+				dba.resetBeingScraped(scrapeState.getPagesProcessedAndUnprocessed());
+				scrapeOne.shutdown();
+				dba.shutdown();
+				Date date = new Date(System.currentTimeMillis());
+				logger.info("ENDING CRAWL after failure at: " + formatter.format(date));	
+				System.out.println("CRAWL OVER!");
+			}
 
 			long endTime = System.nanoTime();
 			long timeElapsed = endTime - startTime;

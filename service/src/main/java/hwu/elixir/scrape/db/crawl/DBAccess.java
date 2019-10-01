@@ -145,6 +145,49 @@ public class DBAccess {
 
 		return true;
 	}
+	
+	
+	public boolean resetBeingScraped(List<CrawlRecord> allRecords) {
+		if (!em.isOpen()) {
+			open();
+		}
+
+		System.out.println("Restting " + allRecords.size() + " records");
+		int counter = 0;
+		EntityTransaction txn = null;
+		try {
+			txn = em.getTransaction();
+			txn.begin();
+
+			for (CrawlRecord record : allRecords) {
+				CrawlRecord retrievedRecord = findCrawlRecordById(record.getId());
+
+				if(record.isBeingScraped()) {
+					retrievedRecord.setBeingScraped(false);
+				} else {
+					System.out.println("RECORD IS BEING UPDATED AFTER CRAWL YET WAS NOT SET TO BEING CRAWLED!");		
+					System.exit(0);
+				}
+				
+				em.persist(retrievedRecord);
+				if (counter++ % 20 == 0) {
+					em.flush();
+					em.clear();
+				}
+			}
+			txn.commit();
+		} catch (Exception e) {
+			if (txn != null)
+				txn.commit();
+
+			logger.error("    ERROR in DBAccess: " + e.getLocalizedMessage());
+			return false;
+		}
+		logger.info("Updated " + counter + " records to CrawlRecord table");		
+		
+		
+		return true;
+	}
 
 	/**
 	 * Retrieves all instances of CrawlRecord from DBMS. Each CrawlRecord is a URL that needs to be scraped, with provenance if scraped.

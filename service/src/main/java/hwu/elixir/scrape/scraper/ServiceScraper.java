@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import hwu.elixir.scrape.db.crawl.StateOfCrawl;
+import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.HtmlExtractorServiceException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
@@ -44,9 +45,10 @@ public class ServiceScraper extends ScraperCore {
 	 * @return True if success; false otherwise
 	 * @throws HtmlExtractorServiceException
 	 * @throws JsonLDInspectionException
+	 * @throws CannotWriteException 
 	 */
 	public boolean scrape(String url, Long contextCounter, String folderToWriteNQTo, StateOfCrawl status)
-			throws HtmlExtractorServiceException, FourZeroFourException, JsonLDInspectionException {
+			throws HtmlExtractorServiceException, FourZeroFourException, JsonLDInspectionException, CannotWriteException {
 
 		if (url.endsWith("/") || url.endsWith("#"))
 			url = url.substring(0, url.length() - 1);
@@ -86,8 +88,8 @@ public class ServiceScraper extends ScraperCore {
 		try (PrintWriter out = new PrintWriter(new File(fileName))) {
 			Rio.write(updatedModel, out, RDFFormat.NQUADS);
 		} catch (Exception e) {
-			logger.error("Problem writing file for " + url);			
-			System.exit(0);
+			logger.error("Problem writing file for " + url);	
+			throw new CannotWriteException(url);			
 		}
 
 		if (!new File(fileName).exists())

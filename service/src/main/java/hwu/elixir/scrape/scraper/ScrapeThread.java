@@ -3,6 +3,7 @@ package hwu.elixir.scrape.scraper;
 import java.util.Date;
 
 import hwu.elixir.scrape.db.crawl.CrawlRecord;
+import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.HtmlExtractorServiceException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
@@ -23,6 +24,8 @@ public class ScrapeThread extends Thread {
 	private ServiceScraper process;
 	private int waitTime;
 	private String folderToWriteNQTo;
+	private boolean worked = true;
+	
 
 	/**
 	 * 
@@ -72,6 +75,9 @@ public class ScrapeThread extends Thread {
 				scrapeState.setStatusTo404(record);
 			} catch (JsonLDInspectionException je) {
 				scrapeState.setStatusToHumanInspection(record);
+			} catch (CannotWriteException cannotWrite) {
+				worked = false;
+				return;
 			}
 			try {
 				ScrapeThread.sleep(1000 * waitTime);
@@ -79,5 +85,9 @@ public class ScrapeThread extends Thread {
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	public boolean isWorked() {
+		return worked;
 	}
 }
