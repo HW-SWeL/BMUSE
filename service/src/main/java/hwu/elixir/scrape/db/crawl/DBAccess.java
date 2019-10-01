@@ -45,7 +45,9 @@ public class DBAccess {
 
 	public void shutdown() {
 		close();
-		emf.close();
+		if(emf.isOpen()) {
+			emf.close();
+		}
 	}
 
 	/**
@@ -152,7 +154,7 @@ public class DBAccess {
 			open();
 		}
 
-		System.out.println("Restting " + allRecords.size() + " records");
+		System.out.println("Resetting " + allRecords.size() + " records");
 		int counter = 0;
 		EntityTransaction txn = null;
 		try {
@@ -183,7 +185,7 @@ public class DBAccess {
 			logger.error("    ERROR in DBAccess: " + e.getLocalizedMessage());
 			return false;
 		}
-		logger.info("Updated " + counter + " records to CrawlRecord table");		
+		logger.info("Reset " + counter + " records to CrawlRecord table");		
 		
 		
 		return true;
