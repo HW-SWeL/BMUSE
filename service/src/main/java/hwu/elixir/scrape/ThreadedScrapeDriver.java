@@ -63,6 +63,9 @@ public class ThreadedScrapeDriver {
 	 * 
 	 */
 	private void runScrape() {
+		ServiceScraper scrapeOne = new ServiceScraper();
+		ServiceScraper scrapeTwo = new ServiceScraper();		
+		
 		while (pagesCounter < totalNumberOfPagesToCrawlInASession) {
 			System.out.println(pagesCounter + " is less than " + totalNumberOfPagesToCrawlInASession);
 			logger.info(pagesCounter + " scraped of " + totalNumberOfPagesToCrawlInASession);
@@ -71,11 +74,11 @@ public class ThreadedScrapeDriver {
 				break;
 			}
 			ScrapeState scrapeState = new ScrapeState(pagesToPull);
-
-			ScrapeThread scrape1 = new ScrapeThread(new ServiceScraper(), scrapeState, waitTime, outputFolder);
+			
+			ScrapeThread scrape1 = new ScrapeThread(scrapeOne, scrapeState, waitTime, outputFolder);
 			scrape1.setName("S1");
 
-			ScrapeThread scrape2 = new ScrapeThread(new ServiceScraper(), scrapeState, waitTime, outputFolder);
+			ScrapeThread scrape2 = new ScrapeThread(scrapeTwo, scrapeState, waitTime, outputFolder);
 			scrape2.setName("S2");
 			
 			scrape1.start();
@@ -99,6 +102,8 @@ public class ThreadedScrapeDriver {
 			pagesCounter += numberOfPagesToCrawlInALoop;
 			System.out.println("ENDED loop");
 		}
+		scrapeOne.shutdown();
+		scrapeTwo.shutdown();
 		dba.shutdown();
 		Date date = new Date(System.currentTimeMillis());
 		logger.info("ENDING CRAWL: " + formatter.format(date));		

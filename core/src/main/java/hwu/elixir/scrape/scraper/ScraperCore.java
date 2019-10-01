@@ -35,8 +35,6 @@ import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
@@ -62,6 +60,16 @@ public abstract class ScraperCore {
 	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
 	private WebDriver driver = ChromeDriverFactory.getInstance();
 	
+	
+	public void shutdown() {		
+		if(driver != null) {
+			logger.info("driver is not null... trying to close!");	
+			driver.quit();
+			logger.info("driver closed?!");
+		} else {
+			logger.info("Driver is null");
+		}
+	}
 	
 	/**
 	 * Uses JSoup to pull the HTML of a NON dynamic web page
