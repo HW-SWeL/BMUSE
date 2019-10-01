@@ -11,6 +11,7 @@ import org.mockito.MockitoAnnotations;
 
 import hwu.elixir.scrape.db.crawl.CrawlRecord;
 import hwu.elixir.scrape.db.crawl.StateOfCrawl;
+import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.HtmlExtractorServiceException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
@@ -49,7 +50,7 @@ public class ScrapeThreadTest {
 	}
 	
 	@Test
-	public void test_uRLtoCrawl_butFails() throws NoSuchFieldException, SecurityException, HtmlExtractorServiceException, FourZeroFourException, JsonLDInspectionException {
+	public void test_uRLtoCrawl_butFails() throws NoSuchFieldException, SecurityException, HtmlExtractorServiceException, FourZeroFourException, JsonLDInspectionException, CannotWriteException {
 		when(state.pagesLeftToScrape()).thenReturn(true, false);
 		when(state.getURLToProcess()).thenReturn(record);
 		when(scraper.scrape("http://www.abc.com", 1L, "/Users/test/output", StateOfCrawl.UNTRIED)).thenReturn(false);
@@ -65,7 +66,7 @@ public class ScrapeThreadTest {
 	}
 
 	@Test
-	public void test_uRLtoCrawl_works() throws HtmlExtractorServiceException, FourZeroFourException, JsonLDInspectionException {
+	public void test_uRLtoCrawl_works() throws HtmlExtractorServiceException, FourZeroFourException, JsonLDInspectionException, CannotWriteException {
 
 		when(state.pagesLeftToScrape()).thenReturn(true, false);
 		when(state.getURLToProcess()).thenReturn(record);
@@ -83,7 +84,7 @@ public class ScrapeThreadTest {
 	
 	
 	@Test
-	public void test_uRLtoCrawl_throwsException() throws HtmlExtractorServiceException, FourZeroFourException, JsonLDInspectionException {
+	public void test_uRLtoCrawl_throwsException() throws HtmlExtractorServiceException, FourZeroFourException, JsonLDInspectionException, CannotWriteException {
 		
 		when(state.pagesLeftToScrape()).thenReturn(true, false);
 		when(state.getURLToProcess()).thenReturn(record);
@@ -99,7 +100,7 @@ public class ScrapeThreadTest {
 	}	
 	
 	@Test
-	public void test_uRLtoCrawl_throws404() throws HtmlExtractorServiceException, FourZeroFourException, JsonLDInspectionException {
+	public void test_uRLtoCrawl_throws404() throws HtmlExtractorServiceException, FourZeroFourException, JsonLDInspectionException, CannotWriteException {
 
 		when(state.pagesLeftToScrape()).thenReturn(true, false);
 		when(state.getURLToProcess()).thenReturn(record);
@@ -116,7 +117,7 @@ public class ScrapeThreadTest {
 	}	
 	
 	@Test
-	public void test_uRLtoCrawl_throwsInsepection() throws HtmlExtractorServiceException, FourZeroFourException, JsonLDInspectionException {
+	public void test_uRLtoCrawl_throwsInsepection() throws HtmlExtractorServiceException, FourZeroFourException, JsonLDInspectionException, CannotWriteException {
 
 		when(state.pagesLeftToScrape()).thenReturn(true, false);
 		when(state.getURLToProcess()).thenReturn(record);

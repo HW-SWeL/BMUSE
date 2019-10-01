@@ -9,6 +9,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import hwu.elixir.scrape.db.crawl.StateOfCrawl;
+import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.HtmlExtractorServiceException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
@@ -38,7 +39,7 @@ public class SimpleScraperImplTest {
 	
 	@Test
 	public void test_scrape_NothingToDo()
-			throws HtmlExtractorServiceException, FourZeroFourException, JsonLDInspectionException {
+			throws HtmlExtractorServiceException, FourZeroFourException, JsonLDInspectionException, CannotWriteException {
 		assertFalse(scraper.scrape("http://www.hw.ac.uk", 100L, "/Volumes/kcm/", StateOfCrawl.SUCCESS));
 
 		assertFalse(scraper.scrape("http://www.hw.ac.uk/", 100L, "/Volumes/kcm/", StateOfCrawl.SUCCESS));
