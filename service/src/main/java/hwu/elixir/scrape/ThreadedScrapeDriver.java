@@ -103,6 +103,8 @@ public class ThreadedScrapeDriver {
 				logger.info("ENDING CRAWL after failure at: " + formatter.format(date));	
 				System.out.println("CRAWL OVER!");
 			}
+			
+			logger.info("Value of isWorked: " + scrape1.isWorked());
 
 			long endTime = System.nanoTime();
 			long timeElapsed = endTime - startTime;

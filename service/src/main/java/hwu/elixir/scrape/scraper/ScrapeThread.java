@@ -2,6 +2,9 @@ package hwu.elixir.scrape.scraper;
 
 import java.util.Date;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import hwu.elixir.scrape.db.crawl.CrawlRecord;
 import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
@@ -25,6 +28,9 @@ public class ScrapeThread extends Thread {
 	private int waitTime;
 	private String folderToWriteNQTo;
 	private boolean worked = true;
+	
+	
+	private static Logger logger = LoggerFactory.getLogger("hwu.elixir.scrape.scraper.ScrapeThread");
 	
 
 	/**
@@ -75,7 +81,8 @@ public class ScrapeThread extends Thread {
 				scrapeState.setStatusTo404(record);
 			} catch (JsonLDInspectionException je) {
 				scrapeState.setStatusToHumanInspection(record);
-			} catch (CannotWriteException cannotWrite) {
+			} catch (CannotWriteException cannotWrite) {		
+				logger.error("Caught cannot read file, setting worked to false!");
 				worked = false;
 				return;
 			}
