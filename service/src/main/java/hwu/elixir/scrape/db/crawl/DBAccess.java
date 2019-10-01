@@ -120,6 +120,13 @@ public class DBAccess {
 				if (record.getStatus() != null) {
 					retrievedRecord.setStatus(record.getStatus());
 				}
+				if(record.isBeingScraped()) {
+					retrievedRecord.setBeingScraped(false);
+				} else {
+					System.out.println("RECORD IS BEING UPDATED AFTER CRAWL YET WAS NOT SET TO BEING CRAWLED!");		
+					System.exit(0);
+				}
+				
 				em.persist(retrievedRecord);
 				if (counter++ % 20 == 0) {
 					em.flush();
@@ -149,11 +156,11 @@ public class DBAccess {
 		if (!em.isOpen()) {
 			open();
 		}
-
 		try {
 			String queryString = "FROM CrawlRecord";
 			Query query = em.createQuery(queryString);
-			List<CrawlRecord> allRecords = query.getResultList();
+			List<CrawlRecord> allRecords = query.getResultList();			
+			
 			return allRecords;
 		} catch (Exception e) {
 			return null;
@@ -171,12 +178,23 @@ public class DBAccess {
 		if (!em.isOpen()) {
 			open();
 		}
-
+		
+		EntityTransaction txn = null;
 		try {
-			String queryString = "FROM CrawlRecord WHERE status NOT IN ('GIVEN_UP', 'SUCCESS', 'DOES_NOT_EXIST', 'HUMAN_INSPECTION') ";
+			txn = em.getTransaction();
+			txn.begin();		
+			
+			String queryString = "FROM CrawlRecord WHERE status NOT IN ('GIVEN_UP', 'SUCCESS', 'DOES_NOT_EXIST', 'HUMAN_INSPECTION') and beingScraped != 1";
 			Query query = em.createQuery(queryString);
 			query.setMaxResults(amount);
-			List<CrawlRecord> allRecords = query.getResultList();
+			List<CrawlRecord> allRecords = query.getResultList();			
+			
+			for(CrawlRecord record : allRecords) {				
+				record.setBeingScraped(true);
+				em.persist(record);
+			}			
+			
+			txn.commit();			
 			return allRecords;
 		} catch (Exception e) {
 			return null;

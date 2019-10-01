@@ -10,6 +10,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+import org.hibernate.annotations.ColumnDefault;
+
 import hwu.elixir.utils.Validation;
 
 
@@ -39,6 +41,9 @@ public class CrawlRecord {
 
 	@Enumerated(EnumType.STRING)
 	private StateOfCrawl status;
+	
+	@Column(columnDefinition = "boolean default false")
+	private boolean beingScraped;
 
 	public CrawlRecord() {		
 		status = StateOfCrawl.UNTRIED;
@@ -91,6 +96,14 @@ public class CrawlRecord {
 	public void setContext(String context) {
 		this.context = context;
 	}
+	
+	public boolean isBeingScraped() {
+		return beingScraped;
+	}
+
+	public void setBeingScraped(boolean beingScraped) {
+		this.beingScraped = beingScraped;
+	}	
 
 	@Override
 	public boolean equals(Object o) {
