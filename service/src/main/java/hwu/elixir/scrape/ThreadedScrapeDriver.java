@@ -64,13 +64,14 @@ public class ThreadedScrapeDriver {
 	 */
 	private void runScrape() {
 		ServiceScraper scrapeOne = new ServiceScraper();
-		ServiceScraper scrapeTwo = new ServiceScraper();		
+//		ServiceScraper scrapeTwo = new ServiceScraper();		
 		
 		while (pagesCounter < totalNumberOfPagesToCrawlInASession) {
 			System.out.println(pagesCounter + " is less than " + totalNumberOfPagesToCrawlInASession);
 			logger.info(pagesCounter + " scraped of " + totalNumberOfPagesToCrawlInASession);
 			List<CrawlRecord> pagesToPull = generatePagesToPull();
 			if (pagesToPull.isEmpty()) {
+				logger.error("Could not find list of URLs to scrape!");
 				break;
 			}
 			ScrapeState scrapeState = new ScrapeState(pagesToPull);
@@ -78,16 +79,16 @@ public class ThreadedScrapeDriver {
 			ScrapeThread scrape1 = new ScrapeThread(scrapeOne, scrapeState, waitTime, outputFolder);
 			scrape1.setName("S1");
 
-			ScrapeThread scrape2 = new ScrapeThread(scrapeTwo, scrapeState, waitTime, outputFolder);
-			scrape2.setName("S2");
+//			ScrapeThread scrape2 = new ScrapeThread(scrapeTwo, scrapeState, waitTime, outputFolder);
+//			scrape2.setName("S2");
 			
 			scrape1.start();
-			scrape2.start();
+//			scrape2.start();
 			long startTime = System.nanoTime();
 			
 			try {
 				scrape1.join();
-				scrape2.join();
+//				scrape2.join();
 			} catch (InterruptedException e) {
 				System.out.println("Unexpected interruption of thread when trying to join");
 				e.printStackTrace();
@@ -103,7 +104,7 @@ public class ThreadedScrapeDriver {
 			System.out.println("ENDED loop");
 		}
 		scrapeOne.shutdown();
-		scrapeTwo.shutdown();
+//		scrapeTwo.shutdown();
 		dba.shutdown();
 		Date date = new Date(System.currentTimeMillis());
 		logger.info("ENDING CRAWL: " + formatter.format(date));		
