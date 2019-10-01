@@ -84,6 +84,7 @@ public class ScrapeThread extends Thread {
 			} catch (CannotWriteException cannotWrite) {		
 				logger.error("Caught cannot read file, setting worked to false!");
 				worked = false;
+				scrapeState.addFailedToScrapeURL(record);
 				return;
 			}
 			try {
