@@ -44,6 +44,7 @@ import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingContextException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
+import hwu.elixir.scrape.exceptions.SeleniumException;
 import hwu.elixir.utils.ChromeDriverFactory;
 import hwu.elixir.utils.Helpers;
 
@@ -104,8 +105,9 @@ public abstract class ScraperCore {
 	 * @param url The address of the site to parse
 	 * @return The HTML as a string
 	 * @throws FourZeroFourException when page title is 404
+	 * @throws SeleniumException 
 	 */
-	public String getHtmlViaSelenium(String url) throws FourZeroFourException {
+	public String getHtmlViaSelenium(String url) throws FourZeroFourException, SeleniumException {
 		try {
 		driver.get(url);
 
@@ -122,8 +124,10 @@ public abstract class ScraperCore {
 		
 		} catch(org.openqa.selenium.WebDriverException crashed) {
 			
-			logger.error("Selenium crashed - shutting down");
-			System.exit(0);
+			if (driver == null) {
+				driver = ChromeDriverFactory.getInstance();
+			}			
+			throw new SeleniumException(url);			
 		}
 
 		return fixAny23WeirdIssues(driver.getPageSource());
