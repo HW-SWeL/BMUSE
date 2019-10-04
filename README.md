@@ -20,6 +20,7 @@ There are 3 sub-modules:
 ## Build instructions
 
 Requirements:
+* java 1.8
 * maven v3.6.0
 * mysql v8.0.13
 * google chrome browser and [driver](https://chromedriver.chromium.org/); you must select the same version for both, e.g., v77.
