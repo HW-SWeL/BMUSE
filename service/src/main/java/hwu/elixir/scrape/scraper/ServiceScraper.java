@@ -118,9 +118,11 @@ public class ServiceScraper extends ScraperCore {
 //			scraper.scrape("https://www.ebi.ac.uk/biosamples/samples/SAMN00025378", 100000L, "/Users/kcm/",StateOfCrawl.UNTRIED); // 404s
 //			scraper.scrape("https://www.alliancegenome.org/gene/MGI:2442292", 100000L, "/Users/kcm/",StateOfCrawl.FAILED_TWICE); // AllianceGenome
 //			scraper.scrape("https://hamap.expasy.org/", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);
+			scraper.scrape("https://hamap.expasy.org/rule/MF_00191", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);
+			
 //			scraper.scrape("http://biotea.github.io/bioschemas/?pmc=35353", 100000L, "/Users/kcm/", StateOfCrawl.FAILED_TWICE);
 //			scraper.scrape("http://biotea.github.io/bioschemas", 100000L, "/Users/kcm/", StateOfCrawl.FAILED_TWICE);
-			scraper.scrape("http://www.macs.hw.ac.uk/~kcm/g2p.html", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);
+//			scraper.scrape("http://www.macs.hw.ac.uk/~kcm/g2p.html", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
