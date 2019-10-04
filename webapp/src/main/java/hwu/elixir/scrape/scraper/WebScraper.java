@@ -17,19 +17,19 @@ import hwu.elixir.scrape.exceptions.HtmlExtractorServiceException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingContextException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
-import hwu.elixir.utils.GetHTMLFromNode;
+import hwu.elixir.scrape.exceptions.SeleniumException;
 
 public class WebScraper extends ScraperCore {
 
 	private static final Logger logger = LoggerFactory.getLogger(System.class.getName());
 
 	public JSONArray scrape(String url) throws HtmlExtractorServiceException, FourZeroFourException,
-			JsonLDInspectionException, MissingContextException, MissingHTMLException {
+			JsonLDInspectionException, MissingContextException, MissingHTMLException, SeleniumException {
 
 		if (url.endsWith("/") || url.endsWith("#"))
 			url = url.substring(0, url.length() - 1);
 
-		String html = GetHTMLFromNode.getHtml(url);		
+		String html = getHtmlViaSelenium(url);		
 		
 		html = injectId(html, url);
 		

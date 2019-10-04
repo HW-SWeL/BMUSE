@@ -19,6 +19,7 @@ import hwu.elixir.scrape.exceptions.HtmlExtractorServiceException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingContextException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
+import hwu.elixir.scrape.exceptions.SeleniumException;
 import hwu.elixir.scrape.scraper.WebScraper;
 import hwu.elixir.utils.Validation;
 
@@ -154,6 +155,18 @@ public class SimpleServlet extends HttpServlet {
 			e.printStackTrace();
 			json.put("result", "error");
 			json.put("message", e.getMessage());
+			
+			response.setStatus(500);
+			response.setHeader("Access-Control-Allow-Origin", "*");
+			response.setCharacterEncoding("UTF-8");
+			
+			PrintWriter out = response.getWriter();
+			out.print(json.toJSONString());
+			out.close();
+		} catch (SeleniumException e) {
+			e.printStackTrace();
+			json.put("result", "error");
+			json.put("message", "Selenium crashed!");
 			
 			response.setStatus(500);
 			response.setHeader("Access-Control-Allow-Origin", "*");
