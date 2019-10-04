@@ -26,8 +26,6 @@
 			<artifactId>apache-any23-core</artifactId>
 			<version>2.3</version>
 		</dependency>
-		<!-- <dependency> <groupId>org.eclipse.rdf4j</groupId> <artifactId>rdf4j-runtime</artifactId> 
-			<version>2.5.1</version> </dependency> -->
 		<dependency>
 			<groupId>org.eclipse.rdf4j</groupId>
 			<artifactId>rdf4j-rio-rdfxml</artifactId>
