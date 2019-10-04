@@ -1,9 +1,13 @@
 package hwu.elixir.scrape.scraper;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
@@ -33,6 +37,9 @@ import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.jsoup.Connection.Response;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -56,22 +63,21 @@ import hwu.elixir.utils.Helpers;
  * @see Scraper
  * 
  */
-public abstract class ScraperCore {
+public class ScraperCore {
 
 	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
 	private WebDriver driver = ChromeDriverFactory.getInstance();
-	
-	
-	public void shutdown() {		
-		if(driver != null) {
-			logger.info("driver is not null... trying to close!");	
+
+	public void shutdown() {
+		if (driver != null) {
+			logger.info("driver is not null... trying to close!");
 			driver.quit();
 			logger.info("driver closed?!");
 		} else {
 			logger.info("Driver is null");
 		}
 	}
-	
+
 	/**
 	 * Uses JSoup to pull the HTML of a NON dynamic web page
 	 * 
@@ -105,32 +111,60 @@ public abstract class ScraperCore {
 	 * @param url The address of the site to parse
 	 * @return The HTML as a string
 	 * @throws FourZeroFourException when page title is 404
-	 * @throws SeleniumException 
+	 * @throws SeleniumException
 	 */
 	public String getHtmlViaSelenium(String url) throws FourZeroFourException, SeleniumException {
 		try {
-		driver.get(url);
+			driver.get(url);
 
-		// possibly worthless as Selenium do not support HTTP codes:
-		// https://github.com/seleniumhq/selenium-google-code-issue-archive/issues/141
-		if (driver.getTitle().contains("404")) {
-			logger.error(url + " produced a 404");
-			throw new FourZeroFourException(url);
-		}
+			// possibly worthless as Selenium do not support HTTP codes:
+			// https://github.com/seleniumhq/selenium-google-code-issue-archive/issues/141
+			if (driver.getTitle().contains("404")) {
+				logger.error(url + " produced a 404");
+				throw new FourZeroFourException(url);
+			}
 
-		WebDriverWait wait = new WebDriverWait(driver, 10);
-		wait.until(
-				ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath("//script[@type=\"application/ld+json\"]")));
-		
-		} catch(org.openqa.selenium.WebDriverException crashed) {
-			
+			WebDriverWait wait = new WebDriverWait(driver, 10);
+			wait.until(ExpectedConditions
+					.presenceOfAllElementsLocatedBy(By.xpath("//script[@type=\"application/ld+json\"]")));
+
+		} catch (org.openqa.selenium.WebDriverException crashed) {
+			crashed.printStackTrace();
 			if (driver == null) {
 				driver = ChromeDriverFactory.getInstance();
-			}			
-			throw new SeleniumException(url);			
+			}
+			throw new SeleniumException(url);
 		}
 
 		return fixAny23WeirdIssues(driver.getPageSource());
+	}
+
+	/**
+	 * Uses JSoup to extract schema markup in JSON-LD form from a given URL. Will
+	 * ignore all other formats of markup.
+	 * 
+	 * @param url URL to scrape
+	 * @return An array in which each element is a block of JSON-LD containing
+	 *         schema.org markup.
+	 * @throws FourZeroFourException
+	 * @throws SeleniumException
+	 */
+	public String[] getOnlyJSONLD(String url) throws FourZeroFourException, SeleniumException {
+		String html = getHtmlViaSelenium(url);
+		Document doc = Jsoup.parse(html);
+		Elements jsonElements = doc.getElementsByTag("script").attr("type", "application/ld+json");
+
+		ArrayList<String> filteredJson = new ArrayList<String>();
+		for (Element jsonElement : jsonElements) {
+			if (jsonElement.data() != "" && jsonElement.data() != null) {
+				if (jsonElement.data().contains("@type") || jsonElement.data().contains("@context")) {
+					filteredJson.add(jsonElement.data());
+				}
+			}
+		}
+		String[] toReturn = new String[filteredJson.size()];
+		filteredJson.toArray(toReturn);
+		return toReturn;
 	}
 
 	/**
@@ -404,8 +438,8 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Injects an @ id attribute into the given html source; prevents Any23
-	 * creating blank nodes at the top of the graph
+	 * Injects an @ id attribute into the given html source; prevents Any23 creating
+	 * blank nodes at the top of the graph
 	 * 
 	 * Problems: only works with json-ld not rdfa etc AND only deals with 1st block
 	 * 
@@ -515,4 +549,20 @@ public abstract class ScraperCore {
 		return SimpleValueFactory.getInstance().createIRI(ngraph + "/" + source + randomInt);
 	}
 
+	public static void main(String[] args) {
+		ScraperCore core = new ScraperCore();
+		try {
+			String[] markup = core.getOnlyJSONLD("https://hamap.expasy.org/rule/MF_00191");
+			PrintWriter out = new PrintWriter(new FileWriter(new File("/Users/kcm/jsonTest2.txt")));
+			for (int i = 0; i < markup.length; i++) {
+				out.println(markup[i]);
+				out.println("*******");
+			}
+			out.flush();
+			out.close();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 }
