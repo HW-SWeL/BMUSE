@@ -125,8 +125,7 @@ public class DBAccess {
 				if(record.isBeingScraped()) {
 					retrievedRecord.setBeingScraped(false);
 				} else {
-					System.out.println("RECORD IS BEING UPDATED AFTER CRAWL YET WAS NOT SET TO BEING CRAWLED!");		
-					System.exit(0);
+					logger.error("RECORD IS BEING UPDATED AFTER CRAWL YET WAS NOT SET TO BEING CRAWLED!");							
 				}
 				
 				em.persist(retrievedRecord);
