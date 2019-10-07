@@ -1,5 +1,8 @@
 # Scraper
 
+A scraper designed to scrape [Bioschema's markup](https://www.bioschemas.org), in either JSON-LD or RDFa, from a set of known web pages.
+Implementation decisions are discussed [here](https://github.com/HW-SWeL/Scraper/wiki/Decisions).
+
 ## Description
 
 There are 3 sub-modules:
