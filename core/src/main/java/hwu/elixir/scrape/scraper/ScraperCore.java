@@ -41,6 +41,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -123,10 +124,15 @@ public class ScraperCore {
 				logger.error(url + " produced a 404");
 				throw new FourZeroFourException(url);
 			}
+			
 
 			WebDriverWait wait = new WebDriverWait(driver, 10);
 			wait.until(ExpectedConditions
 					.presenceOfAllElementsLocatedBy(By.xpath("//script[@type=\"application/ld+json\"]")));
+
+		} catch (TimeoutException to) {
+			logger.error("URL timed out: "+url);
+			return null;
 
 		} catch (org.openqa.selenium.WebDriverException crashed) {
 			crashed.printStackTrace();
