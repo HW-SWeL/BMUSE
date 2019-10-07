@@ -3,9 +3,9 @@
 ## Description
 
 There are 3 sub-modules:
-* *core* provides core scraping functionality
+* *core* provides core scraping functionality.
 * *service* extends this to be a process that can be run via the command line. URLs to be scraped are read from a database.
-* *web* turns core into a very basic webapp that scrapes a single URL fed into the app
+* *web* turns core into a very basic webapp that scrapes a single URL fed into the app.
 
 ### Design decisions
 
@@ -24,7 +24,7 @@ Requirements:
 * maven v3.6.0
 * mysql v8.0.13
 * google chrome browser and [driver](https://chromedriver.chromium.org/); you must select the same version for both, e.g., v77.
-* other requirements are provided through pom file
+* other requirements are provided through pom file.
 
 ### Instructions for running
 
