@@ -64,6 +64,8 @@ public class ThreadedScrapeDriver {
 	 */
 	private void runScrape() {
 		ServiceScraper scrapeOne = new ServiceScraper();
+		
+//		Leaving second thread in to demonstrate use.
 //		ServiceScraper scrapeTwo = new ServiceScraper();		
 		
 		while (pagesCounter < totalNumberOfPagesToCrawlInASession) {
