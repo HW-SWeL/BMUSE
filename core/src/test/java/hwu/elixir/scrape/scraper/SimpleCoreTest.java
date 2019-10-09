@@ -127,19 +127,14 @@ public class SimpleCoreTest {
 	@Test
 	public void test_injectId_alreadyGotId() {
 		try {
-			String resourceName = "testHtml/contextAtEnd.html";
+			String resourceName = "testHtml/contextAtEndWithId.html";
 			ClassLoader classLoader = getClass().getClassLoader();
 			testHtml = new File(classLoader.getResource(resourceName).getFile());
 			String html = "";
 			try (BufferedReader br = new BufferedReader(new FileReader(testHtml))) {
 				String line = "";
-				int i = 0;
 				while ((line = br.readLine()) != null) {
-					if (i == 1) {
-						html += "\"@id\" : \"http://test.com\",";
-					}
 					html += line;
-					i++;
 				}
 				html = html.trim();
 			}
@@ -170,13 +165,13 @@ public class SimpleCoreTest {
 
 			// no trailing /
 			String outHtml = simpleCore.injectId(html, "https://myId.com");
-			assertTrue(outHtml.contains("\"@id\": \"https://myId.com\","));
+			assertTrue(outHtml.contains("\"@id\":\"https://myId.com\","));
 
 			// got a trailing /
 			String html2 = html.replaceFirst("\"@context\": \"http://schema.org\"",
 					"\"@context\": \"http://schema.org/\"");
 			outHtml = simpleCore.injectId(html2, "https://myId.com");
-			assertTrue(outHtml.contains("\"@id\": \"https://myId.com\","));
+			assertTrue(outHtml.contains("\"@id\":\"https://myId.com\","));
 
 			// context at end of JSON-LD
 			resourceName = "testHtml/contextAtEnd.html";
@@ -191,7 +186,7 @@ public class SimpleCoreTest {
 				html = html.trim();
 			}
 			outHtml = simpleCore.injectId(html, "https://myId.com");
-			assertTrue(outHtml.contains("\"@id\": \"https://myId.com\""));
+			assertTrue(outHtml.contains("\"@id\":\"https://myId.com\""));
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -214,7 +209,7 @@ public class SimpleCoreTest {
 				html = html.trim();
 			}
 			String outHtml = simpleCore.injectId(html, "https://myId.com");
-			assertTrue(outHtml.contains("\"@id\": \"https://myId.com\","));
+			assertTrue(outHtml.contains("\"@id\":\"https://myId.com\","));
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail();
@@ -237,7 +232,7 @@ public class SimpleCoreTest {
 			}
 			String outHtml = simpleCore.injectId(html, "https://myId.com");
 			System.out.println(outHtml);
-			assertTrue(outHtml.contains("\"@id\": \"https://myId.com\","));
+			assertTrue(outHtml.contains("\"@id\":\"https://myId.com\","));
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail();
@@ -432,6 +427,7 @@ public class SimpleCoreTest {
 			Rio.write(liveModel, out, RDFFormat.NQUADS);
 		} catch (Exception e) {
 			e.printStackTrace();
+			liveQuads.delete();
 			fail();
 		}
 
@@ -448,9 +444,9 @@ public class SimpleCoreTest {
 		} catch (IOException e) {
 			e.printStackTrace();
 			fail();
+		} finally {
+			liveQuads.delete();
 		}
-
-		liveQuads.delete();
 	}
 
 	@Test
