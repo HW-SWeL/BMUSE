@@ -34,6 +34,9 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.jsoup.Connection.Response;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
@@ -68,6 +71,8 @@ public class ScraperCore {
 
 	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
 	private WebDriver driver = ChromeDriverFactory.getInstance();
+	
+	private int countOfJSONLD = 0;
 
 	public void shutdown() {
 		if (driver != null) {
@@ -124,14 +129,13 @@ public class ScraperCore {
 				logger.error(url + " produced a 404");
 				throw new FourZeroFourException(url);
 			}
-			
 
 			WebDriverWait wait = new WebDriverWait(driver, 10);
 			wait.until(ExpectedConditions
 					.presenceOfAllElementsLocatedBy(By.xpath("//script[@type=\"application/ld+json\"]")));
 
 		} catch (TimeoutException to) {
-			logger.error("URL timed out: "+url);
+			logger.error("URL timed out: " + url);
 			return null;
 
 		} catch (org.openqa.selenium.WebDriverException crashed) {
@@ -157,6 +161,33 @@ public class ScraperCore {
 	 */
 	public String[] getOnlyJSONLD(String url) throws FourZeroFourException, SeleniumException {
 		String html = getHtmlViaSelenium(url);
+		Document doc = Jsoup.parse(html);
+		Elements jsonElements = doc.getElementsByTag("script").attr("type", "application/ld+json");
+
+		ArrayList<String> filteredJson = new ArrayList<String>();
+		for (Element jsonElement : jsonElements) {
+			if (jsonElement.data() != "" && jsonElement.data() != null) {
+				if (jsonElement.data().contains("@type") || jsonElement.data().contains("@context")) {
+					filteredJson.add(jsonElement.data());
+				}
+			}
+		}
+		String[] toReturn = new String[filteredJson.size()];
+		filteredJson.toArray(toReturn);
+		return toReturn;
+	}
+
+	/**
+	 * Uses JSoup to extract schema markup in JSON-LD form from a given URL. Will
+	 * ignore all other formats of markup.
+	 * 
+	 * @param html to find JSON-LD in
+	 * @return An array in which each element is a block of JSON-LD containing
+	 *         schema.org markup.
+	 * @throws FourZeroFourException
+	 * @throws SeleniumException
+	 */
+	public String[] getJSONLDMarkup(String html) {
 		Document doc = Jsoup.parse(html);
 		Elements jsonElements = doc.getElementsByTag("script").attr("type", "application/ld+json");
 
@@ -467,6 +498,8 @@ public class ScraperCore {
 	 */
 	public String injectId(String html, String url)
 			throws MissingContextException, MissingHTMLException, JsonLDInspectionException {
+		
+		countOfJSONLD = 0;
 
 		if (url == null)
 			throw new IllegalArgumentException("url cannot be null");
@@ -482,39 +515,115 @@ public class ScraperCore {
 			}
 			logger.info("Does not appear to be rdfa, but there is no @context in: " + url);
 			throw new MissingContextException(url);
-		} else {
-			// there may be multiple blocks of JSON-LD & thus contexts, only some may have
-			// an at ID.
-
-			if (posContext != html.lastIndexOf("@context")) {
-				logger.info("Multiple @context blocks in: " + url);
-				throw new JsonLDInspectionException("Multiple @context blocks in: " + url);
-			} else {
-				// only 1 context block
-				if (html.indexOf("@id") != -1) {
-					logger.info("Not injecting id into: " + url);
-				} else {
-					String toInject = "\"@id\": \"" + url + "\"";
-
-					Pattern pattern = Pattern.compile("\"?@context\"?\\s*:\\s*\"?");
-					Matcher matcher = pattern.matcher(html);
-					if (matcher.find()) {
-						String tempStart = html.substring(0, matcher.start());
-						tempStart += " " + toInject + ", ";
-						tempStart += html.substring(matcher.start());
-						return tempStart;
-					}
-
-					// should never happen
-					logger.warn(url + " has a @context, but no @id yet did not have an @id injected!");
-					throw new JsonLDInspectionException(url);
-				}
-			}
+		} else {			
+			return fixAllContexts(html, url);
 		}
+	}
 
+	
+	/**
+	 * Given HTML source, gets all the JSON-LD blocks and orchestrates the amendment of them
+	 * 
+	 * @param html
+	 * @param url
+	 * @return HTML in which JSON-LD has been corrected
+	 * @throws JsonLDInspectionException
+	 * @see {@link #fixASingleContext(String, String)}
+	 */
+	public String fixAllContexts(String html, String url) throws JsonLDInspectionException {	
+		String[] allMarkup = null;
+		if(html.startsWith("{")) {		
+			logger.info("Just JSON no HTML from: " + url);
+			allMarkup = new String[1];
+			allMarkup[0] = html;
+			
+		} else {
+			allMarkup = getJSONLDMarkup(html);	
+		}
+					
+		System.out.println("Number of JSONLD sections: " + allMarkup.length);
+		logger.info("Number of JSONLD sections: " + allMarkup.length);		
+		
+		for(String markup: allMarkup) {					
+			String newMarkup = fixASingleContext(markup, url);
+			
+			if(newMarkup.equalsIgnoreCase(markup)) {				
+				continue;
+			}
+			
+			html = swapMarkup(html, markup, newMarkup);	
+			countOfJSONLD++;
+		}
+		
 		return html;
 	}
 
+	
+	/**
+	 * Replaces the old JSON-LD markup with the new markup
+	 * 
+	 * @param html Current HTML
+	 * @param oldMarkup
+	 * @param newMarkup
+	 * @return HTML with the newMarkup replacing the oldMarkup
+	 */
+	public String swapMarkup(String html, String oldMarkup, String newMarkup) {
+		
+		int oldPosition = html.indexOf(oldMarkup);
+		String newHtml = html.substring(0, oldPosition)+ newMarkup + html.substring(oldPosition+oldMarkup.length());
+		
+		return newHtml;
+	}
+	
+	
+	/** 
+	 * 
+	 * Corrects/amends a single block of JSON-LD markup extracted from the HTML source
+	 * <ol>
+	 * <li>Changes context to https://schema.org</li>
+	 * <li>adds @id based on url</li>
+	 * </ol>
+	 * 
+	 * @param markup
+	 * @param url
+	 * @return
+	 * @throws JsonLDInspectionException
+	 */
+	public String fixASingleContext(String markup, String url) throws JsonLDInspectionException {
+		JSONParser parser = new JSONParser();
+		JSONObject parsedJSON = null;
+		
+		try {
+			parsedJSON = (JSONObject) parser.parse(markup);
+		} catch (ParseException e) {	
+			logger.error("Failed to parse JSON from :" + url);
+			throw new JsonLDInspectionException("Failed to parse JSON from :" + url);
+		}
+		
+		if(parsedJSON.containsKey("@context")) {
+			String contextValue = parsedJSON.get("@context").toString();
+			if(!(contextValue.equalsIgnoreCase("https://schema.org"))) {
+				parsedJSON.remove("@context");
+				parsedJSON.put("@context", "https://schema.org");
+			} 
+			contextValue = parsedJSON.get("@context").toString();
+			
+		} else {
+			parsedJSON.put("@context", "https://schema.org");
+		}
+		
+		if(!parsedJSON.containsKey("@id")) {
+			if(countOfJSONLD > 0) {
+				parsedJSON.put("@id", url+"#"+countOfJSONLD);
+			} else {
+				parsedJSON.put("@id", url);
+			}
+		}
+		
+		return parsedJSON.toJSONString().replaceAll("\\\\", "");		
+	}
+	
+	
 	/**
 	 * Changes the HTML such that Any23 can parse it. Bugs in Any23 mean that some
 	 * predicates (that should work) break the parser.
@@ -557,17 +666,25 @@ public class ScraperCore {
 
 	public static void main(String[] args) {
 		ScraperCore core = new ScraperCore();
+//		try {
+//			String[] markup = core.getOnlyJSONLD("https://hamap.expasy.org/rule/MF_00191");
+//			PrintWriter out = new PrintWriter(new FileWriter(new File("/Users/kcm/jsonTest2.txt")));
+//			for (int i = 0; i < markup.length; i++) {
+//				out.println(markup[i]);
+//				out.println("*******");
+//			}
+//			out.flush();
+//			out.close();
+//
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+		
 		try {
-			String[] markup = core.getOnlyJSONLD("https://hamap.expasy.org/rule/MF_00191");
-			PrintWriter out = new PrintWriter(new FileWriter(new File("/Users/kcm/jsonTest2.txt")));
-			for (int i = 0; i < markup.length; i++) {
-				out.println(markup[i]);
-				out.println("*******");
-			}
-			out.flush();
-			out.close();
-
-		} catch (Exception e) {
+		String url = "https://www.alliancegenome.org/gene/MGI:2442292";
+		String html = core.getHtmlViaSelenium(url);
+		core.injectId(html, url);
+		} catch(Exception e) {
 			e.printStackTrace();
 		}
 	}
