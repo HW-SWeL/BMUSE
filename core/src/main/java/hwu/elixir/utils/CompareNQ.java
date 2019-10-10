@@ -39,9 +39,10 @@ public class CompareNQ {
 		quads1 = getQuadsFromFile(file1);
 		quads2 = getQuadsFromFile(file2);
 
-		if (quads1.size() != quads2.size())
-			System.out.println(
-					"Quads are a different length! Quads 1 = " + quads1.size() + ". Quads 2 = " + quads2.size());
+		if (quads1.size() != quads2.size()) {
+			System.out.println("Quads are a different length! Quads 1 = " + quads1.size() + ". Quads 2 = " + quads2.size());
+			return false;
+		}
 
 		for (int i = 0; i < quads1.size(); i++) {
 			if (compareQuad(quads1.get(i), quads2.get(i)) == false)
@@ -160,7 +161,7 @@ public class CompareNQ {
 					System.out.println(t1 + "  " + t2);
 					return false;
 				} else {
-					System.out.println("these are random? : " + t1 + "  " + t2);
+//					System.out.println("these are random? : " + t1 + "  " + t2);
 				}
 			}
 		}
