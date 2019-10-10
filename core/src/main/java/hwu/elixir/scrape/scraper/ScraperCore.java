@@ -1,18 +1,13 @@
 package hwu.elixir.scrape.scraper;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.any23.Any23;
 import org.apache.any23.extractor.ExtractionException;
@@ -53,7 +48,6 @@ import org.slf4j.LoggerFactory;
 
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
-import hwu.elixir.scrape.exceptions.MissingContextException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
 import hwu.elixir.scrape.exceptions.SeleniumException;
 import hwu.elixir.utils.ChromeDriverFactory;
@@ -71,7 +65,7 @@ public class ScraperCore {
 
 	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
 	private WebDriver driver = ChromeDriverFactory.getInstance();
-	
+
 	private int countOfJSONLD = 0;
 
 	public void shutdown() {
@@ -496,9 +490,8 @@ public class ScraperCore {
 	 * @return the original source with @ id added in however many blocks there are
 	 * @throws JsonLDInspectionException
 	 */
-	public String injectId(String html, String url)
-			throws MissingContextException, MissingHTMLException, JsonLDInspectionException {
-		
+	public String injectId(String html, String url) throws MissingHTMLException, JsonLDInspectionException {
+
 		countOfJSONLD = 0;
 
 		if (url == null)
@@ -511,18 +504,14 @@ public class ScraperCore {
 		if (posContext == -1) {
 			if (html.indexOf("vocab=\"http://schema.org") != -1 || html.indexOf("vocab=\"https://schema.org") != -1) {
 				logger.info("No @context, but a vocab; appears to be RDFa with no JSON-LD: " + url);
-				return html;
 			}
-			logger.info("Does not appear to be rdfa, but there is no @context in: " + url);
-			throw new MissingContextException(url);
-		} else {			
-			return fixAllContexts(html, url);
 		}
+		return fixAllContexts(html, url);
 	}
 
-	
 	/**
-	 * Given HTML source, gets all the JSON-LD blocks and orchestrates the amendment of them
+	 * Given HTML source, gets all the JSON-LD blocks and orchestrates the amendment
+	 * of them
 	 * 
 	 * @param html
 	 * @param url
@@ -530,54 +519,53 @@ public class ScraperCore {
 	 * @throws JsonLDInspectionException
 	 * @see {@link #fixASingleContext(String, String)}
 	 */
-	public String fixAllContexts(String html, String url) throws JsonLDInspectionException {	
+	public String fixAllContexts(String html, String url) throws JsonLDInspectionException {
 		String[] allMarkup = null;
-		if(html.startsWith("{")) {		
+		if (html.startsWith("{")) {
 			logger.info("Just JSON no HTML from: " + url);
 			allMarkup = new String[1];
 			allMarkup[0] = html;
-			
+
 		} else {
-			allMarkup = getJSONLDMarkup(html);	
+			allMarkup = getJSONLDMarkup(html);
 		}
-					
-		logger.info("Number of JSONLD sections: " + allMarkup.length);		
-		
-		for(String markup: allMarkup) {					
+
+		logger.info("Number of JSONLD sections: " + allMarkup.length);
+
+		for (String markup : allMarkup) {
 			String newMarkup = fixASingleContext(markup, url);
-			
-			if(newMarkup.equalsIgnoreCase(markup)) {				
+
+			if (newMarkup.equalsIgnoreCase(markup)) {
 				continue;
 			}
-			
-			html = swapMarkup(html, markup, newMarkup);	
+
+			html = swapMarkup(html, markup, newMarkup);
 			countOfJSONLD++;
 		}
-		
+
 		return html;
 	}
 
-	
 	/**
 	 * Replaces the old JSON-LD markup with the new markup
 	 * 
-	 * @param html Current HTML
+	 * @param html      Current HTML
 	 * @param oldMarkup
 	 * @param newMarkup
 	 * @return HTML with the newMarkup replacing the oldMarkup
 	 */
 	public String swapMarkup(String html, String oldMarkup, String newMarkup) {
-		
+
 		int oldPosition = html.indexOf(oldMarkup);
-		String newHtml = html.substring(0, oldPosition)+ newMarkup + html.substring(oldPosition+oldMarkup.length());
-		
+		String newHtml = html.substring(0, oldPosition) + newMarkup + html.substring(oldPosition + oldMarkup.length());
+
 		return newHtml;
 	}
-	
-	
-	/** 
+
+	/**
 	 * 
-	 * Corrects/amends a single block of JSON-LD markup extracted from the HTML source
+	 * Corrects/amends a single block of JSON-LD markup extracted from the HTML
+	 * source
 	 * <ol>
 	 * <li>Changes context to https://schema.org</li>
 	 * <li>adds @id based on url</li>
@@ -591,38 +579,37 @@ public class ScraperCore {
 	public String fixASingleContext(String markup, String url) throws JsonLDInspectionException {
 		JSONParser parser = new JSONParser();
 		JSONObject parsedJSON = null;
-		
+
 		try {
 			parsedJSON = (JSONObject) parser.parse(markup);
-		} catch (ParseException e) {	
+		} catch (ParseException e) {
 			logger.error("Failed to parse JSON from :" + url);
 			throw new JsonLDInspectionException("Failed to parse JSON from :" + url);
 		}
-		
-		if(parsedJSON.containsKey("@context")) {
+
+		if (parsedJSON.containsKey("@context")) {
 			String contextValue = parsedJSON.get("@context").toString();
-			if(!(contextValue.equalsIgnoreCase("https://schema.org"))) {
+			if (!(contextValue.equalsIgnoreCase("https://schema.org"))) {
 				parsedJSON.remove("@context");
 				parsedJSON.put("@context", "https://schema.org");
-			} 
+			}
 			contextValue = parsedJSON.get("@context").toString();
-			
+
 		} else {
 			parsedJSON.put("@context", "https://schema.org");
 		}
-		
-		if(!parsedJSON.containsKey("@id")) {
-			if(countOfJSONLD > 0) {
-				parsedJSON.put("@id", url+"#"+countOfJSONLD);
+
+		if (!parsedJSON.containsKey("@id")) {
+			if (countOfJSONLD > 0) {
+				parsedJSON.put("@id", url + "#" + countOfJSONLD);
 			} else {
 				parsedJSON.put("@id", url);
 			}
 		}
-		
-		return parsedJSON.toJSONString().replaceAll("\\\\", "");		
+
+		return parsedJSON.toJSONString().replaceAll("\\\\", "");
 	}
-	
-	
+
 	/**
 	 * Changes the HTML such that Any23 can parse it. Bugs in Any23 mean that some
 	 * predicates (that should work) break the parser.
@@ -678,12 +665,12 @@ public class ScraperCore {
 //		} catch (Exception e) {
 //			e.printStackTrace();
 //		}
-		
+
 		try {
-		String url = "https://www.alliancegenome.org/gene/MGI:2442292";
-		String html = core.getHtmlViaSelenium(url);
-		core.injectId(html, url);
-		} catch(Exception e) {
+			String url = "https://www.alliancegenome.org/gene/MGI:2442292";
+			String html = core.getHtmlViaSelenium(url);
+			core.injectId(html, url);
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

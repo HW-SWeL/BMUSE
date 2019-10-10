@@ -30,7 +30,6 @@ import org.mockito.Mockito;
 
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
-import hwu.elixir.scrape.exceptions.MissingContextException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
 import hwu.elixir.utils.CompareNQ;
 
@@ -239,9 +238,8 @@ public class SimpleCoreTest {
 		}
 	}
 
-	@Test(expected = MissingContextException.class)
-	public void test_injectId_MCException()
-			throws MissingContextException, MissingHTMLException, JsonLDInspectionException {
+	public void test_injectId_MissingContext()
+			throws MissingHTMLException, JsonLDInspectionException {
 		String resourceName = "testHtml/contextAtEnd.html";
 		ClassLoader classLoader = getClass().getClassLoader();
 		testHtml = new File(classLoader.getResource(resourceName).getFile());
@@ -255,7 +253,10 @@ public class SimpleCoreTest {
 
 			html = html.replaceFirst("@context", "@apple");
 
-			simpleCore.injectId(html, "https://myId.com");
+			html = simpleCore.injectId(html, "https://myId.com");
+			
+			assertTrue(html.contains("\"@context\":\"https://myId.com\""));
+			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			fail();
@@ -267,18 +268,18 @@ public class SimpleCoreTest {
 
 	@Test(expected = MissingHTMLException.class)
 	public void test_injectId_MHException()
-			throws MissingContextException, MissingHTMLException, JsonLDInspectionException {
+			throws MissingHTMLException, JsonLDInspectionException {
 		simpleCore.injectId(null, "https://myId.com");
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void test_injectId_nullURL()
-			throws MissingContextException, MissingHTMLException, JsonLDInspectionException {
+			throws MissingHTMLException, JsonLDInspectionException {
 		simpleCore.injectId("", null);
 	}
 
 	@Test
-	public void test_injectId_rdfa() throws MissingContextException, MissingHTMLException, JsonLDInspectionException {
+	public void test_injectId_rdfa() throws MissingHTMLException, JsonLDInspectionException {
 		String resourceName = "testHtml/rdfaTestPage.html";
 		ClassLoader classLoader = getClass().getClassLoader();
 		testHtml = new File(classLoader.getResource(resourceName).getFile());
