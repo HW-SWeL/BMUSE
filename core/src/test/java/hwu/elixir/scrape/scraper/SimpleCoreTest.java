@@ -1,6 +1,7 @@
 package hwu.elixir.scrape.scraper;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -21,34 +22,36 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
+import org.json.simple.JSONObject;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Mockito;
-
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
+import hwu.elixir.scrape.exceptions.SeleniumException;
 import hwu.elixir.utils.CompareNQ;
 
 public class SimpleCoreTest {
 
-	private ScraperCore simpleCore;
-	private File testHtml;
+	private static ScraperCore simpleCore;
+	private static File testHtml;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
+		simpleCore = new ScraperCore();
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
+		simpleCore.shutdown();
 	}
 
 	@Before
 	public void setUp() throws Exception {
-		simpleCore = Mockito.mock(ScraperCore.class, Mockito.CALLS_REAL_METHODS);
+//		simpleCore = Mockito.mock(ScraperCore.class, Mockito.CALLS_REAL_METHODS);
 	}
 
 	@After
@@ -72,7 +75,12 @@ public class SimpleCoreTest {
 		String uri = randomIRI.stringValue();
 		assertTrue(uri.startsWith("https://bioschemas.org/crawl/v1/0/www.macs.hw.ac.uk/"));
 		int pos = uri.lastIndexOf("/");
-		assertTrue(uri.substring(pos + 1), uri.substring(pos + 1).length() >= 9);
+		String randomNumberElement = uri.substring(pos + 1);
+		try {
+			Integer.parseInt(randomNumberElement);
+		} catch (NumberFormatException e) {
+			fail();
+		}
 
 		nGraph = "https://bioschemas.org/crawl/v1/0";
 		sourceIRI = SimpleValueFactory.getInstance().createIRI("http://www.macs.hw.ac.uk#");
@@ -81,8 +89,14 @@ public class SimpleCoreTest {
 
 		uri = randomIRI.stringValue();
 		assertTrue(uri.startsWith("https://bioschemas.org/crawl/v1/0/www.macs.hw.ac.uk#"));
-		pos = uri.lastIndexOf("/");
-		assertTrue(uri.substring(pos + 1), uri.substring(pos + 1).length() >= 9);
+		pos = uri.lastIndexOf("#");
+		randomNumberElement = uri.substring(pos + 1);
+		try {
+			Integer.parseInt(randomNumberElement);
+		} catch (NumberFormatException e) {
+			e.printStackTrace();
+			fail();
+		}
 	}
 
 	@Test
@@ -120,7 +134,24 @@ public class SimpleCoreTest {
 
 	@Test
 	public void test_getHtml() throws FourZeroFourException {
-		simpleCore.getHtml("https://www.macs.hw.ac.uk");
+		String html = simpleCore.getHtml("https://www.macs.hw.ac.uk");
+		assert (html.contains("CollegeOrUniversity") && html.contains("BreadcrumbList"));
+	}
+
+	@Test
+	public void test_getHtmlViaSelenium() throws FourZeroFourException, SeleniumException {
+		String html = simpleCore.getHtmlViaSelenium("https://www.macs.hw.ac.uk");
+		assert (html.contains("CollegeOrUniversity") && html.contains("BreadcrumbList"));
+	}
+
+	@Test
+	public void test_getOnlyJSONLD() throws FourZeroFourException, SeleniumException {
+		String[] allJsonLD = simpleCore.getOnlyJSONLD("http://www.macs.hw.ac.uk");
+		assertTrue(allJsonLD.length == 3);
+		for (String json : allJsonLD) {
+			assertTrue(json.startsWith("{") && json.endsWith("}"));
+			assertTrue(json.contains("@context") && json.contains("schema.org"));
+		}
 	}
 
 	@Test
@@ -238,8 +269,7 @@ public class SimpleCoreTest {
 		}
 	}
 
-	public void test_injectId_MissingContext()
-			throws MissingHTMLException, JsonLDInspectionException {
+	public void test_injectId_MissingContext() throws MissingHTMLException, JsonLDInspectionException {
 		String resourceName = "testHtml/contextAtEnd.html";
 		ClassLoader classLoader = getClass().getClassLoader();
 		testHtml = new File(classLoader.getResource(resourceName).getFile());
@@ -254,9 +284,9 @@ public class SimpleCoreTest {
 			html = html.replaceFirst("@context", "@apple");
 
 			html = simpleCore.injectId(html, "https://myId.com");
-			
+
 			assertTrue(html.contains("\"@context\":\"https://myId.com\""));
-			
+
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			fail();
@@ -267,14 +297,12 @@ public class SimpleCoreTest {
 	}
 
 	@Test(expected = MissingHTMLException.class)
-	public void test_injectId_MHException()
-			throws MissingHTMLException, JsonLDInspectionException {
+	public void test_injectId_MHException() throws MissingHTMLException, JsonLDInspectionException {
 		simpleCore.injectId(null, "https://myId.com");
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void test_injectId_nullURL()
-			throws MissingHTMLException, JsonLDInspectionException {
+	public void test_injectId_nullURL() throws MissingHTMLException, JsonLDInspectionException {
 		simpleCore.injectId("", null);
 	}
 
@@ -342,6 +370,111 @@ public class SimpleCoreTest {
 		Value outLiteral = simpleCore.fixObject(inLiteral);
 		assertEquals("https://schema.org/dataset/www.bioschemas.org/license/fileFormat/additionalType",
 				outLiteral.stringValue());
+	}
+
+	@Test
+	public void test_fixASingleContext() throws JsonLDInspectionException {
+		JSONObject obj = new JSONObject();
+		obj.put("key1", "value1");
+		String fixedJSON = simpleCore.fixASingleContext(obj.toJSONString(), "http://www.myId.org");
+		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org\""));
+		assertTrue(fixedJSON.contains("\"@id\":\"http://www.myId.org\""));
+
+		obj = new JSONObject();
+		obj.put("key1", "value1");
+		obj.put("@context", "https://schema.org");
+		fixedJSON = simpleCore.fixASingleContext(obj.toJSONString(), "http://www.myId.org");
+		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org\""));
+		assertTrue(fixedJSON.contains("\"@id\":\"http://www.myId.org\""));
+
+		obj = new JSONObject();
+		obj.put("key1", "value1");
+		obj.put("@context", "http://www.macs.hw.ac.uk");
+		fixedJSON = simpleCore.fixASingleContext(obj.toJSONString(), "http://www.myId.org");
+		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org\""));
+		assertTrue(fixedJSON.contains("\"@id\":\"http://www.myId.org\""));
+
+		obj = new JSONObject();
+		obj.put("key1", "value1");
+		obj.put("@context", "https://schema.org");
+		obj.put("@id", "http://www.myId.org");
+		fixedJSON = simpleCore.fixASingleContext(obj.toJSONString(), "http://www.myId.org");
+		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org\""));
+		assertTrue(fixedJSON.contains("\"@id\":\"http://www.myId.org\""));
+	}
+
+	@Test
+	public void test_getJSONLDMarkup() {
+		String html = "";
+		try {
+			String resourceName = "testHtml/basicWithJSONLD.html";
+			ClassLoader classLoader = getClass().getClassLoader();
+			testHtml = new File(classLoader.getResource(resourceName).getFile());
+
+			try (BufferedReader br = new BufferedReader(new FileReader(testHtml))) {
+				String line = "";
+				while ((line = br.readLine()) != null) {
+					html += line;
+				}
+				html = html.trim();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail();
+		}
+		String[] allJsonMarkup = simpleCore.getJSONLDMarkup(html);
+		assertTrue(allJsonMarkup.length == 4);
+
+		for (String json : allJsonMarkup) {
+			assertFalse(json.contains("script"));
+			assertFalse(json.contains("meta"));
+			assertFalse(json.contains("head"));
+			assertFalse(json.contains("body"));
+
+			assertTrue(json.contains("{") && json.contains("}"));
+			assertTrue((json.contains("@context") && json.contains("https://schema.org"))
+					|| (json.contains("@type") && json.contains("Person")));
+			assertTrue(json.contains("key1") && json.contains("value1"));
+			assertTrue(json.contains("block"));
+		}
+	}
+
+	@Test
+	public void test_swapMarkup() {
+		String html = "";
+		try {
+			String resourceName = "testHtml/basicWithJSONLD.html";
+			ClassLoader classLoader = getClass().getClassLoader();
+			testHtml = new File(classLoader.getResource(resourceName).getFile());
+
+			try (BufferedReader br = new BufferedReader(new FileReader(testHtml))) {
+				String line = "";
+				while ((line = br.readLine()) != null) {
+					html += line;
+				}
+				html = html.trim();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail();
+		}
+
+		String[] allMarkup = simpleCore.getJSONLDMarkup(html);
+		int i = 10;
+		for (String oldMarkup : allMarkup) {
+			JSONObject obj = new JSONObject();
+			obj.put("newBlock", Integer.toString(i++));
+			html = simpleCore.swapMarkup(html, oldMarkup, obj.toJSONString());
+		}
+
+		for (String oldMarkup : allMarkup) {
+			assertFalse(html.contains(oldMarkup));
+		}
+
+		String[] newAllMarkup = simpleCore.getJSONLDMarkup(html);
+		for (String newMarkup : newAllMarkup) {
+			assertTrue(html.contains(newMarkup));
+		}
 	}
 
 	@Test
