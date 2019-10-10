@@ -541,7 +541,6 @@ public class ScraperCore {
 			allMarkup = getJSONLDMarkup(html);	
 		}
 					
-		System.out.println("Number of JSONLD sections: " + allMarkup.length);
 		logger.info("Number of JSONLD sections: " + allMarkup.length);		
 		
 		for(String markup: allMarkup) {					
