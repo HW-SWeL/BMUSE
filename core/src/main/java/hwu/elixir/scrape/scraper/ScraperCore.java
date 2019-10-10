@@ -162,7 +162,7 @@ public class ScraperCore {
 		for (Element jsonElement : jsonElements) {
 			if (jsonElement.data() != "" && jsonElement.data() != null) {
 				if (jsonElement.data().contains("@type") || jsonElement.data().contains("@context")) {
-					filteredJson.add(jsonElement.data());
+					filteredJson.add(jsonElement.data().trim());
 				}
 			}
 		}
@@ -189,7 +189,12 @@ public class ScraperCore {
 		for (Element jsonElement : jsonElements) {
 			if (jsonElement.data() != "" && jsonElement.data() != null) {
 				if (jsonElement.data().contains("@type") || jsonElement.data().contains("@context")) {
-					filteredJson.add(jsonElement.data());
+					int positionOfClosingTag = jsonElement.data().indexOf("</script");
+					if(positionOfClosingTag == -1) {
+						filteredJson.add(jsonElement.data());
+					} else {
+						filteredJson.add(jsonElement.data().substring(0, positionOfClosingTag));
+					}
 				}
 			}
 		}
