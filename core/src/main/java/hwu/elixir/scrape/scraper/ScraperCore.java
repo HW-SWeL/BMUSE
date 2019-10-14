@@ -1,8 +1,11 @@
 package hwu.elixir.scrape.scraper;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,7 +53,7 @@ import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
 import hwu.elixir.scrape.exceptions.SeleniumException;
-import hwu.elixir.utils.ChromeDriverFactory;
+import hwu.elixir.utils.ChromeDriverCreator;
 import hwu.elixir.utils.Helpers;
 
 /**
@@ -58,13 +61,14 @@ import hwu.elixir.utils.Helpers;
  * 
  * 
  * @author kcm
- * @see Scraper
+ * @see FileScraper
+ * @see hwu.elixir.scrape.ServiceScrapeDriver
  * 
  */
-public class ScraperCore {
+public abstract class ScraperCore {
 
 	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
-	private WebDriver driver = ChromeDriverFactory.getInstance();
+	private WebDriver driver = ChromeDriverCreator.getInstance();
 
 	private int countOfJSONLD = 0;
 
@@ -117,7 +121,7 @@ public class ScraperCore {
 		try {
 			driver.get(url);
 
-			// possibly worthless as Selenium do not support HTTP codes:
+			// possibly worthless as Selenium does not support HTTP codes:
 			// https://github.com/seleniumhq/selenium-google-code-issue-archive/issues/141
 			if (driver.getTitle().contains("404")) {
 				logger.error(url + " produced a 404");
@@ -135,7 +139,7 @@ public class ScraperCore {
 		} catch (org.openqa.selenium.WebDriverException crashed) {
 			crashed.printStackTrace();
 			if (driver == null) {
-				driver = ChromeDriverFactory.getInstance();
+				driver = ChromeDriverCreator.getInstance();
 			}
 			throw new SeleniumException(url);
 		}
@@ -172,7 +176,7 @@ public class ScraperCore {
 	}
 
 	/**
-	 * Uses JSoup to extract schema markup in JSON-LD form from a given URL. Will
+	 * Uses JSoup to extract schema markup in JSON-LD form from given HTML. Will
 	 * ignore all other formats of markup.
 	 * 
 	 * @param html to find JSON-LD in
@@ -188,9 +192,9 @@ public class ScraperCore {
 		ArrayList<String> filteredJson = new ArrayList<String>();
 		for (Element jsonElement : jsonElements) {
 			if (jsonElement.data() != "" && jsonElement.data() != null) {
-				if (jsonElement.data().contains("@type") || jsonElement.data().contains("@context")) {
+				if (jsonElement.data().contains("\"@type") || jsonElement.data().contains("\"@context")) {
 					int positionOfClosingTag = jsonElement.data().indexOf("</script");
-					if(positionOfClosingTag == -1) {
+					if (positionOfClosingTag == -1) {
 						filteredJson.add(jsonElement.data());
 					} else {
 						filteredJson.add(jsonElement.data().substring(0, positionOfClosingTag));
@@ -198,6 +202,7 @@ public class ScraperCore {
 				}
 			}
 		}
+
 		String[] toReturn = new String[filteredJson.size()];
 		filteredJson.toArray(toReturn);
 		return toReturn;
@@ -511,7 +516,7 @@ public class ScraperCore {
 				logger.info("No @context, but a vocab; appears to be RDFa with no JSON-LD: " + url);
 			}
 		}
-		return fixAllContexts(html, url);
+		return fixAllJsonLdBlocks(html, url);
 	}
 
 	/**
@@ -522,9 +527,9 @@ public class ScraperCore {
 	 * @param url
 	 * @return HTML in which JSON-LD has been corrected
 	 * @throws JsonLDInspectionException
-	 * @see {@link #fixASingleContext(String, String)}
+	 * @see {@link #fixASingleJsonLdBlock(String, String)}
 	 */
-	public String fixAllContexts(String html, String url) throws JsonLDInspectionException {
+	public String fixAllJsonLdBlocks(String html, String url) throws JsonLDInspectionException {
 		String[] allMarkup = null;
 		if (html.startsWith("{")) {
 			logger.info("Just JSON no HTML from: " + url);
@@ -538,13 +543,13 @@ public class ScraperCore {
 		logger.info("Number of JSONLD sections: " + allMarkup.length);
 
 		for (String markup : allMarkup) {
-			String newMarkup = fixASingleContext(markup, url);
+			String newMarkup = fixASingleJsonLdBlock(markup, url);
 
 			if (newMarkup.equalsIgnoreCase(markup)) {
 				continue;
 			}
 
-			html = swapMarkup(html, markup, newMarkup);
+			html = swapJsonLdMarkup(html, markup, newMarkup);
 			countOfJSONLD++;
 		}
 
@@ -555,11 +560,11 @@ public class ScraperCore {
 	 * Replaces the old JSON-LD markup with the new markup
 	 * 
 	 * @param html      Current HTML
-	 * @param oldMarkup
-	 * @param newMarkup
+	 * @param oldMarkup The markup to be replaced
+	 * @param newMarkup The new markup to be added
 	 * @return HTML with the newMarkup replacing the oldMarkup
 	 */
-	public String swapMarkup(String html, String oldMarkup, String newMarkup) {
+	public String swapJsonLdMarkup(String html, String oldMarkup, String newMarkup) {
 
 		int oldPosition = html.indexOf(oldMarkup);
 		String newHtml = html.substring(0, oldPosition) + newMarkup + html.substring(oldPosition + oldMarkup.length());
@@ -576,12 +581,12 @@ public class ScraperCore {
 	 * <li>adds @id based on url</li>
 	 * </ol>
 	 * 
-	 * @param markup
-	 * @param url
-	 * @return
+	 * @param markup A single block of JSON-LD (bio)schema markup
+	 * @param url    The URL of the site the markup was scraped from
+	 * @return Amended JSON-LD markup
 	 * @throws JsonLDInspectionException
 	 */
-	public String fixASingleContext(String markup, String url) throws JsonLDInspectionException {
+	public String fixASingleJsonLdBlock(String markup, String url) throws JsonLDInspectionException {
 		JSONParser parser = new JSONParser();
 		JSONObject parsedJSON = null;
 
@@ -655,28 +660,4 @@ public class ScraperCore {
 		return SimpleValueFactory.getInstance().createIRI(ngraph + "/" + source + randomInt);
 	}
 
-	public static void main(String[] args) {
-		ScraperCore core = new ScraperCore();
-//		try {
-//			String[] markup = core.getOnlyJSONLD("https://hamap.expasy.org/rule/MF_00191");
-//			PrintWriter out = new PrintWriter(new FileWriter(new File("/Users/kcm/jsonTest2.txt")));
-//			for (int i = 0; i < markup.length; i++) {
-//				out.println(markup[i]);
-//				out.println("*******");
-//			}
-//			out.flush();
-//			out.close();
-//
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-
-		try {
-			String url = "https://www.alliancegenome.org/gene/MGI:2442292";
-			String html = core.getHtmlViaSelenium(url);
-			core.injectId(html, url);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 }
