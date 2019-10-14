@@ -10,7 +10,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ChromeDriverFactory {
+public class ChromeDriverCreator {
 	
 	private static final String propertiesFile = "application.properties";
 	
@@ -19,7 +19,7 @@ public class ChromeDriverFactory {
 	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
 	
 	static {
-		ClassLoader classLoader = ChromeDriverFactory.class.getClassLoader();
+		ClassLoader classLoader = ChromeDriverCreator.class.getClassLoader();
 
 		InputStream is = classLoader.getResourceAsStream(propertiesFile);
 		if(is == null) {
@@ -43,12 +43,12 @@ public class ChromeDriverFactory {
 	}
 	
 	
-	private ChromeDriverFactory()  {}
+	private ChromeDriverCreator()  {}
 	
 	
 	public static synchronized WebDriver getInstance() {
 		if(driver == null) {
-			synchronized (ChromeDriverFactory.class) {				
+			synchronized (ChromeDriverCreator.class) {				
 				if(driver == null) {
 					logger.info("starting a new chrome driver");
 					driver = new ChromeDriver(chromeOptions);					
