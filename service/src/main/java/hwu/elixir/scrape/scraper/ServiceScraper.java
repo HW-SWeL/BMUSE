@@ -18,7 +18,6 @@ import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.HtmlExtractorServiceException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
-import hwu.elixir.scrape.exceptions.MissingContextException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
 import hwu.elixir.scrape.exceptions.SeleniumException;
 
@@ -73,7 +72,7 @@ public class ServiceScraper extends ScraperCore {
 		
 		try {
 			html = injectId(html, url);
-		} catch (MissingContextException | MissingHTMLException e) {
+		} catch (MissingHTMLException e) {
 			logger.error(e.toString());
 			return false;
 		}
@@ -118,7 +117,9 @@ public class ServiceScraper extends ScraperCore {
 //			scraper.scrape("https://www.ebi.ac.uk/biosamples/samples/SAMN00025378", 100000L, "/Users/kcm/",StateOfCrawl.UNTRIED); // 404s
 //			scraper.scrape("https://www.alliancegenome.org/gene/MGI:2442292", 100000L, "/Users/kcm/",StateOfCrawl.FAILED_TWICE); // AllianceGenome
 //			scraper.scrape("https://hamap.expasy.org/", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);
-			scraper.scrape("https://hamap.expasy.org/rule/MF_00191", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);
+//			scraper.scrape("https://hamap.expasy.org/rule/MF_00191", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);
+
+			scraper.scrape("https://www.alliancegenome.org/gene/RGD:620474", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);
 			
 //			scraper.scrape("http://biotea.github.io/bioschemas/?pmc=35353", 100000L, "/Users/kcm/", StateOfCrawl.FAILED_TWICE);
 //			scraper.scrape("http://biotea.github.io/bioschemas", 100000L, "/Users/kcm/", StateOfCrawl.FAILED_TWICE);
