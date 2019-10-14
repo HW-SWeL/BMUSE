@@ -27,7 +27,7 @@ import hwu.elixir.utils.Helpers;
  * @author kcm
  *
  */
-public class ThreadedScrapeDriver {
+public class ServiceScrapeDriver {
 
 	private static final String propertiesFile = "application.properties";
 
@@ -50,7 +50,7 @@ public class ThreadedScrapeDriver {
 	 * @param args Not used
 	 */
 	public static void main(String[] args) {
-		ThreadedScrapeDriver driver = new ThreadedScrapeDriver();
+		ServiceScrapeDriver driver = new ServiceScrapeDriver();
 
 		Date date = new Date(System.currentTimeMillis());
 		logger.info("STARTING CRAWL: " + formatter.format(date));
@@ -63,10 +63,7 @@ public class ThreadedScrapeDriver {
 	 * 
 	 */
 	private void runScrape() {
-		ServiceScraper scrapeOne = new ServiceScraper();
-		
-//		Leaving second thread in to demonstrate use.
-//		ServiceScraper scrapeTwo = new ServiceScraper();		
+		ServiceScraper scrapeOne = new ServiceScraper();		
 		
 		while (pagesCounter < totalNumberOfPagesToCrawlInASession) {
 			System.out.println(pagesCounter + " is less than " + totalNumberOfPagesToCrawlInASession);
@@ -81,18 +78,13 @@ public class ThreadedScrapeDriver {
 			ScrapeThread scrape1 = new ScrapeThread(scrapeOne, scrapeState, waitTime, outputFolder);
 			scrape1.setName("S1");
 
-//			ScrapeThread scrape2 = new ScrapeThread(scrapeTwo, scrapeState, waitTime, outputFolder);
-//			scrape2.setName("S2");
-			
 			scrape1.start();
-//			scrape2.start();
 			long startTime = System.nanoTime();
 			
 			try {
-				scrape1.join();
-//				scrape2.join();
+				scrape1.wait();
 			} catch (InterruptedException e) {
-				System.out.println("Unexpected interruption of thread when trying to join");
+				System.out.println("Exception waiting on thread");
 				e.printStackTrace();
 			}
 			
@@ -176,7 +168,7 @@ public class ThreadedScrapeDriver {
 	 * 
 	 */
 	private void processProperties() {
-		ClassLoader classLoader = ThreadedScrapeDriver.class.getClassLoader();
+		ClassLoader classLoader = ServiceScrapeDriver.class.getClassLoader();
 
 		InputStream is = classLoader.getResourceAsStream(propertiesFile);
 		if(is == null) {
