@@ -70,8 +70,14 @@ public abstract class ScraperCore {
 	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
 	private WebDriver driver = ChromeDriverCreator.getInstance();
 
-	private int countOfJSONLD = 0;
+	private int countOfJSONLD = 0; // number of JSON-LB blocks found in HTML
 
+	/**
+	 * An attempt to close the chromedriver opened by Selenium. 
+	 * 
+	 * @see ChromeDriverCreator
+	 * @see https://github.com/HW-SWeL/Scraper/issues/42
+	 */
 	public void shutdown() {
 		if (driver != null) {
 			logger.info("driver is not null... trying to close!");
@@ -110,12 +116,12 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Uses Selenium to pull the HTML of a NON dynamic web page
+	 * Uses Selenium to pull the HTML of a dynamic web page (ie, executes the JavaScript).
 	 * 
-	 * @param url The address of the site to parse
+	 * @param url The address of the page to parse
 	 * @return The HTML as a string
 	 * @throws FourZeroFourException when page title is 404
-	 * @throws SeleniumException
+	 * @throws SeleniumException 
 	 */
 	public String getHtmlViaSelenium(String url) throws FourZeroFourException, SeleniumException {
 		try {
@@ -148,7 +154,7 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Uses JSoup to extract schema markup in JSON-LD form from a given URL. Will
+	 * Extract schema markup in JSON-LD form from a given URL. Will
 	 * ignore all other formats of markup.
 	 * 
 	 * @param url URL to scrape
@@ -176,7 +182,7 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Uses JSoup to extract schema markup in JSON-LD form from given HTML. Will
+	 * Extract schema markup in JSON-LD form from given HTML. Will
 	 * ignore all other formats of markup.
 	 * 
 	 * @param html to find JSON-LD in
@@ -238,10 +244,10 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Takes an Any23 DocumentSource and converts into triples in quads form.
+	 * Takes an Any23 DocumentSource and converts into quads in NQ form.
 	 * 
 	 * @param source The HTML as an Any23 DocumentSource
-	 * @return Triples in N3 form as a long String
+	 * @return Triples in quads (NQ) form as a long String
 	 * @see DocumentSource
 	 */
 	public String getTriplesInNQ(DocumentSource source) {
@@ -274,6 +280,7 @@ public abstract class ScraperCore {
 	 * <li>xhtml/vocab</li>
 	 * <li>vocab.sindice</li>
 	 * </ol>
+	 * 
 	 * Also, replaces blank nodes with a URI based on the context counter and the
 	 * current time.
 	 * 
@@ -367,6 +374,7 @@ public abstract class ScraperCore {
 	 * <li>xhtml/vocab</li>
 	 * <li>vocab.sindice</li>
 	 * </ol>
+	 * 
 	 * DOES NOT replace blank nodes.
 	 * 
 	 * Triples are NOT placed in a context.
@@ -409,7 +417,7 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Removes changes made to allow Any23 to parse the html
+	 * Removes changes made to allow Any23 to parse the html & standardises on httpS://schema.org
 	 * 
 	 * @param predicate
 	 * @return Corrected IRI
@@ -630,7 +638,6 @@ public abstract class ScraperCore {
 	 * @see #fixAny23WeirdIssues(String)
 	 */
 	public String fixAny23WeirdIssues(String html) {
-		// any23 has problems with license & fileFormat
 		return html.replaceAll("license", "licensE").replaceAll("fileFormat", "FileFormat").replaceAll("additionalType",
 				"addType");
 	}
