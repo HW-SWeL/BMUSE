@@ -6,7 +6,7 @@
 	<timestamp key="timestamp" datePattern="yyyyMMdd" />
 
 	<appender name="FILE" class="ch.qos.logback.core.FileAppender">
-		<file>${user.home}/${timestamp}_bsScraper.log</file>
+		<file>${user.home}/${timestamp}_bscServiceScraper.log</file>
 		<append>scraper.log</append>
 		<encoder>
 			<pattern>[%level] %message%n%xException
