@@ -74,7 +74,7 @@ public abstract class ScraperCore {
 	private int countOfJSONLD = 0; // number of JSON-LB blocks found in HTML
 
 	/**
-	 * An attempt to close the chromedriver opened by Selenium. 
+	 * An attempt to close the chromedriver opened by Selenium.
 	 * 
 	 * @see ChromeDriverCreator
 	 * @see https://github.com/HW-SWeL/Scraper/issues/42
@@ -117,12 +117,13 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Uses Selenium to pull the HTML of a dynamic web page (ie, executes the JavaScript).
+	 * Uses Selenium to pull the HTML of a dynamic web page (ie, executes the
+	 * JavaScript).
 	 * 
 	 * @param url The address of the page to parse
 	 * @return The HTML as a string
 	 * @throws FourZeroFourException when page title is 404
-	 * @throws SeleniumException 
+	 * @throws SeleniumException
 	 */
 	public String getHtmlViaSelenium(String url) throws FourZeroFourException, SeleniumException {
 		try {
@@ -140,9 +141,9 @@ public abstract class ScraperCore {
 					.presenceOfAllElementsLocatedBy(By.xpath("//script[@type=\"application/ld+json\"]")));
 
 		} catch (TimeoutException to) {
-			logger.error("URL timed out: " + url+". Trying JSoup.");
+			logger.error("URL timed out: " + url + ". Trying JSoup.");
 			return getHtml(url);
-			
+
 		} catch (org.openqa.selenium.WebDriverException crashed) {
 			crashed.printStackTrace();
 			if (driver == null) {
@@ -155,8 +156,8 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Extract schema markup in JSON-LD form from a given URL. Will
-	 * ignore all other formats of markup.
+	 * Extract schema markup in JSON-LD form from a given URL. Will ignore all other
+	 * formats of markup.
 	 * 
 	 * @param url URL to scrape
 	 * @return An array in which each element is a block of JSON-LD containing
@@ -183,8 +184,8 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Extract schema markup in JSON-LD form from given HTML. Will
-	 * ignore all other formats of markup.
+	 * Extract schema markup in JSON-LD form from given HTML. Will ignore all other
+	 * formats of markup.
 	 * 
 	 * @param html to find JSON-LD in
 	 * @return An array in which each element is a block of JSON-LD containing
@@ -229,7 +230,7 @@ public abstract class ScraperCore {
 				TripleHandler handler = new NTriplesWriter(out);) {
 
 			runner.extract(source, handler);
-			
+
 			return out.toString("UTF-8");
 		} catch (ExtractionException e) {
 			System.out.println("Cannot extract triples!");
@@ -246,8 +247,8 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Takes a series of triples as a string and filters them removing triples
-	 * with the following predicates:
+	 * Takes a series of triples as a string and filters them removing triples with
+	 * the following predicates:
 	 * <ol>
 	 * <li>nofollow</li>
 	 * <li>ogp.me/...</li>
@@ -262,7 +263,7 @@ public abstract class ScraperCore {
 	 * 
 	 * Ultimately produces an RDF4J Model based on the filtered triples
 	 * 
-	 * @param nTriples        The triples to be processed
+	 * @param nTriples       The triples to be processed
 	 * @param sourceIRI      The URL of the page from which the triples were
 	 *                       obtained
 	 * @param contextCounter The current counter for the context. Assumes the
@@ -389,7 +390,8 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Removes changes made to allow Any23 to parse the html & standardises on httpS://schema.org
+	 * Removes changes made to allow Any23 to parse the html & standardises on
+	 * httpS://schema.org
 	 * 
 	 * @param predicate
 	 * @return Corrected IRI
@@ -462,14 +464,12 @@ public abstract class ScraperCore {
 	 * Injects an @ id attribute into the given html source; prevents Any23 creating
 	 * blank nodes at the top of the graph
 	 * 
-	 * Problems: only works with json-ld not rdfa etc AND only deals with 1st block
-	 * 
-	 * Hard to deal with multiple @ contexts as they may be nested in a single
-	 * block, or there may be multiple blocks (or a hybrid).
-	 * 
-	 * Handles contexts that declare prefixes by looking to see if @ context is
-	 * followed by a {.
-	 * 
+	 * Problems:
+	 * <ol>
+	 * <li>only works with json-ld; won't do anything with rdfa.</li>
+	 * <li>ignoring nesting; only outer layer has id injected thus lower levels will
+	 * use id based on outer.</li>
+	 * </ol>
 	 * 
 	 * Adding the @ id in the wrong location can completely break the parsers
 	 * ability to generate triples. The location of the injection should be checked
@@ -477,7 +477,8 @@ public abstract class ScraperCore {
 	 * 
 	 * @param html the source to be changed
 	 * @param url  the url to be used for @ id
-	 * @return the original source with @ id added in however many blocks there are
+	 * @return the original source with @ id added in if missing from a block of
+	 *         JSON-LD. if not, unchanged source
 	 * @throws JsonLDInspectionException
 	 */
 	public String injectId(String html, String url) throws MissingHTMLException, JsonLDInspectionException {
@@ -494,6 +495,7 @@ public abstract class ScraperCore {
 		if (posContext == -1) {
 			if (html.indexOf("vocab=\"http://schema.org") != -1 || html.indexOf("vocab=\"https://schema.org") != -1) {
 				logger.info("No @context, but a vocab; appears to be RDFa with no JSON-LD: " + url);
+				return html;
 			}
 		}
 		return fixAllJsonLdBlocks(html, url);
@@ -501,7 +503,7 @@ public abstract class ScraperCore {
 
 	/**
 	 * Given HTML source, gets all the JSON-LD blocks and orchestrates the amendment
-	 * of them
+	 * of them using {@link #fixASingleJsonLdBlock(String, String)}
 	 * 
 	 * @param html
 	 * @param url
@@ -534,22 +536,6 @@ public abstract class ScraperCore {
 		}
 
 		return html;
-	}
-
-	/**
-	 * Replaces the old JSON-LD markup with the new markup
-	 * 
-	 * @param html      Current HTML
-	 * @param oldMarkup The markup to be replaced
-	 * @param newMarkup The new markup to be added
-	 * @return HTML with the newMarkup replacing the oldMarkup
-	 */
-	public String swapJsonLdMarkup(String html, String oldMarkup, String newMarkup) {
-
-		int oldPosition = html.indexOf(oldMarkup);
-		String newHtml = html.substring(0, oldPosition) + newMarkup + html.substring(oldPosition + oldMarkup.length());
-
-		return newHtml;
 	}
 
 	/**
@@ -598,6 +584,22 @@ public abstract class ScraperCore {
 		}
 
 		return parsedJSON.toJSONString().replaceAll("\\\\", "");
+	}
+
+	/**
+	 * Replaces the old JSON-LD markup with the new markup
+	 * 
+	 * @param html      Current HTML
+	 * @param oldMarkup The markup to be replaced
+	 * @param newMarkup The new markup to be added
+	 * @return HTML with the newMarkup replacing the oldMarkup
+	 */
+	public String swapJsonLdMarkup(String html, String oldMarkup, String newMarkup) {
+
+		int oldPosition = html.indexOf(oldMarkup);
+		String newHtml = html.substring(0, oldPosition) + newMarkup + html.substring(oldPosition + oldMarkup.length());
+
+		return newHtml;
 	}
 
 	/**
