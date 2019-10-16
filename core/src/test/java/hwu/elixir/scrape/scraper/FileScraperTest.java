@@ -500,7 +500,7 @@ public class FileScraperTest {
 		}
 		DocumentSource source = new StringDocumentSource(html, "https://hamap.expasy.org");
 		IRI sourceIRI = SimpleValueFactory.getInstance().createIRI(source.getDocumentIRI());
-		String n3 = fileScraper.getTriplesInN3(source);
+		String n3 = fileScraper.getTriplesInNTriples(source);
 		Model liveModel = fileScraper.processTriples(n3, sourceIRI, 100000L);
 
 		File liveQuads = new File("test_live_hamap.nq");
@@ -552,7 +552,7 @@ public class FileScraperTest {
 		}
 		DocumentSource source = new StringDocumentSource(html, "https://www.ebi.ac.uk/biosamples/samples/SAMEA4999347");
 		IRI sourceIRI = SimpleValueFactory.getInstance().createIRI(source.getDocumentIRI());
-		String n3 = fileScraper.getTriplesInN3(source);
+		String n3 = fileScraper.getTriplesInNTriples(source);
 		Model liveModel = fileScraper.processTriples(n3, sourceIRI, 100000L);
 
 		File liveQuads = new File("test_live_biosamples.nq");
@@ -607,7 +607,7 @@ public class FileScraperTest {
 		DocumentSource source = new StringDocumentSource(html,
 				"https://www.ebi.ac.uk/chembl/compound_report_card/CHEMBL59/");
 		IRI sourceIRI = SimpleValueFactory.getInstance().createIRI(source.getDocumentIRI());
-		String n3 = fileScraper.getTriplesInN3(source);
+		String n3 = fileScraper.getTriplesInNTriples(source);
 		Model liveModel = fileScraper.processTriples(n3, sourceIRI, 100000L);
 
 		File liveQuads = new File("test_live_chembl.nq");

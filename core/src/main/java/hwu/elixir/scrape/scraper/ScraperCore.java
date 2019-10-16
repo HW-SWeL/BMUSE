@@ -1,11 +1,11 @@
 package hwu.elixir.scrape.scraper;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,6 +32,7 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
+import org.eclipse.rdf4j.rio.n3.N3Writer;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -84,7 +85,7 @@ public abstract class ScraperCore {
 			driver.quit();
 			logger.info("driver closed?!");
 		} else {
-			logger.info("Driver is null");
+			logger.info("Driver is null... no need to close.");
 		}
 	}
 
@@ -139,9 +140,9 @@ public abstract class ScraperCore {
 					.presenceOfAllElementsLocatedBy(By.xpath("//script[@type=\"application/ld+json\"]")));
 
 		} catch (TimeoutException to) {
-			logger.error("URL timed out: " + url);
-			return null;
-
+			logger.error("URL timed out: " + url+". Trying JSoup.");
+			return getHtml(url);
+			
 		} catch (org.openqa.selenium.WebDriverException crashed) {
 			crashed.printStackTrace();
 			if (driver == null) {
@@ -218,16 +219,17 @@ public abstract class ScraperCore {
 	 * Takes an Any23 DocumentSource and converts into triples in N3 form.
 	 * 
 	 * @param source The HTML as an Any23 DocumentSource
-	 * @return Triples in N3 form as a long String
+	 * @return Triples in NTriples form as a long String
 	 * @see DocumentSource
 	 */
-	public String getTriplesInN3(DocumentSource source) {
+	public String getTriplesInNTriples(DocumentSource source) {
 
 		Any23 runner = new Any23();
 		try (ByteArrayOutputStream out = new ByteArrayOutputStream();
 				TripleHandler handler = new NTriplesWriter(out);) {
 
 			runner.extract(source, handler);
+			
 			return out.toString("UTF-8");
 		} catch (ExtractionException e) {
 			System.out.println("Cannot extract triples!");
@@ -244,35 +246,7 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Takes an Any23 DocumentSource and converts into quads in NQ form.
-	 * 
-	 * @param source The HTML as an Any23 DocumentSource
-	 * @return Triples in quads (NQ) form as a long String
-	 * @see DocumentSource
-	 */
-	public String getTriplesInNQ(DocumentSource source) {
-
-		Any23 runner = new Any23();
-		try (ByteArrayOutputStream out = new ByteArrayOutputStream(); TripleHandler handler = new NQuadsWriter(out);) {
-
-			runner.extract(source, handler);
-			return out.toString("UTF-8");
-		} catch (ExtractionException e) {
-			System.out.println("Cannot extract triples!");
-			logger.error("Cannot extract triples", e);
-		} catch (IOException e) {
-			System.out.println("IO error whilst extracting triples!");
-			logger.error(" IO error whilst extracting triples", e);
-		} catch (TripleHandlerException e1) {
-			System.out.println("TripleHanderException!");
-			logger.error("TripleHanderException", e1);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Takes a series of N3 triples as a string and filters them removing triples
+	 * Takes a series of triples as a string and filters them removing triples
 	 * with the following predicates:
 	 * <ol>
 	 * <li>nofollow</li>
@@ -288,7 +262,7 @@ public abstract class ScraperCore {
 	 * 
 	 * Ultimately produces an RDF4J Model based on the filtered triples
 	 * 
-	 * @param n3             The triples to be processed
+	 * @param nTriples        The triples to be processed
 	 * @param sourceIRI      The URL of the page from which the triples were
 	 *                       obtained
 	 * @param contextCounter The current counter for the context. Assumes the
@@ -297,15 +271,14 @@ public abstract class ScraperCore {
 	 * @return An RDF4J model containing the processed triples
 	 * @see Model
 	 */
-	public Model processTriples(String n3, IRI sourceIRI, Long contextCounter) {
-		InputStream input = new ByteArrayInputStream(n3.getBytes(StandardCharsets.UTF_8));
+	public Model processTriples(String nTriples, IRI sourceIRI, Long contextCounter) {
+		InputStream input = new ByteArrayInputStream(nTriples.getBytes(StandardCharsets.UTF_8));
 
 		Model model;
 		try {
-			model = Rio.parse(input, "", RDFFormat.N3);
+			model = Rio.parse(input, "", RDFFormat.NTRIPLES);
 		} catch (RDFParseException | UnsupportedRDFormatException | IOException e) {
-			System.out.println("Cannot parse N3 into model");
-			logger.error("Cannot parse n3 into a model", e);
+			logger.error("Cannot parse triples into a model", e);
 			return null;
 		}
 		Iterator<Statement> it = model.iterator();
@@ -366,7 +339,7 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Takes a series of N3 triples as a string and filters them removing triples
+	 * Takes a series of n-triples as a string and filters them removing triples
 	 * with the following predicates:
 	 * <ol>
 	 * <li>nofollow</li>
@@ -381,19 +354,18 @@ public abstract class ScraperCore {
 	 * 
 	 * Ultimately produces an RDF4J Model based on the filtered triples
 	 * 
-	 * @param n3 The triples to be processed
+	 * @param nTriples The triples to be processed
 	 * @return An RDF4J model containing the processed triples
 	 * @see Model
 	 */
-	public Model processTriplesLeaveBlankNodes(String n3) {
-		InputStream input = new ByteArrayInputStream(n3.getBytes(StandardCharsets.UTF_8));
+	public Model processTriplesLeaveBlankNodes(String nTriples) {
+		InputStream input = new ByteArrayInputStream(nTriples.getBytes(StandardCharsets.UTF_8));
 
 		Model model;
 		try {
-			model = Rio.parse(input, "", RDFFormat.N3);
+			model = Rio.parse(input, "", RDFFormat.NTRIPLES);
 		} catch (RDFParseException | UnsupportedRDFormatException | IOException e) {
-			System.out.println("Cannot parse N3 into model");
-			logger.error("Cannot parse n3 into a model", e);
+			logger.error("Cannot parse triples into a model", e);
 			return null;
 		}
 		Iterator<Statement> it = model.iterator();
@@ -535,7 +507,7 @@ public abstract class ScraperCore {
 	 * @param url
 	 * @return HTML in which JSON-LD has been corrected
 	 * @throws JsonLDInspectionException
-	 * @see {@link #fixASingleJsonLdBlock(String, String)}
+	 * @see #fixASingleJsonLdBlock(String, String)
 	 */
 	public String fixAllJsonLdBlocks(String html, String url) throws JsonLDInspectionException {
 		String[] allMarkup = null;
@@ -548,7 +520,7 @@ public abstract class ScraperCore {
 			allMarkup = getJSONLDMarkup(html);
 		}
 
-		logger.info("Number of JSONLD sections: " + allMarkup.length);
+		logger.debug("Number of JSONLD sections: " + allMarkup.length);
 
 		for (String markup : allMarkup) {
 			String newMarkup = fixASingleJsonLdBlock(markup, url);
