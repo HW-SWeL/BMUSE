@@ -52,8 +52,7 @@ public class ServiceScrapeDriver {
 	public static void main(String[] args) {
 		ServiceScrapeDriver driver = new ServiceScrapeDriver();
 
-		Date date = new Date(System.currentTimeMillis());
-		logger.info("STARTING CRAWL: " + formatter.format(date));
+		logger.info("STARTING CRAWL: " + formatter.format(new Date(System.currentTimeMillis())));
 		driver.processProperties();
 		driver.runScrape();
 	}
@@ -111,10 +110,8 @@ public class ServiceScrapeDriver {
 			System.out.println("ENDED loop");
 		}
 		scrapeOne.shutdown();
-//		scrapeTwo.shutdown();
 		dba.shutdown();
-		Date date = new Date(System.currentTimeMillis());
-		logger.info("ENDING CRAWL: " + formatter.format(date));		
+		logger.info("ENDING CRAWL: " + formatter.format(new Date(System.currentTimeMillis())));		
 		System.out.println("CRAWL OVER!");
 	}
 
