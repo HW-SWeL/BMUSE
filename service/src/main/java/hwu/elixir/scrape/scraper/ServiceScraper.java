@@ -30,16 +30,16 @@ public class ServiceScraper extends ScraperCore {
 	 * @param url               Site to be scraped
 	 * @param contextCounter    Number used to generate the named graph/context and
 	 *                          the URLs used to replace blank nodes.
-	 * @param folderToWriteNQTo Location to which the NQuads will be written
+	 * @param outputFolderName Location to which the NQuads will be written
 	 * @return True if success; false otherwise
 	 * @throws FourZeroFourException 
 	 * @throws JsonLDInspectionException
 	 * @throws CannotWriteException 
 	 * 
 	 */
-	public boolean scrape(String url, Long contextCounter, String folderToWriteNQTo, StateOfCrawl status) throws FourZeroFourException, JsonLDInspectionException, CannotWriteException {
+	public boolean scrape(String url, Long contextCounter, String outputFolderName, StateOfCrawl status) throws FourZeroFourException, JsonLDInspectionException, CannotWriteException {
 		this.status = status;
-		return scrape(url, null, contextCounter, folderToWriteNQTo);
+		return scrape(url, outputFolderName, null, contextCounter);
 	}
 	
 	
