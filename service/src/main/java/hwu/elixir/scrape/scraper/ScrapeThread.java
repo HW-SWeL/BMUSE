@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import hwu.elixir.scrape.db.crawl.CrawlRecord;
 import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
-import hwu.elixir.scrape.exceptions.HtmlExtractorServiceException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 
 /**
@@ -75,8 +74,6 @@ public class ScrapeThread extends Thread {
 				} else {
 					scrapeState.addFailedToScrapeURL(record);
 				}
-			} catch (HtmlExtractorServiceException serviceException) {
-				scrapeState.addFailedToScrapeURL(record);
 			} catch(FourZeroFourException fourZeroFourException) {
 				scrapeState.setStatusTo404(record);
 			} catch (JsonLDInspectionException je) {
