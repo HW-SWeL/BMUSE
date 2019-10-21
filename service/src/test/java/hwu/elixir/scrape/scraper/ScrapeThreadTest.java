@@ -14,6 +14,7 @@ import hwu.elixir.scrape.db.crawl.StateOfCrawl;
 import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
+import hwu.elixir.scrape.exceptions.MissingHTMLException;
 
 public class ScrapeThreadTest {
 	
@@ -85,9 +86,9 @@ public class ScrapeThreadTest {
 	@Test
 	public void test_uRLtoCrawl_throwsException() throws FourZeroFourException, JsonLDInspectionException, CannotWriteException {
 		
-//		when(state.pagesLeftToScrape()).thenReturn(true, false);
-//		when(state.getURLToProcess()).thenReturn(record);
-//		when(scraper.scrape("http://www.abc.com", 1L, "/Users/test/output", StateOfCrawl.UNTRIED)).thenThrow(HtmlExtractorServiceException.class);
+		when(state.pagesLeftToScrape()).thenReturn(true, false);
+		when(state.getURLToProcess()).thenReturn(record);
+		when(scraper.scrape("http://www.abc.com", 1L, "/Users/test/output", StateOfCrawl.UNTRIED)).thenThrow(FourZeroFourException.class);
 
 		ScrapeThread thread = new ScrapeThread(scraper, state, 1, "/Users/test/output");
 		thread.run();
