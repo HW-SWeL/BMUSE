@@ -1,4 +1,4 @@
-package hwu.elixir.scrape.scraper;
+package hwu.elixir.scrape.scraper.examples;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -6,7 +6,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
@@ -14,20 +13,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 
-import org.apache.any23.source.DocumentSource;
-import org.apache.any23.source.StringDocumentSource;
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
-import hwu.elixir.scrape.exceptions.MissingHTMLException;
-import hwu.elixir.scrape.exceptions.SeleniumException;
+import hwu.elixir.scrape.scraper.ScraperCore;
 import hwu.elixir.utils.Helpers;
 
 /**
@@ -35,9 +27,6 @@ import hwu.elixir.utils.Helpers;
  * scrapes a single specified URL.
  * 
  * Output is quads written to a file in a location specified in application.properties.
- *  
- * 
- * @author kcm
  *
  */
 public class FileScraper extends ScraperCore {
@@ -48,7 +37,7 @@ public class FileScraper extends ScraperCore {
 	private static String locationOfSitesFile = "";
 	private static String outputFolderOriginal = "";
 	private static String outputFolder = System.getProperty("user.home");
-	private static long contextCounter = 0L;
+	private static long contextCounter = 0L; 
 
 	private static ArrayList<String> urlsToScrape = new ArrayList<>();
 
@@ -77,6 +66,10 @@ public class FileScraper extends ScraperCore {
 		displayPropertyValues();
 	}
 
+	
+	/** 
+	 * Displays values of properties read from properties file.
+	 */
 	private void displayPropertyValues() {
 		logger.info("outputFolder: " + outputFolder);
 		logger.info("locationOfSitesFile: " + locationOfSitesFile);
@@ -85,6 +78,11 @@ public class FileScraper extends ScraperCore {
 	}
 	
 	
+	/**
+	 * Read properties from local file. 
+	 * 
+	 * @return
+	 */
 	private Properties readPropertiesFromLocalFile() {
 		logger.info("Reading properties from local file");
 		Properties properties = null;
@@ -107,6 +105,11 @@ public class FileScraper extends ScraperCore {
 		return properties;
 	}
 	
+	/**
+	 * Read properties from JAR. Will be called if no local properties file exists.
+	 * 
+	 * @return
+	 */
 	private Properties readPropertiesFromJar() {
 		logger.info("Reading properties from jar file");
 		ClassLoader classLoader = ScraperCore.class.getClassLoader();
@@ -134,6 +137,10 @@ public class FileScraper extends ScraperCore {
 		return properties;
 	}
 
+	/**
+	 * Write contextCounter to local properties file
+	 * 
+	 */
 	private void updateContextCounter() {
 		Properties properties = null;
 		Writer writer = null;
@@ -197,6 +204,15 @@ public class FileScraper extends ScraperCore {
 		logger.info("Read " + urlsToScrape.size() + " urls to scrape from " + locationOfSitesFile+".\n");
 	}
 
+	
+	/**
+	 * Reads a list of URLs from a specified file; scrapes each one sequentially and writes the parsed (bio)schema 
+	 * markup to a NQuads file inside a specified directory. 
+	 * 
+	 * Each file is given a unique name based on the order (sequential number) in which it was scraped.
+	 * This number is not reset, instead auto-incrementing with each scrape or run of this scraper. 
+	 *  
+	 */
 	public void scrapeAllUrls() {
 		readFileList();
 		for (String url : urlsToScrape) {
@@ -204,116 +220,23 @@ public class FileScraper extends ScraperCore {
 
 			boolean result = false;
 			try {
-				result = scrape(url, null);
+				result = scrape(url, null, contextCounter++, outputFolder);
 			} catch (FourZeroFourException e) {
 				logger.error(url + "returned a 404.");
 			} catch (JsonLDInspectionException e) {
 				logger.error("The JSON-LD could be not parsed for " + url);
+			} catch (CannotWriteException e) {
+				logger.error("Problem writing file for " + url + " to the " + outputFolder + " directory.");
+				shutdown();
+				System.exit(-1);				
 			}
 
-			displayResult(url, result);
+			displayResult(url, result, outputFolder);
 		}
 		logger.info("Scraping over");
 		updateContextCounter();
 		shutdown();
 	}
-	
-	
-	private void displayResult(String url, boolean result) {
-		if (result) {
-			logger.info(url + " was successfully scraped and written to " + outputFolder);
-		} else {
-			logger.error(url + " was NOT successfully scraped.");
-		}
-		logger.info("\n\n");		
-	}
-	
-	/** 
-	 * Scrape a given URL and write to file in the home directory.
-	 * 
-	 * @param url The URL to scrape
-	 * @throws FourZeroFourException
-	 * @throws JsonLDInspectionException
-	 */
-	public void scrapeASingleURL(String url, String fileName) throws FourZeroFourException, JsonLDInspectionException {
-		readProperties();		
-		try {			
-			displayResult(url, scrape(url, fileName));
-		} finally {
-			shutdown();
-		}		
-	}
-
-	/**
-	 * Actually scrapes a given URL and writes the output (as quads) to a file specified in the arguments. If not 
-	 * specified, ie null, the contextCounter will be used to name the file.
-	 * 
-	 * The file will be located in the location specified in application.properties
-	 * 	 
-	 * @param url URL to scrape
-	 * @return FALSE if failed else TRUE
-	 * @throws FourZeroFourException
-	 * @throws JsonLDInspectionException
-	 */
-	private boolean scrape(String url, String fileName) throws FourZeroFourException, JsonLDInspectionException {
-		if (url.endsWith("/") || url.endsWith("#"))
-			url = url.substring(0, url.length() - 1);
-
-		String html = "";
-
-		try {
-			html = getHtmlViaSelenium(url);
-		} catch (SeleniumException e) {
-			// try again
-			try {
-				html = getHtmlViaSelenium(url);
-			} catch (SeleniumException e2) {
-				return false;
-			}
-		}
-
-		try {
-			html = injectId(html, url);
-		} catch (MissingHTMLException e) {
-			logger.error(e.toString());
-			return false;
-		}
-
-		DocumentSource source = new StringDocumentSource(html, url);
-		IRI sourceIRI = SimpleValueFactory.getInstance().createIRI(source.getDocumentIRI());
-
-		String n3 = getTriplesInNTriples(source);
-		if (n3 == null)
-			return false;
-
-		Model updatedModel = processTriples(n3, sourceIRI, contextCounter);
-		if (updatedModel == null)
-			return false;
-
-		File directory = new File(outputFolder);
-		if (!directory.exists())
-			directory.mkdir();
-
-		if(fileName == null) {
-			fileName = outputFolder + "/" + contextCounter++ + ".nq";
-		} else {
-			fileName = outputFolder + "/" + fileName + ".nq";
-		}
-
-		try (PrintWriter out = new PrintWriter(new File(fileName))) {
-			Rio.write(updatedModel, out, RDFFormat.NQUADS);
-		} catch (Exception e) {
-			logger.error("Problem writing file for " + url + " to the " + outputFolder + " directory.");
-			shutdown();
-			System.exit(-1);
-		}
-
-		if (!new File(fileName).exists())
-			System.exit(0);
-
-		return true;
-	}
-
 	
 	public static void main(String[] args) throws FourZeroFourException, JsonLDInspectionException {
 		logger.info("STARTING SCRAPE: " + formatter.format(new Date(System.currentTimeMillis())));
@@ -322,9 +245,6 @@ public class FileScraper extends ScraperCore {
 		// to scrape all URLs in the file specified in applications.properties
 		core.scrapeAllUrls();
 		
-		// to scrape a single URL
-//		core.scrapeASingleURL("https://www.uniprot.org/uniprot/P46736", "uniprot");
-
 		logger.info("ENDING SCRAPE: " + formatter.format(new Date(System.currentTimeMillis())));
 		System.exit(0);
 	}

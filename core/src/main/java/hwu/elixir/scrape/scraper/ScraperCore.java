@@ -1,11 +1,10 @@
 package hwu.elixir.scrape.scraper;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,7 +14,7 @@ import java.util.Random;
 import org.apache.any23.Any23;
 import org.apache.any23.extractor.ExtractionException;
 import org.apache.any23.source.DocumentSource;
-import org.apache.any23.writer.NQuadsWriter;
+import org.apache.any23.source.StringDocumentSource;
 import org.apache.any23.writer.NTriplesWriter;
 import org.apache.any23.writer.TripleHandler;
 import org.apache.any23.writer.TripleHandlerException;
@@ -32,7 +31,6 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
-import org.eclipse.rdf4j.rio.n3.N3Writer;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -50,18 +48,20 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
 import hwu.elixir.scrape.exceptions.SeleniumException;
+import hwu.elixir.scrape.scraper.examples.FileScraper;
+import hwu.elixir.scrape.scraper.examples.SingleURLScraper;
 import hwu.elixir.utils.ChromeDriverCreator;
 import hwu.elixir.utils.Helpers;
 
 /**
- * Provides core functionality for scraping, but is not an actual scraper
+ * Provides core functionality for scraping, but is not an actual scraper. See {@link FileScraper} or {@link SingleURLScraper}
+ * for examples of how to use this.
  * 
- * 
- * @author kcm
  * @see FileScraper
  * @see hwu.elixir.scrape.ServiceScrapeDriver
  * 
@@ -75,6 +75,7 @@ public abstract class ScraperCore {
 
 	/**
 	 * An attempt to close the chromedriver opened by Selenium.
+	 * Should always be closed at the end of the scrape.
 	 * 
 	 * @see ChromeDriverCreator
 	 * @see https://github.com/HW-SWeL/Scraper/issues/42
@@ -127,6 +128,10 @@ public abstract class ScraperCore {
 	 */
 	public String getHtmlViaSelenium(String url) throws FourZeroFourException, SeleniumException {
 		try {
+			if (driver == null) {
+				driver = ChromeDriverCreator.getInstance();
+			}
+						
 			driver.get(url);
 
 			// possibly worthless as Selenium does not support HTTP codes:
@@ -217,7 +222,7 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Takes an Any23 DocumentSource and converts into triples in N3 form.
+	 * Takes an Any23 DocumentSource and converts into triples in NTriples form.
 	 * 
 	 * @param source The HTML as an Any23 DocumentSource
 	 * @return Triples in NTriples form as a long String
@@ -640,5 +645,107 @@ public abstract class ScraperCore {
 		int randomInt = Math.abs(rand.nextInt());
 		return SimpleValueFactory.getInstance().createIRI(ngraph + "/" + source + randomInt);
 	}
+	
+	
+	/**
+	 * 
+	 * Wraps methods to obtain HTML; can be changed for different types of scraper.
+	 * 
+	 * @param url
+	 * @return
+	 * @throws FourZeroFourException
+	 */
+	protected String wrapHTMLExtraction(String url) throws FourZeroFourException {
+		String html = "";
+		try {
+			html = getHtmlViaSelenium(url);
+		} catch (SeleniumException e) {
+			// try again
+			try {
+				html = getHtmlViaSelenium(url);
+			} catch (SeleniumException e2) {
+				return "";
+			}
+		}	
+		return html;
+	}
+	
+	
+	/**
+	 * Actually scrapes a given URL and writes the output (as quads) to a file specified in the arguments. If not 
+	 * specified, ie null, the contextCounter will be used to name the file.
+	 * 
+	 * The file will be located in the location specified in application.properties
+	 * 	 
+	 * @param url URL to scrape
+	 * @return FALSE if failed else TRUE
+	 * @throws FourZeroFourException
+	 * @throws JsonLDInspectionException
+	 * @throws CannotWriteException 
+	 */
+	protected boolean scrape(String url, String fileName, Long contextCounter, String folderToWriteNQTo) throws FourZeroFourException, JsonLDInspectionException, CannotWriteException {
+		if (url.endsWith("/") || url.endsWith("#"))
+			url = url.substring(0, url.length() - 1);
 
+		String html = wrapHTMLExtraction(url);
+		
+		if(html.contentEquals("")) return false;
+		
+		try {
+			html = injectId(html, url);
+		} catch (MissingHTMLException e) {
+			logger.error(e.toString());
+			return false;
+		}
+
+		DocumentSource source = new StringDocumentSource(html, url);
+		IRI sourceIRI = SimpleValueFactory.getInstance().createIRI(source.getDocumentIRI());
+
+		String n3 = getTriplesInNTriples(source);
+		if (n3 == null)
+			return false;
+
+		Model updatedModel = processTriples(n3, sourceIRI, contextCounter);
+		if (updatedModel == null)
+			return false;
+
+		File directory = new File(folderToWriteNQTo);
+		if (!directory.exists())
+			directory.mkdir();
+
+		if(fileName == null) {
+			fileName = folderToWriteNQTo + "/" + contextCounter++ + ".nq";
+		} else {
+			fileName = folderToWriteNQTo + "/" + fileName + ".nq";
+		}
+
+		try (PrintWriter out = new PrintWriter(new File(fileName))) {
+			Rio.write(updatedModel, out, RDFFormat.NQUADS);
+		} catch (Exception e) {
+			logger.error("Problem writing file for " + url);
+			throw new CannotWriteException(url);
+		}	
+		
+		if (!new File(fileName).exists())
+			System.exit(0);
+
+		return true;
+	}	
+	
+	
+	/** 
+	 * Writes the success or failure of a scrape to the log.
+	 * 
+	 * @param url URL scraped
+	 * @param result TRUE for success; FALSE for fail.
+	 * @param outputFolder Where the output was written.
+	 */
+	protected void displayResult(String url, boolean result, String outputFolder) {
+		if (result) {
+			logger.info(url + " was successfully scraped and written to " + outputFolder);
+		} else {
+			logger.error(url + " was NOT successfully scraped.");
+		}
+		logger.info("\n\n");		
+	}
 }
