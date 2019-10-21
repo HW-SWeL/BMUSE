@@ -77,7 +77,7 @@ public abstract class ScraperCore {
 	private int countOfJSONLD = 0; // number of JSON-LB blocks found in HTML
 
 	/**
-	 * An attempt to close the chromedriver opened by Selenium. Should always be
+	 * Close the chromedriver opened by Selenium. Should always be
 	 * closed at the end of the scrape.
 	 * 
 	 * @see ChromeDriverCreator
@@ -93,6 +93,29 @@ public abstract class ScraperCore {
 		}
 	}
 
+	/**
+	 * 
+	 * Wraps methods to obtain HTML; can be changed for different types of scraper.
+	 * 
+	 * @param url
+	 * @return
+	 * @throws FourZeroFourException
+	 */
+	protected String wrapHTMLExtraction(String url) throws FourZeroFourException {
+		String html = "";
+		try {
+			html = getHtmlViaSelenium(url);
+		} catch (SeleniumException e) {
+			// try again
+			try {
+				html = getHtmlViaSelenium(url);
+			} catch (SeleniumException e2) {
+				return "";
+			}
+		}
+		return html;
+	}
+	
 	/**
 	 * Uses JSoup to pull the HTML of a NON dynamic web page
 	 * 
@@ -173,7 +196,7 @@ public abstract class ScraperCore {
 	 * @throws FourZeroFourException
 	 * @throws SeleniumException
 	 */
-	protected String[] getOnlyJSONLD(String url) throws FourZeroFourException, SeleniumException {
+	protected String[] getOnlyJSONLDFromUrl(String url) throws FourZeroFourException, SeleniumException {
 		String html = getHtmlViaSelenium(url);
 		Document doc = Jsoup.parse(html);
 		Elements jsonElements = doc.getElementsByTag("script").attr("type", "application/ld+json");
@@ -201,7 +224,7 @@ public abstract class ScraperCore {
 	 * @throws FourZeroFourException
 	 * @throws SeleniumException
 	 */
-	protected String[] getOnlyJSONLDMarkup(String html) {
+	protected String[] getOnlyJSONLDFromHtml(String html) {
 		Document doc = Jsoup.parse(html);
 		Elements jsonElements = doc.getElementsByTag("script").attr("type", "application/ld+json");
 
@@ -348,8 +371,9 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Takes a series of n-triples as a string and filters them removing triples
-	 * with the following predicates:
+	 * Processes a string containing nTriples to obtain a {@link Model} 
+	 * 
+	 * Does NOT replace the following:
 	 * <ol>
 	 * <li>nofollow</li>
 	 * <li>ogp.me/...</li>
@@ -361,10 +385,10 @@ public abstract class ScraperCore {
 	 * 
 	 * Triples are NOT placed in a context.
 	 * 
-	 * Ultimately produces an RDF4J Model based on the filtered triples
+	 * DOES rectify the changes made to predicates and objects to ensure Any23 can parse them (see {@link #fixAny23WeirdIssues(String)}
 	 * 
 	 * @param nTriples The triples to be processed
-	 * @return An RDF4J model containing the processed triples
+	 * @return An RDF4J model containing the UNprocessed triples
 	 * @see Model
 	 */
 	protected Model processTriplesLeaveBlankNodes(String nTriples) {
@@ -397,6 +421,45 @@ public abstract class ScraperCore {
 		return builder.build();
 	}
 
+	/**
+	 * Generates a new IRI based on the named graph and the source's IRI. Includes a
+	 * random element based on time to ensure no collisions.
+	 * 
+	 * @param ngraph
+	 * @param sourceIRI
+	 * @return New IRI
+	 */
+	protected IRI iriGenerator(String ngraph, IRI sourceIRI) {
+		String source = "";
+		if (sourceIRI.toString().indexOf("https://") != -1) {
+			source = sourceIRI.toString().replaceAll("https://", "");
+		} else {
+			source = sourceIRI.toString().replaceAll("http://", "");
+		}
+
+		if (!(source.endsWith("/") || source.endsWith("#"))) {
+			source += "/";
+		}
+
+		Random rand = new Random();
+		int randomInt = Math.abs(rand.nextInt());
+		return SimpleValueFactory.getInstance().createIRI(ngraph + "/" + source + randomInt);
+	}	
+	
+	/**
+	 * Changes the HTML such that Any23 can parse it. Bugs in Any23 mean that some
+	 * predicates (that should work) break the parser.
+	 * 
+	 * 
+	 * @param html HTML to be corrected
+	 * @return Corrected HTML
+	 * @see #fixAny23WeirdIssues(String)
+	 */
+	protected String fixAny23WeirdIssues(String html) {
+		return html.replaceAll("license", "licensE").replaceAll("fileFormat", "FileFormat").replaceAll("additionalType",
+				"addType");
+	}
+	
 	/**
 	 * Removes changes made to allow Any23 to parse the html & standardises on
 	 * httpS://schema.org
@@ -527,7 +590,7 @@ public abstract class ScraperCore {
 			allMarkup[0] = html;
 
 		} else {
-			allMarkup = getOnlyJSONLDMarkup(html);
+			allMarkup = getOnlyJSONLDFromHtml(html);
 		}
 
 		logger.debug("Number of JSONLD sections: " + allMarkup.length);
@@ -545,7 +608,6 @@ public abstract class ScraperCore {
 
 		return html;
 	}
-
 
 	/**
 	 * 	 
@@ -622,7 +684,6 @@ public abstract class ScraperCore {
 		return correctedObj.toJSONString().replaceAll("\\\\", "");
 	}
 	
-	
 	/**
 	 * 
 	 * Corrects/amends a single JSON-LD object markup extracted from the HTML
@@ -660,7 +721,6 @@ public abstract class ScraperCore {
 		return jsonObj;
 	}
 	
-
 	/**
 	 * Replaces the old JSON-LD markup with the new markup
 	 * 
@@ -675,68 +735,6 @@ public abstract class ScraperCore {
 		String newHtml = html.substring(0, oldPosition) + newMarkup + html.substring(oldPosition + oldMarkup.length());
 
 		return newHtml;
-	}
-
-	/**
-	 * Changes the HTML such that Any23 can parse it. Bugs in Any23 mean that some
-	 * predicates (that should work) break the parser.
-	 * 
-	 * 
-	 * @param html HTML to be corrected
-	 * @return Corrected HTML
-	 * @see #fixAny23WeirdIssues(String)
-	 */
-	protected String fixAny23WeirdIssues(String html) {
-		return html.replaceAll("license", "licensE").replaceAll("fileFormat", "FileFormat").replaceAll("additionalType",
-				"addType");
-	}
-
-	/**
-	 * Generates a new IRI based on the named graph and the source's IRI. Includes a
-	 * random element based on time to ensure no collisions.
-	 * 
-	 * @param ngraph
-	 * @param sourceIRI
-	 * @return New IRI
-	 */
-	protected IRI iriGenerator(String ngraph, IRI sourceIRI) {
-		String source = "";
-		if (sourceIRI.toString().indexOf("https://") != -1) {
-			source = sourceIRI.toString().replaceAll("https://", "");
-		} else {
-			source = sourceIRI.toString().replaceAll("http://", "");
-		}
-
-		if (!(source.endsWith("/") || source.endsWith("#"))) {
-			source += "/";
-		}
-
-		Random rand = new Random();
-		int randomInt = Math.abs(rand.nextInt());
-		return SimpleValueFactory.getInstance().createIRI(ngraph + "/" + source + randomInt);
-	}
-
-	/**
-	 * 
-	 * Wraps methods to obtain HTML; can be changed for different types of scraper.
-	 * 
-	 * @param url
-	 * @return
-	 * @throws FourZeroFourException
-	 */
-	protected String wrapHTMLExtraction(String url) throws FourZeroFourException {
-		String html = "";
-		try {
-			html = getHtmlViaSelenium(url);
-		} catch (SeleniumException e) {
-			// try again
-			try {
-				html = getHtmlViaSelenium(url);
-			} catch (SeleniumException e2) {
-				return "";
-			}
-		}
-		return html;
 	}
 
 	/**

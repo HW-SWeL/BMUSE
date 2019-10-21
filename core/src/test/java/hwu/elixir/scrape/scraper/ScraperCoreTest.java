@@ -154,7 +154,7 @@ public class ScraperCoreTest {
 
 	@Test
 	public void test_getOnlyJSONLD() throws FourZeroFourException, SeleniumException {
-		String[] allJsonLD = scraperCore.getOnlyJSONLD("http://www.macs.hw.ac.uk");
+		String[] allJsonLD = scraperCore.getOnlyJSONLDFromUrl("http://www.macs.hw.ac.uk");
 		assertTrue(allJsonLD.length == 3);
 		for (String json : allJsonLD) {
 			assertTrue(json.startsWith("{") && json.endsWith("}"));
@@ -520,7 +520,7 @@ public class ScraperCoreTest {
 			e.printStackTrace();
 			fail();
 		}
-		String[] allJsonMarkup = scraperCore.getOnlyJSONLDMarkup(html);
+		String[] allJsonMarkup = scraperCore.getOnlyJSONLDFromHtml(html);
 		assertTrue(allJsonMarkup.length == 4);
 
 		for (String json : allJsonMarkup) {
@@ -557,7 +557,7 @@ public class ScraperCoreTest {
 			fail();
 		}
 
-		String[] allMarkup = scraperCore.getOnlyJSONLDMarkup(html);
+		String[] allMarkup = scraperCore.getOnlyJSONLDFromHtml(html);
 		int i = 10;
 		for (String oldMarkup : allMarkup) {
 			JSONObject obj = new JSONObject();
@@ -569,7 +569,7 @@ public class ScraperCoreTest {
 			assertFalse(html.contains(oldMarkup));
 		}
 
-		String[] newAllMarkup = scraperCore.getOnlyJSONLDMarkup(html);
+		String[] newAllMarkup = scraperCore.getOnlyJSONLDFromHtml(html);
 		for (String newMarkup : newAllMarkup) {
 			assertTrue(html.contains(newMarkup));
 		}
