@@ -2,6 +2,7 @@ package hwu.elixir.scrape.scraper;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -23,12 +24,14 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
+
 
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
@@ -380,24 +383,24 @@ public class ScraperCoreTest {
 	}
 
 	@Test
-	public void test_fixASingleContext() throws JsonLDInspectionException {
+	public void test_fixASingleJsonLdObject() throws JsonLDInspectionException {
 		JSONObject obj = new JSONObject();
 		obj.put("key1", "value1");
-		String fixedJSON = scraperCore.fixASingleJsonLdBlock(obj.toJSONString(), "http://www.myId.org");
+		String fixedJSON = scraperCore.fixASingleJsonLdObject(obj, "http://www.myId.org");
 		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org\""));
 		assertTrue(fixedJSON.contains("\"@id\":\"http://www.myId.org\""));
 
 		obj = new JSONObject();
 		obj.put("key1", "value1");
 		obj.put("@context", "https://schema.org");
-		fixedJSON = scraperCore.fixASingleJsonLdBlock(obj.toJSONString(), "http://www.myId.org");
+		fixedJSON = scraperCore.fixASingleJsonLdObject(obj, "http://www.myId.org");
 		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org\""));
 		assertTrue(fixedJSON.contains("\"@id\":\"http://www.myId.org\""));
 
 		obj = new JSONObject();
 		obj.put("key1", "value1");
 		obj.put("@context", "http://www.macs.hw.ac.uk");
-		fixedJSON = scraperCore.fixASingleJsonLdBlock(obj.toJSONString(), "http://www.myId.org");
+		fixedJSON = scraperCore.fixASingleJsonLdObject(obj, "http://www.myId.org");
 		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org\""));
 		assertTrue(fixedJSON.contains("\"@id\":\"http://www.myId.org\""));
 
@@ -405,7 +408,95 @@ public class ScraperCoreTest {
 		obj.put("key1", "value1");
 		obj.put("@context", "https://schema.org");
 		obj.put("@id", "http://www.myId.org");
-		fixedJSON = scraperCore.fixASingleJsonLdBlock(obj.toJSONString(), "http://www.myId.org");
+		fixedJSON = scraperCore.fixASingleJsonLdObject(obj, "http://www.myId.org");
+		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org\""));
+		assertTrue(fixedJSON.contains("\"@id\":\"http://www.myId.org\""));
+	}
+	
+	@Test
+	public void test_fixAJsonLdArray() throws JsonLDInspectionException {
+		JSONObject obj1 = new JSONObject();
+		obj1.put("key1", "value1");
+		
+		JSONObject obj2 = new JSONObject();
+		obj2.put("key2", "value2");
+		obj2.put("@context", "https://schema.org");
+		
+		JSONObject obj3 = new JSONObject();
+		obj3.put("key3", "value3");
+		obj3.put("@context", "http://www.macs.hw.ac.uk");
+		
+		JSONArray array = new JSONArray();
+		array.add(obj1);
+		array.add(obj2);
+		array.add(obj3);
+		
+		String fixedJSON = scraperCore.fixAJsonLdArray(array, "http://www.myId.org");
+		//
+		obj1.put("@id", "http://www.myId.org");
+		obj1.put("@context", "https://schema.org");
+		
+		obj2.put("@id", "http://www.myId.org");
+		obj2.put("@context", "https://schema.org");
+		
+		obj3.put("@id", "http://www.myId.org");
+		obj3.put("@context", "https://schema.org");
+		
+		array = new JSONArray();
+		array.add(obj1);
+		array.add(obj2);
+		array.add(obj3);
+		
+		String expectedJSON = array.toJSONString().replaceAll("\\\\", "");
+		
+		assertEquals(expectedJSON, fixedJSON);
+		
+	}
+
+	@Test
+	public void test_fixASingleJsonLdBlock_array() throws JsonLDInspectionException {
+		JSONObject obj1 = new JSONObject();
+		obj1.put("key1", "value1");
+		
+		JSONObject obj2 = new JSONObject();
+		obj2.put("key2", "value2");
+		obj2.put("@context", "https://schema.org");
+		
+		JSONObject obj3 = new JSONObject();
+		obj3.put("key3", "value3");
+		obj3.put("@context", "http://www.macs.hw.ac.uk");
+		
+		JSONArray array = new JSONArray();
+		array.add(obj1);
+		array.add(obj2);
+		array.add(obj3);
+		
+		String fixedJSON = scraperCore.fixASingleJsonLdBlock(array.toJSONString(), "http://www.myId.org");
+		//
+		obj1.put("@id", "http://www.myId.org");
+		obj1.put("@context", "https://schema.org");
+		
+		obj2.put("@id", "http://www.myId.org");
+		obj2.put("@context", "https://schema.org");
+		
+		obj3.put("@id", "http://www.myId.org");
+		obj3.put("@context", "https://schema.org");
+		
+		array = new JSONArray();
+		array.add(obj1);
+		array.add(obj2);
+		array.add(obj3);
+		
+		String expectedJSON = array.toJSONString().replaceAll("\\\\", "");
+		
+		assertEquals(expectedJSON, fixedJSON);
+	}
+	
+	@Test
+	public void test_fixASingleJsonLdBlock_object() throws JsonLDInspectionException {
+		JSONObject obj = new JSONObject();
+		obj.put("key1", "value1");
+		String fixedJSON = scraperCore.fixASingleJsonLdBlock(obj.toJSONString(), "http://www.myId.org");
 		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org\""));
 		assertTrue(fixedJSON.contains("\"@id\":\"http://www.myId.org\""));
 	}
@@ -429,7 +520,7 @@ public class ScraperCoreTest {
 			e.printStackTrace();
 			fail();
 		}
-		String[] allJsonMarkup = scraperCore.getJSONLDMarkup(html);
+		String[] allJsonMarkup = scraperCore.getOnlyJSONLDMarkup(html);
 		assertTrue(allJsonMarkup.length == 4);
 
 		for (String json : allJsonMarkup) {
@@ -466,7 +557,7 @@ public class ScraperCoreTest {
 			fail();
 		}
 
-		String[] allMarkup = scraperCore.getJSONLDMarkup(html);
+		String[] allMarkup = scraperCore.getOnlyJSONLDMarkup(html);
 		int i = 10;
 		for (String oldMarkup : allMarkup) {
 			JSONObject obj = new JSONObject();
@@ -478,7 +569,7 @@ public class ScraperCoreTest {
 			assertFalse(html.contains(oldMarkup));
 		}
 
-		String[] newAllMarkup = scraperCore.getJSONLDMarkup(html);
+		String[] newAllMarkup = scraperCore.getOnlyJSONLDMarkup(html);
 		for (String newMarkup : newAllMarkup) {
 			assertTrue(html.contains(newMarkup));
 		}
@@ -654,4 +745,13 @@ public class ScraperCoreTest {
 		assertEquals(html2, html1);
 	}
 
+	
+	@Test
+	public void wrapHTMLExtraction_fail() throws FourZeroFourException, SeleniumException {
+		String url = "https://www.apJ7G2m!.com";
+		String html1 = scraperCore.wrapHTMLExtraction(url);	
+		System.out.println(html1 == null);
+		assertNull(html1);
+	}
+	
 }
