@@ -27,10 +27,9 @@ public class SingleURLScraper extends ScraperCore {
 	 * @throws JsonLDInspectionException
 	 * @throws CannotWriteException
 	 */
-	public void scrapeASingleURL(String url, String fileName) {
-
+	public void scrapeASingleURL(String url, String outputFileName) {
 		try {
-			displayResult(url, scrape(url, fileName, 0L, outputFolder), outputFolder);
+			displayResult(url, scrape(url, outputFolder, outputFileName, 0L), outputFolder);
 		} catch (FourZeroFourException | JsonLDInspectionException e) {
 			logger.error("Cannot scrape site; error thrown", e);
 		} catch (CannotWriteException e) {
@@ -44,5 +43,6 @@ public class SingleURLScraper extends ScraperCore {
 		SingleURLScraper scraper = new SingleURLScraper();
 
 		scraper.scrapeASingleURL("https://www.uniprot.org/uniprot/P46736", "uniprot");
+		
 	}
 }

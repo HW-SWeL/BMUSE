@@ -220,7 +220,7 @@ public class FileScraper extends ScraperCore {
 
 			boolean result = false;
 			try {
-				result = scrape(url, null, contextCounter++, outputFolder);
+				result = scrape(url, outputFolder, null, contextCounter++);
 			} catch (FourZeroFourException e) {
 				logger.error(url + "returned a 404.");
 			} catch (JsonLDInspectionException e) {
