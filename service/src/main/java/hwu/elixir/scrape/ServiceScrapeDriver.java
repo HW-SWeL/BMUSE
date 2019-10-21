@@ -51,10 +51,8 @@ public class ServiceScrapeDriver {
 	 */
 	public static void main(String[] args) {
 		ServiceScrapeDriver driver = new ServiceScrapeDriver();
-
-		logger.info("STARTING CRAWL: " + formatter.format(new Date(System.currentTimeMillis())));
-		driver.processProperties();
 		driver.runScrape();
+		System.exit(0);
 	}
 	
 	/** 
@@ -62,8 +60,9 @@ public class ServiceScrapeDriver {
 	 * 
 	 */
 	private void runScrape() {
+		processProperties();
 		ServiceScraper scrapeOne = new ServiceScraper();		
-		
+		logger.info("STARTING CRAWL: " + formatter.format(new Date(System.currentTimeMillis())));
 		while (pagesCounter < totalNumberOfPagesToCrawlInASession) {
 			System.out.println(pagesCounter + " is less than " + totalNumberOfPagesToCrawlInASession);
 			logger.info(pagesCounter + " scraped of " + totalNumberOfPagesToCrawlInASession);
@@ -111,8 +110,7 @@ public class ServiceScrapeDriver {
 		}
 		scrapeOne.shutdown();
 		dba.shutdown();
-		logger.info("ENDING CRAWL: " + formatter.format(new Date(System.currentTimeMillis())));		
-		System.out.println("CRAWL OVER!");
+		logger.info("ENDING CRAWL: " + formatter.format(new Date(System.currentTimeMillis())));
 	}
 
 	/**
