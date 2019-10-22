@@ -80,7 +80,7 @@ public class ServiceScrapeDriver {
 			long startTime = System.nanoTime();
 			
 			try {
-				scrape1.wait();
+				scrape1.join();
 			} catch (InterruptedException e) {
 				System.out.println("Exception waiting on thread");
 				e.printStackTrace();
