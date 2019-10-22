@@ -85,7 +85,7 @@ public class ScrapeThread extends Thread {
 				return;
 			}
 			try {
-				ScrapeThread.sleep(1000 * waitTime);
+				ScrapeThread.sleep(100 * waitTime);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
