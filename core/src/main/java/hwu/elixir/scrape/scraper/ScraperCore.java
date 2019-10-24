@@ -188,7 +188,7 @@ public abstract class ScraperCore {
 	/**
 	 * Extract schema markup in JSON-LD form from a given URL. Will ignore all other
 	 * formats of markup. Some blocks may not be (bio)schema markup.
-	 * Will not process 
+	 * Will not process/validate JSON-LD, add @id or change @context etc.
 	 * 
 	 * 
 	 * @param url URL to scrape
@@ -204,6 +204,7 @@ public abstract class ScraperCore {
 	/**
 	 * Extract schema markup in JSON-LD form from a given HTML. Will ignore all other
 	 * formats of markup. Some blocks may not be (bio)schema markup.
+	 * Will not process/validate JSON-LD, add @id or change @context etc.
 	 * 
 	 * @param html to find JSON-LD in
 	 * @return An array in which each element is a block of JSON-LD containing
