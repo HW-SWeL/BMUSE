@@ -97,7 +97,7 @@ public class ServiceScrapeDriver {
 				System.exit(0);
 			}
 			
-			logger.info("Value of isWorked: " + scrape1.isWorked());
+			logger.debug("Value of isWorked: " + scrape1.isWorked());
 
 			long endTime = System.nanoTime();
 			long timeElapsed = endTime - startTime;
