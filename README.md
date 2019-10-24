@@ -60,14 +60,15 @@ Assumes a database of URLs that need to be scraped. Will collect a list of URLs 
 To use this:
 1. You may want to set the [JVM parameters](https://stackoverflow.com/questions/14763079/what-are-the-xms-and-xmx-parameters-when-starting-jvm) to increase the size of RAM available to JAVA.
 2. Add your database connection to hibernate; we are using `service > src > main > resources > META-INF > persistence.xml`.
-3. Update `service > src > main > resources > applications.properties`. You need to specify:
+3. If your database is empty, running the program (by following the steps below) will create an empty table before stopping as there are no URLs to scrape. You can then populate this table and re-run the program to perform the scrape. Alternatively, you can create the table and populate the database manually. An example script for this can be found in `service > src > main > resources > setUpDatabaseScript.sql`. If you run this before running the program, it will start scraping immediately.
+4. Update `service > src > main > resources > applications.properties`. You need to specify:
     * how long you want to wait being fetching pages, measured in tenths of a second. (default: 5 = 0.5 second).
     * output loction: currently all RDF is saved as NQuads to a folder. 
     * how many pages you want to crawl in a single loop (default: 8).
     * how many pages you want to crawl in a single session; there are multiple loops in a session (default: 32). The default settings are enough for you to run the scraper to check everything is working. However, these should be increased for a real world scrape.
     * location of the chrome driver.
-4. Package with maven: `mvn clean package` from the top level, i.e., *Scraper* folder not the *service* folder.
-5. Inside the `service > target` directory you will find `service.jar`. Run it however you wish via maven or the command line, e.g., `java -jar service.jar`.
+5. Package with maven: `mvn clean package` from the top level, i.e., *Scraper* folder not the *service* folder.
+6. Inside the `service > target` directory you will find `service.jar`. Run it however you wish via maven or the command line, e.g., `java -jar service.jar`.
 
 #### web
 
