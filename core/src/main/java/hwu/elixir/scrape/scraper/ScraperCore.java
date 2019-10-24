@@ -2,7 +2,6 @@ package hwu.elixir.scrape.scraper;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -188,7 +187,9 @@ public abstract class ScraperCore {
 
 	/**
 	 * Extract schema markup in JSON-LD form from a given URL. Will ignore all other
-	 * formats of markup.
+	 * formats of markup. Some blocks may not be (bio)schema markup.
+	 * Will not process 
+	 * 
 	 * 
 	 * @param url URL to scrape
 	 * @return An array in which each element is a block of JSON-LD containing
@@ -196,27 +197,13 @@ public abstract class ScraperCore {
 	 * @throws FourZeroFourException
 	 * @throws SeleniumException
 	 */
-	protected String[] getOnlyJSONLDFromUrl(String url) throws FourZeroFourException, SeleniumException {
-		String html = getHtmlViaSelenium(url);
-		Document doc = Jsoup.parse(html);
-		Elements jsonElements = doc.getElementsByTag("script").attr("type", "application/ld+json");
-
-		ArrayList<String> filteredJson = new ArrayList<String>();
-		for (Element jsonElement : jsonElements) {
-			if (jsonElement.data() != "" && jsonElement.data() != null) {
-				if (jsonElement.data().contains("@type") || jsonElement.data().contains("@context")) {
-					filteredJson.add(jsonElement.data().trim());
-				}
-			}
-		}
-		String[] toReturn = new String[filteredJson.size()];
-		filteredJson.toArray(toReturn);
-		return toReturn;
+	public String[] getOnlyJSONLDFromUrl(String url) throws FourZeroFourException, SeleniumException {		
+		return getOnlyJSONLDFromHtml(getHtmlViaSelenium(url));
 	}
 
 	/**
 	 * Extract schema markup in JSON-LD form from a given HTML. Will ignore all other
-	 * formats of markup.
+	 * formats of markup. Some blocks may not be (bio)schema markup.
 	 * 
 	 * @param html to find JSON-LD in
 	 * @return An array in which each element is a block of JSON-LD containing
