@@ -53,6 +53,7 @@ import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
+import hwu.elixir.scrape.exceptions.MissingMarkupException;
 import hwu.elixir.scrape.exceptions.SeleniumException;
 import hwu.elixir.scrape.scraper.examples.FileScraper;
 import hwu.elixir.scrape.scraper.examples.SingleURLScraper;
@@ -76,8 +77,8 @@ public abstract class ScraperCore {
 	private int countOfJSONLD = 0; // number of JSON-LB blocks found in HTML
 
 	/**
-	 * Close the chromedriver opened by Selenium. Should always be
-	 * closed at the end of the scrape.
+	 * Close the chromedriver opened by Selenium. Should always be closed at the end
+	 * of the scrape.
 	 * 
 	 * @see ChromeDriverCreator
 	 * @see https://github.com/HW-SWeL/Scraper/issues/42
@@ -101,6 +102,7 @@ public abstract class ScraperCore {
 	 * @throws FourZeroFourException
 	 */
 	protected String wrapHTMLExtraction(String url) throws FourZeroFourException {
+		
 		String html = "";
 		try {
 			html = getHtmlViaSelenium(url);
@@ -114,7 +116,7 @@ public abstract class ScraperCore {
 		}
 		return html;
 	}
-	
+
 	/**
 	 * Uses JSoup to pull the HTML of a NON dynamic web page
 	 * 
@@ -187,8 +189,8 @@ public abstract class ScraperCore {
 
 	/**
 	 * Extract schema markup in JSON-LD form from a given URL. Will ignore all other
-	 * formats of markup. Some blocks may not be (bio)schema markup.
-	 * Will not process/validate JSON-LD, add @id or change @context etc.
+	 * formats of markup. Some blocks may not be (bio)schema markup. Will not
+	 * process/validate JSON-LD, add @id or change @context etc.
 	 * 
 	 * 
 	 * @param url URL to scrape
@@ -197,14 +199,14 @@ public abstract class ScraperCore {
 	 * @throws FourZeroFourException
 	 * @throws SeleniumException
 	 */
-	public String[] getOnlyJSONLDFromUrl(String url) throws FourZeroFourException, SeleniumException {		
-		return getOnlyJSONLDFromHtml(getHtmlViaSelenium(url));
+	public String[] getOnlyJSONLDFromUrl(String url) throws FourZeroFourException {
+		return getOnlyJSONLDFromHtml(wrapHTMLExtraction(url));
 	}
 
 	/**
-	 * Extract schema markup in JSON-LD form from a given HTML. Will ignore all other
-	 * formats of markup. Some blocks may not be (bio)schema markup.
-	 * Will not process/validate JSON-LD, add @id or change @context etc.
+	 * Extract schema markup in JSON-LD form from a given HTML. Will ignore all
+	 * other formats of markup. Some blocks may not be (bio)schema markup. Will not
+	 * process/validate JSON-LD, add @id or change @context etc.
 	 * 
 	 * @param html to find JSON-LD in
 	 * @return An array in which each element is a block of JSON-LD containing
@@ -236,6 +238,136 @@ public abstract class ScraperCore {
 	}
 
 	/**
+	 * Returns the raw/unprocessed structured data from a given URL in JSON-LD. Will
+	 * include rdfa and json-ld (if they exist). Will change the triples so 
+	 * that Any23 will parse them without throwing an error and then change them back.
+	 * 
+	 * Will not:
+	 * <ol>
+	 * <li>remove triples from:
+	 * <ol>
+	 * <li>{@link https://ogp.me/}</li>
+	 * <li>nofollow</li>
+	 * <li>xhtml/vocab</li>
+	 * <li>vocab.sindice</li>
+	 * <li>or anywhere else</li>
+	 * <ol>
+	 * <li>replace blank nodes
+	 * <li>
+	 * </ol>
+	 * 
+	 * 
+	 * @param url The URL to be scraped
+	 * @return The unfiltered structured data as a JSONLD string
+	 * @throws FourZeroFourException 
+	 * @throws MissingHTMLException 
+	 * @throws MissingMarkupException 
+	 */
+	protected String getUnfilteredMarkupAsJsonLDFromUrl(String url) throws FourZeroFourException, MissingHTMLException, MissingMarkupException {
+		Model model = extractUnfilteredMarkupAsRdf4jModel(url);
+
+		if (model == null) {
+			logger.info("Empty model; no markup found in " + url); 
+			return "";
+		}
+		
+		try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+			Rio.write(model, out, RDFFormat.JSONLD);
+			return out.toString("UTF-8");
+		} catch (IOException e) {
+			logger.error("IO error whilst writing JSONLD", e);
+		}
+		return "";
+	}
+
+	/**
+	 * Returns the raw/unprocessed structured data from a given URL in NTriples. Will
+	 * include rdfa and json-ld (if they exist). Will change the triples so 
+	 * that Any23 will parse them without throwing an error and then change them back.
+	 * 
+	 * Will not:
+	 * <ol>
+	 * <li>remove triples from:
+	 * <ol>
+	 * <li>{@link https://ogp.me/}</li>
+	 * <li>nofollow</li>
+	 * <li>xhtml/vocab</li>
+	 * <li>vocab.sindice</li>
+	 * <li>or anywhere else</li>
+	 * <ol>
+	 * <li>replace blank nodes
+	 * <li>
+	 * </ol>
+	 * 
+	 * @param url The URL to be scraped
+	 * @return The unfiltered structured data as a NTriples string
+	 * @throws FourZeroFourException
+	 * @throws MissingMarkupException 
+	 */
+	protected String getUnfilteredMarkupAsNTriplesFromUrl(String url) throws FourZeroFourException, MissingHTMLException, MissingMarkupException {
+		Model model = extractUnfilteredMarkupAsRdf4jModel(url);
+		
+		if (model == null) {
+			logger.info("Empty model; no markup found in " + url); 
+			return "";
+		}
+
+		try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+			Rio.write(model, out, RDFFormat.NTRIPLES);
+			return out.toString("UTF-8");
+		} catch (IOException e) {
+			logger.error("IO error whilst writing NTriples", e);
+		}
+		return "";
+	}
+
+	/**
+	 * Returns the raw/unprocessed structured data from a given URL as an RDF4J {@link Model}. Will
+	 * include rdfa and json-ld (if they exist). Will change the triples so 
+	 * that Any23 will parse them without throwing an error and then change them back.
+	 * 
+	 * Will not:
+	 * <ol>
+	 * <li>remove triples from:
+	 * <ol>
+	 * <li>{@link https://ogp.me/}</li>
+	 * <li>nofollow</li>
+	 * <li>xhtml/vocab</li>
+	 * <li>vocab.sindice</li>
+	 * <li>or anywhere else</li>
+	 * <ol>
+	 * <li>replace blank nodes
+	 * <li>
+	 * </ol>
+	 * 
+	 * @param url The URL to be scraped
+	 * @return The unfiltered structured data as a RDF4J Model
+	 * @throws FourZeroFourException
+	 * @throws MissingHTMLException 
+	 * @throws MissingMarkupException 
+	 * @see {@link Model}
+	 */
+	private Model extractUnfilteredMarkupAsRdf4jModel(String url) throws FourZeroFourException, MissingHTMLException, MissingMarkupException {
+
+		url = fixURL(url);
+		String html = wrapHTMLExtraction(url);
+
+		if (html.contentEquals(""))
+			throw new MissingHTMLException(url);
+
+		// not injecting id as leaving blank nodes
+
+		DocumentSource source = new StringDocumentSource(html, url);
+		String n3 = getTriplesInNTriples(source);
+		if (n3 == null)
+			throw new MissingMarkupException(url);
+
+		Model model = processTriplesLeaveBlankNodes(n3);
+
+		return model;
+	}
+
+	/**
 	 * Takes an Any23 DocumentSource and converts into triples in NTriples form.
 	 * 
 	 * @param source The HTML as an Any23 DocumentSource
@@ -252,13 +384,10 @@ public abstract class ScraperCore {
 
 			return out.toString("UTF-8");
 		} catch (ExtractionException e) {
-			System.out.println("Cannot extract triples!");
 			logger.error("Cannot extract triples", e);
 		} catch (IOException e) {
-			System.out.println("IO error whilst extracting triples!");
 			logger.error(" IO error whilst extracting triples", e);
 		} catch (TripleHandlerException e1) {
-			System.out.println("TripleHanderException!");
 			logger.error("TripleHanderException", e1);
 		}
 
@@ -270,7 +399,7 @@ public abstract class ScraperCore {
 	 * the following predicates:
 	 * <ol>
 	 * <li>nofollow</li>
-	 * <li>ogp.me/...</li>
+	 * <li>{@link https://ogp.me/}</li>
 	 * <li>xhtml/vocab</li>
 	 * <li>vocab.sindice</li>
 	 * </ol>
@@ -359,12 +488,12 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Processes a string containing nTriples to obtain a {@link Model} 
+	 * Processes a string containing nTriples to obtain a {@link Model}
 	 * 
 	 * Does NOT replace the following:
 	 * <ol>
 	 * <li>nofollow</li>
-	 * <li>ogp.me/...</li>
+	 * <li>{@link https://ogp.me/}</li>
 	 * <li>xhtml/vocab</li>
 	 * <li>vocab.sindice</li>
 	 * </ol>
@@ -373,7 +502,8 @@ public abstract class ScraperCore {
 	 * 
 	 * Triples are NOT placed in a context.
 	 * 
-	 * DOES rectify the changes made to predicates and objects to ensure Any23 can parse them (see {@link #fixAny23WeirdIssues(String)}
+	 * DOES rectify the changes made to predicates and objects to ensure Any23 can
+	 * parse them (see {@link #fixAny23WeirdIssues(String)}
 	 * 
 	 * @param nTriples The triples to be processed
 	 * @return An RDF4J model containing the UNprocessed triples
@@ -432,7 +562,22 @@ public abstract class ScraperCore {
 		Random rand = new Random();
 		int randomInt = Math.abs(rand.nextInt());
 		return SimpleValueFactory.getInstance().createIRI(ngraph + "/" + source + randomInt);
-	}	
+	}
+
+	
+	/** 
+	 * Removes trailing # or / at the end of a URL
+	 * 
+	 * @param url
+	 * @return Remove with # or / removed (if they existing)
+	 */
+	protected String fixURL (String url) {
+		if (url.endsWith("/") || url.endsWith("#"))
+			url = url.substring(0, url.length() - 1);
+		
+		return url;
+	}
+	
 	
 	/**
 	 * Changes the HTML such that Any23 can parse it. Bugs in Any23 mean that some
@@ -447,7 +592,7 @@ public abstract class ScraperCore {
 		return html.replaceAll("license", "licensE").replaceAll("fileFormat", "FileFormat").replaceAll("additionalType",
 				"addType");
 	}
-	
+
 	/**
 	 * Removes changes made to allow Any23 to parse the html & standardises on
 	 * httpS://schema.org
@@ -565,7 +710,7 @@ public abstract class ScraperCore {
 	 * of them using {@link #fixASingleJsonLdBlock(String, String)}
 	 * 
 	 * @param html The HTML source
-	 * @param url The URL from which the source was obtained
+	 * @param url  The URL from which the source was obtained
 	 * @return HTML in which JSON-LD has been corrected
 	 * @throws JsonLDInspectionException when JSON cannot be parsed
 	 * @see {@link #fixASingleJsonLdBlock(String, String)}
@@ -598,10 +743,10 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * 	 
-	 * Corrects/amends a single JSON-LD block markup extracted from the HTML source. 
-	 * A block of JSON can either contain a single JSON description or an array of several JSON descriptions.
-	 * For each description this will:
+	 * 
+	 * Corrects/amends a single JSON-LD block markup extracted from the HTML source.
+	 * A block of JSON can either contain a single JSON description or an array of
+	 * several JSON descriptions. For each description this will:
 	 * <ol>
 	 * <li>Changes context to https://schema.org</li>
 	 * <li>adds @id based on url</li>
@@ -609,7 +754,7 @@ public abstract class ScraperCore {
 	 * 
 	 * 
 	 * @param markup A single block of JSON-LD (bio)schema markup as a String
-	 * @param url The URL of the site the markup was scraped from
+	 * @param url    The URL of the site the markup was scraped from
 	 * @return mended JSON-LD markup as a String
 	 * @throws JsonLDInspectionException when JSON cannot be parsed
 	 */
@@ -618,30 +763,30 @@ public abstract class ScraperCore {
 		JSONArray jsonArray = null;
 		JSONObject jsonObj = null;
 		try {
-			Object obj  = parser.parse(markup);
-			
-			if(obj instanceof JSONArray) {
+			Object obj = parser.parse(markup);
+
+			if (obj instanceof JSONArray) {
 				jsonArray = (JSONArray) obj;
 				return fixAJsonLdArray(jsonArray, url);
-			} else if(obj instanceof JSONObject) {
+			} else if (obj instanceof JSONObject) {
 				jsonObj = (JSONObject) obj;
 				return fixASingleJsonLdObject(jsonObj, url);
 			}
-			
+
 			throw new JsonLDInspectionException("Unkown object obtained from JSON parser :" + url);
-					
+
 		} catch (ParseException e) {
 			logger.error("Failed to parse JSONArray from :" + url);
 			throw new JsonLDInspectionException("Failed to parse JSON from :" + url);
-		}		
+		}
 	}
 
 	/**
-	 * Corrects an {@link JSONArray} of (bio)schemas markup; each element is a {@link JSONObject}. 
-	 * Uses {@link #fixASingleJSONLdObject(JSONObject, String)}
+	 * Corrects an {@link JSONArray} of (bio)schemas markup; each element is a
+	 * {@link JSONObject}. Uses {@link #fixASingleJSONLdObject(JSONObject, String)}
 	 * 
 	 * @param array An {@link JSONArray} of (bio)schemas markup
-	 * @param url The URL from which the markup was scraped
+	 * @param url   The URL from which the markup was scraped
 	 * @return The corrected markup stringified; will still be in array
 	 */
 	protected String fixAJsonLdArray(JSONArray array, String url) {
@@ -658,12 +803,13 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Wrapper that converts {@link #fixASingleJSONLdObject(JSONObject, String)} such that it returns 
-	 * a String rather than a {@link JSONObject}
+	 * Wrapper that converts {@link #fixASingleJSONLdObject(JSONObject, String)}
+	 * such that it returns a String rather than a {@link JSONObject}
 	 * 
-	 * @param jsonObj A {@link JSONObject} containing the (bio)schema markup to be corrected
-	 * @param url The URL from where the jsonObj was obtained
-	 * @return A stringified version of the corrected {@link JSONObject} 
+	 * @param jsonObj A {@link JSONObject} containing the (bio)schema markup to be
+	 *                corrected
+	 * @param url     The URL from where the jsonObj was obtained
+	 * @return A stringified version of the corrected {@link JSONObject}
 	 */
 	protected String fixASingleJsonLdObject(JSONObject jsonObj, String url) {
 
@@ -671,18 +817,18 @@ public abstract class ScraperCore {
 
 		return correctedObj.toJSONString().replaceAll("\\\\", "");
 	}
-	
+
 	/**
 	 * 
-	 * Corrects/amends a single JSON-LD object markup extracted from the HTML
-	 * source
+	 * Corrects/amends a single JSON-LD object markup extracted from the HTML source
 	 * <ol>
 	 * <li>Changes context to https://schema.org</li>
 	 * <li>adds @id based on url</li>
 	 * </ol>
-	 *  
-	 * @param jsonObj A single block of JSON-LD (bio)schema markup as a {@link JSONObject}
-	 * @param url    The URL of the site the markup was scraped from
+	 * 
+	 * @param jsonObj A single block of JSON-LD (bio)schema markup as a
+	 *                {@link JSONObject}
+	 * @param url     The URL of the site the markup was scraped from
 	 * @return Amended JSON-LD markup as a {@link JSONObject}
 	 */
 	protected JSONObject fixASingleJSONLdObject(JSONObject jsonObj, String url) {
@@ -705,10 +851,10 @@ public abstract class ScraperCore {
 				jsonObj.put("@id", url);
 			}
 		}
-		
+
 		return jsonObj;
 	}
-	
+
 	/**
 	 * Replaces the old JSON-LD markup with the new markup
 	 * 
@@ -726,18 +872,19 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Orchestrates the scraping of a given URL and writes the output (as quads) to a file
-	 * specified in the arguments. If the fileName is not specified, ie null, the contextCounter
-	 * will be used to name the file.
+	 * Orchestrates the scraping of a given URL and writes the output (as quads) to
+	 * a file specified in the arguments. If the fileName is not specified, ie null,
+	 * the contextCounter will be used to name the file.
 	 * 
-	 * contextCounter is used a way of keeping track of which URL in a list is being scraped.
-	 * This is managed by the calling class. 
+	 * contextCounter is used a way of keeping track of which URL in a list is being
+	 * scraped. This is managed by the calling class.
 	 * 
 	 * The file will be located in the location specified in application.properties
 	 * 
-	 * @param url URL to scrape
-	 * @param outputFileName name of file the output will be written to
-	 * @param contextCounter The value of the counter used to record which number of URL is being scraped
+	 * @param url              URL to scrape
+	 * @param outputFileName   name of file the output will be written to
+	 * @param contextCounter   The value of the counter used to record which number
+	 *                         of URL is being scraped
 	 * @param outputFolderName Folder where output is written to
 	 * @return FALSE if failed else TRUE
 	 * @throws FourZeroFourException
@@ -746,8 +893,8 @@ public abstract class ScraperCore {
 	 */
 	public boolean scrape(String url, String outputFolderName, String outputFileName, Long contextCounter)
 			throws FourZeroFourException, JsonLDInspectionException, CannotWriteException {
-		if (url.endsWith("/") || url.endsWith("#"))
-			url = url.substring(0, url.length() - 1);
+	
+		url = fixURL(url);
 
 		String html = wrapHTMLExtraction(url);
 
