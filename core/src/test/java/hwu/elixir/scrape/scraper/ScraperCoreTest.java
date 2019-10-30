@@ -45,10 +45,11 @@ public class ScraperCoreTest {
 	
 	private static ScraperCore scraperCore;
 	private static File testHtml;
-	private static String outputLoction  = System.getProperty("user.home")+File.separator+"toDelete";
+	private static String outputLoction  = System.getProperty("user.home")+File.separator+"toDelete"+File.separator;
 
 	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {		
+	public static void setUpBeforeClass() throws Exception {
+		System.out.println(outputLoction);
 		File outputFolder = new File(outputLoction);
 		boolean result = outputFolder.mkdir();
 		if(!result) {
@@ -206,7 +207,6 @@ public class ScraperCoreTest {
 			e.printStackTrace();
 			fail();
 		}
-
 	}
 
 	@Test
@@ -291,8 +291,7 @@ public class ScraperCoreTest {
 				}
 				html = html.trim();
 			}
-			String outHtml = scraperCore.injectId(html, "https://myId.com");
-			System.out.println(outHtml);
+			String outHtml = scraperCore.injectId(html, "https://myId.com");			
 			assertTrue(outHtml.contains("\"@id\":\"https://myId.com\","));
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -624,7 +623,7 @@ public class ScraperCoreTest {
 		String n3 = scraperCore.getTriplesInNTriples(source);
 		Model liveModel = scraperCore.processTriples(n3, sourceIRI, 100000L);
 
-		File liveQuads = new File("test_live_hamap.nq");
+		File liveQuads = new File(outputLoction+"test_live_hamap.nq");
 
 		try (PrintWriter out = new PrintWriter(liveQuads)) {
 			Rio.write(liveModel, out, RDFFormat.NQUADS);
@@ -676,7 +675,7 @@ public class ScraperCoreTest {
 		String n3 = scraperCore.getTriplesInNTriples(source);
 		Model liveModel = scraperCore.processTriples(n3, sourceIRI, 100000L);
 
-		File liveQuads = new File("test_live_biosamples.nq");
+		File liveQuads = new File(outputLoction+"test_live_biosamples.nq");
 
 		try (PrintWriter out = new PrintWriter(liveQuads)) {
 			Rio.write(liveModel, out, RDFFormat.NQUADS);
@@ -731,7 +730,7 @@ public class ScraperCoreTest {
 		String n3 = scraperCore.getTriplesInNTriples(source);
 		Model liveModel = scraperCore.processTriples(n3, sourceIRI, 100000L);
 
-		File liveQuads = new File("test_live_chembl.nq");
+		File liveQuads = new File(outputLoction+"test_live_chembl.nq");
 
 		try (PrintWriter out = new PrintWriter(liveQuads)) {
 			Rio.write(liveModel, out, RDFFormat.NQUADS);
@@ -785,7 +784,7 @@ public class ScraperCoreTest {
 		String n3 = scraperCore.getTriplesInNTriples(source);
 		Model liveModel = scraperCore.processTriplesLeaveBlankNodes(n3);		
 	
-		File liveQuads = new File("test_live_chembl.nq");
+		File liveQuads = new File(outputLoction+"test_live_chembl.nq");
 
 		try (PrintWriter out = new PrintWriter(liveQuads)) {
 			Rio.write(liveModel, out, RDFFormat.NQUADS);
@@ -848,9 +847,8 @@ public class ScraperCoreTest {
 		String outputFileName = "chembl";
 		
 		scraperCore.scrape(chemblURLOnGitHub, outputLoction, outputFileName, 100000L);
-		String fileName = outputLoction+File.separator+outputFileName+".nq";
+		String fileName = outputLoction+outputFileName+".nq";		
 		File liveQuads = new File(fileName);
-		
 		
 		String resourceName = "testRDF/chemblFromGitHub.nq";
 		ClassLoader classLoader = getClass().getClassLoader();
