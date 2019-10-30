@@ -32,10 +32,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-
+import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
+import hwu.elixir.scrape.exceptions.MissingMarkupException;
 import hwu.elixir.scrape.exceptions.NTriplesParsingException;
 import hwu.elixir.scrape.exceptions.SeleniumException;
 import hwu.elixir.utils.CompareNQ;
@@ -44,13 +45,31 @@ public class ScraperCoreTest {
 	
 	private static ScraperCore scraperCore;
 	private static File testHtml;
+	private static String outputLoction  = System.getProperty("user.home")+File.separator+"toDelete";
 
 	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {			
+	public static void setUpBeforeClass() throws Exception {		
+		File outputFolder = new File(outputLoction);
+		boolean result = outputFolder.mkdir();
+		if(!result) {
+			throw new Exception("Cannot create output folder for temporary files used during ScraperCoreTest!");
+		}		
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
+		File outputFolder = new File(outputLoction);
+		String[] listOfFiles = outputFolder.list();
+		for(String fileName : listOfFiles) {
+			File currentFile = new File(outputFolder.getPath(), fileName);
+			currentFile.delete();
+		}			
+		
+		boolean result = outputFolder.delete();
+		if(!result) {
+			throw new Exception("Cannot delete output folder for temporary files used during ScraperCoreTest!");
+		}		
+		
 		scraperCore.shutdown();
 	}
 
@@ -741,7 +760,7 @@ public class ScraperCoreTest {
 	
 	
 	@Test
-	public void processTriplesLeaveBlankNodes_chembl() throws NTriplesParsingException {
+	public void test_processTriplesLeaveBlankNodes_chembl() throws NTriplesParsingException {
 		String html = "";
 		try {
 			String resourceName = "testHtml/chembl.html";
@@ -807,7 +826,6 @@ public class ScraperCoreTest {
 	public void test_wrapHTMLExtraction_fail() throws FourZeroFourException, SeleniumException {
 		String url = "https://www.apJ7G2m!.com";
 		String html1 = scraperCore.wrapHTMLExtraction(url);	
-		System.out.println(html1 == null);
 		assertNull(html1);
 	}
 	
@@ -820,9 +838,34 @@ public class ScraperCoreTest {
 		assertEquals(url, scraperCore.fixURL(url2));
 		
 		url2 = "https://www.macs.hw.ac.uk#";
-		assertEquals(url, scraperCore.fixURL(url2));
+		assertEquals(url, scraperCore.fixURL(url2));	
+	}
+	
+	
+	@Test
+	public void test_scrape_pass() throws FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
+		String chemblURLOnGitHub = "https://raw.githubusercontent.com/HW-SWeL/Scraper/master/core/src/test/resources/testHtml/chembl.html";
+		String outputFileName = "chembl";
+		
+		scraperCore.scrape(chemblURLOnGitHub, outputLoction, outputFileName, 100000L);
+		String fileName = outputLoction+File.separator+outputFileName+".nq";
+		File liveQuads = new File(fileName);
 		
 		
+		String resourceName = "testRDF/chemblFromGitHub.nq";
+		ClassLoader classLoader = getClass().getClassLoader();
+		File storedQuads = new File(classLoader.getResource(resourceName).getFile());		
+
+		CompareNQ compare = new CompareNQ();
+		try {
+			assertTrue(compare.compare(liveQuads, storedQuads));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			fail();
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail();
+		}		
 	}
 	
 }
