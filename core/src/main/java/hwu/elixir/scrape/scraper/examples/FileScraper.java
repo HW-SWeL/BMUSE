@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
+import hwu.elixir.scrape.exceptions.MissingMarkupException;
 import hwu.elixir.scrape.scraper.ScraperCore;
 import hwu.elixir.utils.Helpers;
 
@@ -226,9 +227,9 @@ public class FileScraper extends ScraperCore {
 			} catch (JsonLDInspectionException e) {
 				logger.error("The JSON-LD could be not parsed for " + url);
 			} catch (CannotWriteException e) {
-				logger.error("Problem writing file for " + url + " to the " + outputFolder + " directory.");
-				shutdown();
-				System.exit(-1);				
+				logger.error("Problem writing file for " + url + " to the " + outputFolder + " directory.");			
+			} catch (MissingMarkupException e) {
+				logger.error("Problem obtaining markup from " + url + ".");
 			}
 
 			displayResult(url, result, outputFolder);

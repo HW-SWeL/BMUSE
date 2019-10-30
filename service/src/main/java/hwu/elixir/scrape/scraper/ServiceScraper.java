@@ -7,6 +7,7 @@ import hwu.elixir.scrape.db.crawl.StateOfCrawl;
 import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
+import hwu.elixir.scrape.exceptions.MissingMarkupException;
 import hwu.elixir.scrape.exceptions.SeleniumException;
 
 /**
@@ -35,9 +36,10 @@ public class ServiceScraper extends ScraperCore {
 	 * @throws FourZeroFourException 
 	 * @throws JsonLDInspectionException
 	 * @throws CannotWriteException 
+	 * @throws MissingMarkupException 
 	 * 
 	 */
-	public boolean scrape(String url, Long contextCounter, String outputFolderName, StateOfCrawl status) throws FourZeroFourException, JsonLDInspectionException, CannotWriteException {
+	public boolean scrape(String url, Long contextCounter, String outputFolderName, StateOfCrawl status) throws FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
 		this.status = status;
 		return scrape(url, outputFolderName, null, contextCounter);
 	}

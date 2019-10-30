@@ -18,6 +18,7 @@ import hwu.elixir.scrape.db.crawl.StateOfCrawl;
 import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
+import hwu.elixir.scrape.exceptions.MissingMarkupException;
 
 public class ScrapeThreadTest {
 	
@@ -80,7 +81,7 @@ public class ScrapeThreadTest {
 	}
 	
 	@Test
-	public void test_uRLtoCrawl_butFails() throws NoSuchFieldException, SecurityException, FourZeroFourException, JsonLDInspectionException, CannotWriteException {
+	public void test_uRLtoCrawl_butFails() throws NoSuchFieldException, SecurityException, FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
 		when(state.pagesLeftToScrape()).thenReturn(true, false);
 		when(state.getURLToProcess()).thenReturn(record);
 		when(scraper.scrape("http://www.abc.com", 1L, outputLoction, StateOfCrawl.UNTRIED)).thenReturn(false);
@@ -96,7 +97,7 @@ public class ScrapeThreadTest {
 	}
 
 	@Test
-	public void test_uRLtoCrawl_works() throws FourZeroFourException, JsonLDInspectionException, CannotWriteException {
+	public void test_uRLtoCrawl_works() throws FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
 
 		when(state.pagesLeftToScrape()).thenReturn(true, false);
 		when(state.getURLToProcess()).thenReturn(record);
@@ -114,7 +115,7 @@ public class ScrapeThreadTest {
 	
 	
 	@Test
-	public void test_uRLtoCrawl_throwsException() throws FourZeroFourException, JsonLDInspectionException, CannotWriteException {
+	public void test_uRLtoCrawl_throwsException() throws FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
 		
 		when(state.pagesLeftToScrape()).thenReturn(true, false);
 		when(state.getURLToProcess()).thenReturn(record);
@@ -130,7 +131,7 @@ public class ScrapeThreadTest {
 	}	
 	
 	@Test
-	public void test_uRLtoCrawl_throws404() throws FourZeroFourException, JsonLDInspectionException, CannotWriteException {
+	public void test_uRLtoCrawl_throws404() throws FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
 
 		when(state.pagesLeftToScrape()).thenReturn(true, false);
 		when(state.getURLToProcess()).thenReturn(record);
@@ -147,7 +148,7 @@ public class ScrapeThreadTest {
 	}	
 	
 	@Test
-	public void test_uRLtoCrawl_throwsInsepection() throws FourZeroFourException, JsonLDInspectionException, CannotWriteException {
+	public void test_uRLtoCrawl_throwsInsepection() throws FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
 
 		when(state.pagesLeftToScrape()).thenReturn(true, false);
 		when(state.getURLToProcess()).thenReturn(record);

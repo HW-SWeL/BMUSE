@@ -14,6 +14,7 @@ import hwu.elixir.scrape.db.crawl.StateOfCrawl;
 import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
+import hwu.elixir.scrape.exceptions.MissingMarkupException;
 
 public class ServiceScraperTest {
 
@@ -56,14 +57,14 @@ public class ServiceScraperTest {
 
 	
 	@Test
-	public void test_scrape_doSomething() throws FourZeroFourException, JsonLDInspectionException, CannotWriteException {
+	public void test_scrape_doSomething() throws FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
 		assertEquals(true, scraper.scrape("http://www.hw.ac.uk", 100L, outputLoction, StateOfCrawl.FAILED));
 		assertEquals(true, scraper.scrape("http://www.hw.ac.uk", 100L, outputLoction, StateOfCrawl.UNTRIED));
 	}
 	
 	@Test
 	public void test_scrape_NothingToDo()
-			throws FourZeroFourException, JsonLDInspectionException, CannotWriteException {
+			throws FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
 		assertEquals(false, scraper.scrape("http://www.hw.ac.uk", 100L, outputLoction, StateOfCrawl.SUCCESS));
 
 		assertEquals(false, scraper.scrape("http://www.hw.ac.uk/", 100L, outputLoction, StateOfCrawl.GIVEN_UP));

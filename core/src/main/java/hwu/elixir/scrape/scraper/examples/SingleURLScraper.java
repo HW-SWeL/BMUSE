@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
+import hwu.elixir.scrape.exceptions.MissingMarkupException;
 import hwu.elixir.scrape.scraper.ScraperCore;
 
 /**
@@ -23,6 +24,7 @@ public class SingleURLScraper extends ScraperCore {
 	 * Scrape a given URL and write to file in the home directory. Output will be in NQuads format.
 	 * 
 	 * @param url The URL to scrape
+	 * @throws  
 	 * @throws FourZeroFourException
 	 * @throws JsonLDInspectionException
 	 * @throws CannotWriteException
@@ -33,7 +35,9 @@ public class SingleURLScraper extends ScraperCore {
 		} catch (FourZeroFourException | JsonLDInspectionException e) {
 			logger.error("Cannot scrape site; error thrown", e);
 		} catch (CannotWriteException e) {
-			logger.error("Problem writing file for to the " + outputFolder + " directory.");
+			logger.error("Problem writing file for to the " + outputFolder + " directory.");	
+		} catch (MissingMarkupException e) {
+			logger.error("Problem obtaining markup from " + url + ".");
 		} finally {
 			shutdown();
 		}
