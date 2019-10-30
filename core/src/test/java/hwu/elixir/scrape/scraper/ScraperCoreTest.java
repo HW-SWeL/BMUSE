@@ -741,7 +741,60 @@ public class ScraperCoreTest {
 	
 	
 	@Test
-	public void wrapHTMLExtraction_basic() throws FourZeroFourException, SeleniumException {
+	public void processTriplesLeaveBlankNodes_chembl() throws NTriplesParsingException {
+		String html = "";
+		try {
+			String resourceName = "testHtml/chembl.html";
+			ClassLoader classLoader = getClass().getClassLoader();
+			testHtml = new File(classLoader.getResource(resourceName).getFile());
+
+			try (BufferedReader br = new BufferedReader(new FileReader(testHtml))) {
+				String line = "";
+				while ((line = br.readLine()) != null) {
+					html += line;
+				}
+				html = html.trim();
+			}
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail();
+		}	
+		
+		DocumentSource source = new StringDocumentSource(html,
+				"https://www.ebi.ac.uk/chembl/compound_report_card/CHEMBL59/");
+		String n3 = scraperCore.getTriplesInNTriples(source);
+		Model liveModel = scraperCore.processTriplesLeaveBlankNodes(n3);		
+	
+		File liveQuads = new File("test_live_chembl.nq");
+
+		try (PrintWriter out = new PrintWriter(liveQuads)) {
+			Rio.write(liveModel, out, RDFFormat.NQUADS);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail();
+		}
+		
+		String resourceName = "testRDF/unprocessedChembl.nq";
+		ClassLoader classLoader = getClass().getClassLoader();
+		File storedQuads = new File(classLoader.getResource(resourceName).getFile());
+
+		CompareNQ compare = new CompareNQ();
+		try {
+			assertTrue(compare.compare(liveQuads, storedQuads));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			fail();
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail();
+		}
+
+		liveQuads.delete();		
+	}
+	
+	@Test
+	public void test_wrapHTMLExtraction_basic() throws FourZeroFourException, SeleniumException {
 		String url = "https://www.macs.hw.ac.uk";
 		String html1 = scraperCore.getHtmlViaSelenium(url);
 		String html2 = scraperCore.wrapHTMLExtraction(url);
@@ -751,11 +804,25 @@ public class ScraperCoreTest {
 
 	
 	@Test
-	public void wrapHTMLExtraction_fail() throws FourZeroFourException, SeleniumException {
+	public void test_wrapHTMLExtraction_fail() throws FourZeroFourException, SeleniumException {
 		String url = "https://www.apJ7G2m!.com";
 		String html1 = scraperCore.wrapHTMLExtraction(url);	
 		System.out.println(html1 == null);
 		assertNull(html1);
+	}
+	
+	@Test
+	public void test_fixURL_pass() {
+		String url = "https://www.macs.hw.ac.uk";
+		assertEquals(url, scraperCore.fixURL(url));
+		
+		String url2 = "https://www.macs.hw.ac.uk/";
+		assertEquals(url, scraperCore.fixURL(url2));
+		
+		url2 = "https://www.macs.hw.ac.uk#";
+		assertEquals(url, scraperCore.fixURL(url2));
+		
+		
 	}
 	
 }
