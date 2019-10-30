@@ -9,6 +9,7 @@ import hwu.elixir.scrape.db.crawl.CrawlRecord;
 import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
+import hwu.elixir.scrape.exceptions.MissingMarkupException;
 
 /**
  * Provides a thread wrapper for the process of scraping. Scraping defined
@@ -83,6 +84,10 @@ public class ScrapeThread extends Thread {
 				worked = false;
 				scrapeState.addFailedToScrapeURL(record);
 				return;
+			} catch (MissingMarkupException e) {
+				logger.error("Cannot obtain markup from " + record.getUrl() +".");
+				worked = false;
+				scrapeState.addFailedToScrapeURL(record);
 			}
 			try {
 				ScrapeThread.sleep(100 * waitTime);

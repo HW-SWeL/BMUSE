@@ -36,6 +36,7 @@ import org.mockito.Mockito;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
+import hwu.elixir.scrape.exceptions.NTriplesParsingException;
 import hwu.elixir.scrape.exceptions.SeleniumException;
 import hwu.elixir.utils.CompareNQ;
 
@@ -576,7 +577,7 @@ public class ScraperCoreTest {
 	}
 
 	@Test
-	public void processTriples_hamap() {
+	public void processTriples_hamap() throws NTriplesParsingException {
 		String html = "";
 		try {
 			String resourceName = "testHtml/hamap.html";
@@ -628,7 +629,7 @@ public class ScraperCoreTest {
 	}
 
 	@Test
-	public void processTriples_biosamples() {
+	public void processTriples_biosamples() throws NTriplesParsingException {
 		String html = "";
 		try {
 			String resourceName = "testHtml/biosamples.html";
@@ -682,7 +683,7 @@ public class ScraperCoreTest {
 	}
 
 	@Test
-	public void processTriples_chembl() {
+	public void processTriples_chembl() throws NTriplesParsingException {
 		String html = "";
 		try {
 			String resourceName = "testHtml/chembl.html";
