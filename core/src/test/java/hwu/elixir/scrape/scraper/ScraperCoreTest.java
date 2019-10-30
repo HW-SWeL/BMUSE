@@ -158,8 +158,11 @@ public class ScraperCoreTest {
 		String[] allJsonLD = scraperCore.getOnlyJSONLDFromUrl("http://www.macs.hw.ac.uk");
 		assertTrue(allJsonLD.length == 3);
 		for (String json : allJsonLD) {
-			assertTrue(json.startsWith("{") && json.endsWith("}"));
-			assertTrue(json.contains("@context") && json.contains("schema.org"));
+			json = json.trim();
+			assertTrue(json.startsWith("{"));
+			assertTrue(json.endsWith("}"));
+			assertTrue(json.contains("@context"));
+			assertTrue(json.contains("schema.org"));
 		}
 	}
 
