@@ -391,6 +391,8 @@ public abstract class ScraperCore {
 	}
 
 	/**
+	 * Processes a string containing nTriples to obtain a RDF4J {@link Model}.
+	 * 
 	 * Takes a series of triples as a string and filters them removing triples with
 	 * the following predicates:
 	 * <ol>
@@ -418,15 +420,9 @@ public abstract class ScraperCore {
 	 * @see Model
 	 */
 	protected Model processTriples(String nTriples, IRI sourceIRI, Long contextCounter) throws NTriplesParsingException {
-		InputStream input = new ByteArrayInputStream(nTriples.getBytes(StandardCharsets.UTF_8));
-
-		Model model = null;
-		try {
-			model = Rio.parse(input, "", RDFFormat.NTRIPLES);
-		} catch (RDFParseException | UnsupportedRDFormatException | IOException e) {
-			logger.error("Cannot parse triples into a model", e);
-			throw new NTriplesParsingException("Cannot parse triples into a model");
-		}
+	
+		Model model = createModelFromNTriples(nTriples);
+		
 		Iterator<Statement> it = model.iterator();
 
 		String nSpace = "https://bioschemas.org/crawl/v1/";
@@ -485,7 +481,7 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Processes a string containing nTriples to obtain a {@link Model}
+	 * Processes a string containing nTriples to obtain a RDF4J {@link Model}
 	 * 
 	 * Does NOT replace the following:
 	 * <ol>
@@ -508,19 +504,11 @@ public abstract class ScraperCore {
 	 * @see Model
 	 */
 	protected Model processTriplesLeaveBlankNodes(String nTriples) throws NTriplesParsingException {
-		InputStream input = new ByteArrayInputStream(nTriples.getBytes(StandardCharsets.UTF_8));
 
-		Model model = null;
-		try {
-			model = Rio.parse(input, "", RDFFormat.NTRIPLES);
-		} catch (RDFParseException | UnsupportedRDFormatException | IOException e) {
-			logger.error("Cannot parse triples into a model", e);
-			
-		}
+		Model model = createModelFromNTriples(nTriples);
 		Iterator<Statement> it = model.iterator();
-
 		ModelBuilder builder = new ModelBuilder();
-
+		
 		while (it.hasNext()) {
 			Statement temp = it.next();
 			Resource subject = temp.getSubject();
@@ -533,10 +521,31 @@ public abstract class ScraperCore {
 
 			builder.add(subject, predicate, object);
 		}
-
 		return builder.build();
 	}
 
+	
+	/** 
+	 * Generates a RDF4J {@link Model} from a string of NTriples.
+	 * 
+	 * @param nTriples The string containing the N-Triples to be turned into a Model
+	 * @return The Model containing the triples from nTriples
+	 * @throws NTriplesParsingException Thrown when the input param cannot be parsed as NTriples
+	 */
+	private Model createModelFromNTriples(String nTriples) throws NTriplesParsingException {
+		InputStream input = new ByteArrayInputStream(nTriples.getBytes(StandardCharsets.UTF_8));
+
+		Model model = null;
+		try {
+			model = Rio.parse(input, "", RDFFormat.NTRIPLES);
+		} catch (RDFParseException | UnsupportedRDFormatException | IOException e) {
+			logger.error("Cannot parse triples into a model", e);
+			throw new NTriplesParsingException("Cannot parse triples into a model");
+		}
+		return model;
+	}
+	
+	
 	/**
 	 * Generates a new IRI based on the named graph and the source's IRI. Includes a
 	 * random element based on time to ensure no collisions.
