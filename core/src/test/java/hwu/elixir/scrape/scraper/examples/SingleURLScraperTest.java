@@ -60,5 +60,6 @@ public class SingleURLScraperTest {
 		assertTrue(fileContent.contains("<https://www.hw.ac.uk/schools/mathematical-computer-sciences.htm> <https://schema.org/name> \"Mathematical and Computer Sciences\""));
 		assertTrue(fileContent.contains("<https://www.macs.hw.ac.uk> <http://purl.org/dc/terms/title> \"Mathematical and Computer Sciences | Heriot-Watt University\""));
 		
+		outputFile.delete();
 	}
 }
