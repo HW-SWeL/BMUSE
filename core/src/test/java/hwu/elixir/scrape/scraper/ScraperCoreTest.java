@@ -49,7 +49,6 @@ public class ScraperCoreTest {
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		System.out.println(outputLoction);
 		File outputFolder = new File(outputLoction);
 		boolean result = outputFolder.mkdir();
 		if(!result) {
