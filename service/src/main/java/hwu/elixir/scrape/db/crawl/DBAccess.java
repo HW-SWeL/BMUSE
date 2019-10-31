@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
  * standard JPA
  * 
  * @see CrawlRecord
- * @author kcm
  */
 public class DBAccess {
 
@@ -80,7 +79,7 @@ public class DBAccess {
 			txn.commit();
 		} catch (Exception e) {
 			if (txn != null)
-				txn.commit();
+				txn.rollback();
 
 			logger.error("    ERROR in DBAccess: " + e.getLocalizedMessage());
 			return false;
@@ -137,7 +136,7 @@ public class DBAccess {
 			txn.commit();
 		} catch (Exception e) {
 			if (txn != null)
-				txn.commit();
+				txn.rollback();
 
 			logger.error("    ERROR in DBAccess: " + e.getLocalizedMessage());
 			return false;
@@ -179,7 +178,7 @@ public class DBAccess {
 			txn.commit();
 		} catch (Exception e) {
 			if (txn != null)
-				txn.commit();
+				txn.rollback();
 
 			logger.error("    ERROR in DBAccess: " + e.getLocalizedMessage());
 			return false;
