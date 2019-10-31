@@ -2,6 +2,7 @@ package hwu.elixir.scrape.scraper;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -10,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.any23.Any23;
 import org.apache.any23.extractor.ExtractionException;
@@ -533,16 +536,38 @@ public abstract class ScraperCore {
 	 * @throws NTriplesParsingException Thrown when the input param cannot be parsed as NTriples
 	 */
 	private Model createModelFromNTriples(String nTriples) throws NTriplesParsingException {
+		
+		try {
+			return createModelFromNTriples2(nTriples);
+		} catch (RDFParseException e) {
+			// RDF4J doesn't like | (ie character U+7C) inside URLs.
+			// this removes | from everywhere in the doc...
+			nTriples = nTriples.replaceAll("\\|", "");
+			try {
+				return createModelFromNTriples2(nTriples);
+			} catch (RDFParseException | UnsupportedRDFormatException | IOException e2) {
+				logger.error("Cannot parse triples into a model", e2);
+				throw new NTriplesParsingException("Cannot parse triples into a model");
+			}				
+		} catch (UnsupportedRDFormatException | IOException e2) {
+			logger.error("Cannot parse triples into a model. Already tried removing |", e2);
+			throw new NTriplesParsingException("Cannot parse triples into a model");			
+		}
+	}
+	
+	/**
+	 * Loads nTriples into a InputStream and passes that to RDF4J NTriples parser to generate a {@link Model} 
+	 * 
+	 * @param nTriples String of nTriples
+	 * @return RDF4J Model with the triples loaded inside it
+	 * @throws RDFParseException Cannot parse the nTriples for some reason. Common problem is a URL with an inappropriate character, e.g., |
+	 * @throws UnsupportedRDFormatException
+	 * @throws IOException
+	 */
+	private Model createModelFromNTriples2(String nTriples) throws RDFParseException, UnsupportedRDFormatException, IOException {
 		InputStream input = new ByteArrayInputStream(nTriples.getBytes(StandardCharsets.UTF_8));
 
-		Model model = null;
-		try {
-			model = Rio.parse(input, "", RDFFormat.NTRIPLES);
-		} catch (RDFParseException | UnsupportedRDFormatException | IOException e) {
-			logger.error("Cannot parse triples into a model", e);
-			throw new NTriplesParsingException("Cannot parse triples into a model");
-		}
-		return model;
+		return Rio.parse(input, "", RDFFormat.NTRIPLES);
 	}
 	
 	
@@ -826,7 +851,6 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * 
 	 * Corrects/amends a single JSON-LD object markup extracted from the HTML source
 	 * <ol>
 	 * <li>Changes context to https://schema.org</li>
