@@ -38,7 +38,7 @@ Additional requirements for *service*:
 
 #### core
 
-Provides the core functionality as an abstract class. Additionally, two example classes exist that can be used to scrape either a single given URL or a series of URLs from a given file. For most purposes this file scraper is likely to be sufficient and there is no need to explore further.
+Provides the core functionality as an abstract class. Additionally, two example classes exist that can be used to scrape either a single given URL or a series of URLs from a given file. For most purposes this file scraper is likely to be sufficient and there is no need to explore further. If you follow the instructions below you will run the file scraper.
 
 To use this:
 1. Update `core > src > main > resources > applications.properties`. You need to specify:
@@ -47,7 +47,7 @@ To use this:
     * location of the chrome driver.
 2. Create/edit your list of urls file.
 3. Package with maven: `mvn clean package` from the top level *Scraper* folder or the *core* folder.
-4. Inside the `core > target` directory you will find two jars. The fat jar is called `core-x.x.x-SNAPSHOT.jar` and the skinny jar is `original-core-x.x.x-SNAPSHOT.jar`. Run the fat jar however you wish via maven or the command line, e.g., `java -jar core-x.x.x-SNAPSHOT.jar`.
+4. Inside the `core > target` directory you will find two jars. The fat jar is called `core-x.x.x-SNAPSHOT.jar` and the skinny jar is `original-core-x.x.x-SNAPSHOT.jar`. Run the fat jar however you wish via maven or the command line, e.g., `java -jar core-x.x.x-SNAPSHOT.jar`. This will run the file scraper.
 
 Note: Running this will produce a `localProperties.Properties` file, which can be ignored. It is simply used to maintain an auto-incrementing count of the number of sites scrape (a.k.a. the `contextCounter`). You can reset this count to 0 by deleting the `localProperties.Properties` file.
 
