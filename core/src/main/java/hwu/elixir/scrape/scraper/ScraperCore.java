@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -106,7 +107,7 @@ public abstract class ScraperCore {
 	 * @throws FourZeroFourException
 	 */
 	protected String wrapHTMLExtraction(String url) throws FourZeroFourException {
-		
+
 		String html = "";
 		try {
 			html = getHtmlViaSelenium(url);
@@ -122,8 +123,8 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Uses JSoup to pull the HTML of a NON dynamic web page. Much faster than Selenium BUT will not 
-	 * execute JS.
+	 * Uses JSoup to pull the HTML of a NON dynamic web page. Much faster than
+	 * Selenium BUT will not execute JS.
 	 * 
 	 * @param url The address of the site to parse
 	 * @return The HTML as a string
@@ -139,12 +140,13 @@ public abstract class ScraperCore {
 				throw new FourZeroFourException(url);
 			}
 			logger.error(url + " produced a " + status.getStatusCode());
+		} catch (UnknownHostException ehe) {
+			logger.error(url + " cannot be found; UnknownHostException thrown!");
+			return null;
 		} catch (IOException e) {
 			logger.error(url + " produced a " + e.getMessage());
-			System.out.println(url + " produced a " + e.getMessage());
 		} catch (IllegalArgumentException e1) {
 			logger.error(url + " produced a " + e1.getMessage());
-			System.out.println(url + " produced a " + e1.getMessage());
 		}
 		return null;
 	}
@@ -244,8 +246,8 @@ public abstract class ScraperCore {
 
 	/**
 	 * Returns the raw/unprocessed structured data from a given URL in JSON-LD. Will
-	 * include rdfa and json-ld (if they exist). Will change the triples so 
-	 * that Any23 will parse them without throwing an error and then change them back.
+	 * include rdfa and json-ld (if they exist). Will change the triples so that
+	 * Any23 will parse them without throwing an error and then change them back.
 	 * 
 	 * Will not:
 	 * <ol>
@@ -264,27 +266,31 @@ public abstract class ScraperCore {
 	 * 
 	 * @param url The URL to be scraped
 	 * @return The unfiltered structured data as a JSONLD string
-	 * @throws FourZeroFourException 
-	 * @throws MissingHTMLException Cannot retrieve HTML from URL
-	 * @throws MissingMarkupException Can retrieve HTML from URL, but cannot obtain triples from that HTML 
-	 * @throws NTriplesParsingException Cannot parse the NTriples generated from the given URL
+	 * @throws FourZeroFourException
+	 * @throws MissingHTMLException     Cannot retrieve HTML from URL
+	 * @throws MissingMarkupException   Can retrieve HTML from URL, but cannot
+	 *                                  obtain triples from that HTML
+	 * @throws NTriplesParsingException Cannot parse the NTriples generated from the
+	 *                                  given URL
 	 */
-	protected String getUnfilteredMarkupAsJsonLDFromUrl(String url) throws FourZeroFourException, MissingHTMLException, MissingMarkupException, NTriplesParsingException {
+	protected String getUnfilteredMarkupAsJsonLDFromUrl(String url)
+			throws FourZeroFourException, MissingHTMLException, MissingMarkupException, NTriplesParsingException {
 		Model model = extractUnfilteredMarkupAsRdf4jModel(url);
-		
+
 		try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 			Rio.write(model, out, RDFFormat.JSONLD);
 			return out.toString("UTF-8");
 		} catch (IOException e) {
-			logger.error("IO error whilst writing JSONLD", e);			
+			logger.error("IO error whilst writing JSONLD", e);
 		}
 		return "";
 	}
 
 	/**
-	 * Returns the raw/unprocessed structured data from a given URL in NTriples. Will
-	 * include rdfa and json-ld (if they exist). Will change the triples so 
-	 * that Any23 will parse them without throwing an error and then change them back.
+	 * Returns the raw/unprocessed structured data from a given URL in NTriples.
+	 * Will include rdfa and json-ld (if they exist). Will change the triples so
+	 * that Any23 will parse them without throwing an error and then change them
+	 * back.
 	 * 
 	 * Will not:
 	 * <ol>
@@ -303,11 +309,14 @@ public abstract class ScraperCore {
 	 * @param url The URL to be scraped
 	 * @return The unfiltered structured data as a NTriples string
 	 * @throws FourZeroFourException
-	 * @throws MissingHTMLException Cannot retrieve HTML from URL
-	 * @throws MissingMarkupException Can retrieve HTML from URL, but cannot obtain triples from that HTML 
-	 * @throws NTriplesParsingException Cannot parse the NTriples generated from the given URL
+	 * @throws MissingHTMLException     Cannot retrieve HTML from URL
+	 * @throws MissingMarkupException   Can retrieve HTML from URL, but cannot
+	 *                                  obtain triples from that HTML
+	 * @throws NTriplesParsingException Cannot parse the NTriples generated from the
+	 *                                  given URL
 	 */
-	protected String getUnfilteredMarkupAsNTriplesFromUrl(String url) throws FourZeroFourException, MissingHTMLException, MissingMarkupException, NTriplesParsingException {
+	protected String getUnfilteredMarkupAsNTriplesFromUrl(String url)
+			throws FourZeroFourException, MissingHTMLException, MissingMarkupException, NTriplesParsingException {
 		Model model = extractUnfilteredMarkupAsRdf4jModel(url);
 
 		try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -320,9 +329,10 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Returns the raw/unprocessed structured data from a given URL as an RDF4J {@link Model}. Will
-	 * include rdfa and json-ld (if they exist). Will change the triples so 
-	 * that Any23 will parse them without throwing an error and then change them back.
+	 * Returns the raw/unprocessed structured data from a given URL as an RDF4J
+	 * {@link Model}. Will include rdfa and json-ld (if they exist). Will change the
+	 * triples so that Any23 will parse them without throwing an error and then
+	 * change them back.
 	 * 
 	 * Will not:
 	 * <ol>
@@ -341,12 +351,15 @@ public abstract class ScraperCore {
 	 * @param url The URL to be scraped
 	 * @return The unfiltered structured data as a RDF4J Model
 	 * @throws FourZeroFourException
-	 * @throws MissingHTMLException Cannot retrieve HTML from URL
-	 * @throws MissingMarkupException Can retrieve HTML from URL, but cannot obtain triples from that HTML
-	 * @throws NTriplesParsingException Cannot parse the NTriples generated from the given URL
+	 * @throws MissingHTMLException     Cannot retrieve HTML from URL
+	 * @throws MissingMarkupException   Can retrieve HTML from URL, but cannot
+	 *                                  obtain triples from that HTML
+	 * @throws NTriplesParsingException Cannot parse the NTriples generated from the
+	 *                                  given URL
 	 * @see {@link Model}
 	 */
-	private Model extractUnfilteredMarkupAsRdf4jModel(String url) throws FourZeroFourException, MissingHTMLException, MissingMarkupException, NTriplesParsingException {
+	private Model extractUnfilteredMarkupAsRdf4jModel(String url)
+			throws FourZeroFourException, MissingHTMLException, MissingMarkupException, NTriplesParsingException {
 
 		url = fixURL(url);
 		String html = wrapHTMLExtraction(url);
@@ -419,13 +432,15 @@ public abstract class ScraperCore {
 	 *                       triples will be placed into crawl repo. If not, any
 	 *                       number can be used here.
 	 * @return An RDF4J model containing the processed triples
-	 * @throws NTriplesParsingException Thrown when the nTriples string cannot be parsed 
+	 * @throws NTriplesParsingException Thrown when the nTriples string cannot be
+	 *                                  parsed
 	 * @see Model
 	 */
-	protected Model processTriples(String nTriples, IRI sourceIRI, Long contextCounter) throws NTriplesParsingException {
-	
+	protected Model processTriples(String nTriples, IRI sourceIRI, Long contextCounter)
+			throws NTriplesParsingException {
+
 		Model model = createModelFromNTriples(nTriples);
-		
+
 		Iterator<Statement> it = model.iterator();
 
 		String nSpace = "https://bioschemas.org/crawl/v1/";
@@ -503,7 +518,8 @@ public abstract class ScraperCore {
 	 * 
 	 * @param nTriples The triples to be processed
 	 * @return An RDF4J model containing the UNprocessed triples
-	 * @throws NTriplesParsingException Thrown when the nTriples string cannot be parsed
+	 * @throws NTriplesParsingException Thrown when the nTriples string cannot be
+	 *                                  parsed
 	 * @see Model
 	 */
 	protected Model processTriplesLeaveBlankNodes(String nTriples) throws NTriplesParsingException {
@@ -511,7 +527,7 @@ public abstract class ScraperCore {
 		Model model = createModelFromNTriples(nTriples);
 		Iterator<Statement> it = model.iterator();
 		ModelBuilder builder = new ModelBuilder();
-		
+
 		while (it.hasNext()) {
 			Statement temp = it.next();
 			Resource subject = temp.getSubject();
@@ -527,16 +543,16 @@ public abstract class ScraperCore {
 		return builder.build();
 	}
 
-	
-	/** 
+	/**
 	 * Generates a RDF4J {@link Model} from a string of NTriples.
 	 * 
 	 * @param nTriples The string containing the N-Triples to be turned into a Model
 	 * @return The Model containing the triples from nTriples
-	 * @throws NTriplesParsingException Thrown when the input param cannot be parsed as NTriples
+	 * @throws NTriplesParsingException Thrown when the input param cannot be parsed
+	 *                                  as NTriples
 	 */
 	private Model createModelFromNTriples(String nTriples) throws NTriplesParsingException {
-		
+
 		try {
 			return createModelFromNTriples2(nTriples);
 		} catch (RDFParseException e) {
@@ -548,29 +564,32 @@ public abstract class ScraperCore {
 			} catch (RDFParseException | UnsupportedRDFormatException | IOException e2) {
 				logger.error("Cannot parse triples into a model", e2);
 				throw new NTriplesParsingException("Cannot parse triples into a model");
-			}				
+			}
 		} catch (UnsupportedRDFormatException | IOException e2) {
 			logger.error("Cannot parse triples into a model. Already tried removing |", e2);
-			throw new NTriplesParsingException("Cannot parse triples into a model");			
+			throw new NTriplesParsingException("Cannot parse triples into a model");
 		}
 	}
-	
+
 	/**
-	 * Loads nTriples into a InputStream and passes that to RDF4J NTriples parser to generate a {@link Model} 
+	 * Loads nTriples into a InputStream and passes that to RDF4J NTriples parser to
+	 * generate a {@link Model}
 	 * 
 	 * @param nTriples String of nTriples
 	 * @return RDF4J Model with the triples loaded inside it
-	 * @throws RDFParseException Cannot parse the nTriples for some reason. Common problem is a URL with an inappropriate character, e.g., |
+	 * @throws RDFParseException            Cannot parse the nTriples for some
+	 *                                      reason. Common problem is a URL with an
+	 *                                      inappropriate character, e.g., |
 	 * @throws UnsupportedRDFormatException
 	 * @throws IOException
 	 */
-	private Model createModelFromNTriples2(String nTriples) throws RDFParseException, UnsupportedRDFormatException, IOException {
+	private Model createModelFromNTriples2(String nTriples)
+			throws RDFParseException, UnsupportedRDFormatException, IOException {
 		InputStream input = new ByteArrayInputStream(nTriples.getBytes(StandardCharsets.UTF_8));
 
 		return Rio.parse(input, "", RDFFormat.NTRIPLES);
 	}
-	
-	
+
 	/**
 	 * Generates a new IRI based on the named graph and the source's IRI. Includes a
 	 * random element based on time to ensure no collisions.
@@ -596,21 +615,19 @@ public abstract class ScraperCore {
 		return SimpleValueFactory.getInstance().createIRI(ngraph + "/" + source + randomInt);
 	}
 
-	
-	/** 
+	/**
 	 * Removes trailing # or / at the end of a URL
 	 * 
 	 * @param url
 	 * @return Remove with # or / removed (if they existing)
 	 */
-	protected String fixURL (String url) {
+	protected String fixURL(String url) {
 		if (url.endsWith("/") || url.endsWith("#"))
 			url = url.substring(0, url.length() - 1);
-		
+
 		return url;
 	}
-	
-	
+
 	/**
 	 * Changes the HTML such that Any23 can parse it. Bugs in Any23 mean that some
 	 * predicates (that should work) break the parser.
@@ -920,17 +937,19 @@ public abstract class ScraperCore {
 	 * @return FALSE if failed else TRUE
 	 * @throws FourZeroFourException
 	 * @throws JsonLDInspectionException
-	 * @throws CannotWriteException Cannot write the markup to the specified file
-	 * @throws MissingMarkupException Can retrieve HTML from URL, but cannot obtain triples from that HTML
+	 * @throws CannotWriteException      Cannot write the markup to the specified
+	 *                                   file
+	 * @throws MissingMarkupException    Can retrieve HTML from URL, but cannot
+	 *                                   obtain triples from that HTML
 	 */
 	public boolean scrape(String url, String outputFolderName, String outputFileName, Long contextCounter)
 			throws FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
-	
+
 		url = fixURL(url);
 
 		String html = wrapHTMLExtraction(url);
 
-		if (html.contentEquals(""))
+		if (html == null || html.contentEquals(""))
 			return false;
 
 		try {
@@ -951,7 +970,8 @@ public abstract class ScraperCore {
 		try {
 			updatedModel = processTriples(n3, sourceIRI, contextCounter);
 		} catch (NTriplesParsingException e1) {
-			logger.error("Failed to process triples into model; the NTriples generated from the URL ("+url+") could not be parsed into a model."); 	
+			logger.error("Failed to process triples into model; the NTriples generated from the URL (" + url
+					+ ") could not be parsed into a model.");
 			return false;
 		}
 		if (updatedModel == null)
