@@ -46,7 +46,9 @@ public class ServiceScraper extends ScraperCore {
 	
 	
 
-	@Override
+	@Override	
+	/* Now takes account of StateOfCrawl
+	 */
 	protected String wrapHTMLExtraction(String url) throws FourZeroFourException {
 		String html = "";
 		if (status.equals(StateOfCrawl.UNTRIED) || status.equals(StateOfCrawl.FAILED)) {
@@ -65,29 +67,4 @@ public class ServiceScraper extends ScraperCore {
 		}
 		return html;
 	}
-	
-
-	public static void main(String[] args) {
-		try {
-			ServiceScraper scraper = new ServiceScraper();
-//			scraper.scrape("https://www.bbc.co.uk", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);  // works
-//			scraper.scrape("https://www.ebi.ac.uk/chembl/compound_report_card/CHEMBL59/", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);  // works
-//			scraper.scrape("https://www.ebi.ac.uk/chembl/compound_report_card/CHEMBL59/", 100001L, "/Users/kcm/", StateOfCrawl.FAILED);  // works
-			scraper.scrape("https://www.ebi.ac.uk/chembl/compound_report_card/CHEMBL59/", 100002L, "/Users/kcm/", StateOfCrawl.GIVEN_UP);  // works
-//			scraper.scrape("https://www.ebi.ac.uk/biosamples/samples/SAMEA4999347", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);  // works
-//			scraper.scrape("https://www.ebi.ac.uk/biosamples/samples/SAMN00025378", 100000L, "/Users/kcm/",StateOfCrawl.UNTRIED); // 404s
-//			scraper.scrape("https://www.alliancegenome.org/gene/MGI:2442292", 100000L, "/Users/kcm/",StateOfCrawl.FAILED_TWICE); // AllianceGenome
-//			scraper.scrape("https://hamap.expasy.org/", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);
-//			scraper.scrape("https://hamap.expasy.org/rule/MF_00191", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);
-
-//			scraper.scrape("https://www.alliancegenome.org/gene/RGD:620474", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED); // BREAKS!
-			
-//			scraper.scrape("http://biotea.github.io/bioschemas/?pmc=35353", 100000L, "/Users/kcm/", StateOfCrawl.FAILED_TWICE);
-//			scraper.scrape("http://biotea.github.io/bioschemas", 100000L, "/Users/kcm/", StateOfCrawl.FAILED_TWICE);
-//			scraper.scrape("http://www.macs.hw.ac.uk/~kcm/g2p.html", 100000L, "/Users/kcm/", StateOfCrawl.UNTRIED);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 }
