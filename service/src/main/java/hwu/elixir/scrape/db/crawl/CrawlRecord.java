@@ -10,17 +10,13 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
-import org.hibernate.annotations.ColumnDefault;
-
 import hwu.elixir.utils.Validation;
 
 
 /**
  * 
- * Store the current status of a single URL.
+ * Store the current status of a single URL in the scrape service.
  * 
- * 
- * @author kcm
  *
  */
 
