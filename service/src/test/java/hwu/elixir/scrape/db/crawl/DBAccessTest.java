@@ -52,10 +52,16 @@ public class DBAccessTest {
 	}
 
 	@Test
-	public void test_getSomeCrawlRecords() {
+	public void test_getSomeCrawlRecords_plus_beingScraped() {
 		List<CrawlRecord> list = dba.getSomeCrawlRecords(1);
 		assertTrue(list.size() == 1);		
 		assertEquals(StateOfCrawl.UNTRIED, list.get(0).getStatus());
+		assertEquals(true, list.get(0).isBeingScraped());
+		
+		dba.resetBeingScraped(list);
+		CrawlRecord one = dba.findCrawlRecordById(1L);
+		assertEquals("http://www.hw.ac.uk", one.getUrl());
+		assertEquals(false, one.isBeingScraped());
 	}
 	
 	@Test
