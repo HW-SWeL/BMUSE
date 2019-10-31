@@ -183,7 +183,7 @@ public class ServiceScrapeDriver {
 		waitTime = Integer.parseInt(prop.getProperty("waitTime").trim());
 		logger.info("     waitTime: " + waitTime);
 		outputFolder = prop.getProperty("outputFolder").trim();
-		outputFolder += Helpers.getDateForName()+"/";
+		outputFolder += "_"+Helpers.getDateForName()+"/";
 		logger.info("     outputFolder: " + outputFolder);		
 		numberOfPagesToCrawlInALoop = Integer.parseInt(prop.getProperty("numberOfPagesToCrawlInALoop").trim());
 		logger.info("     numberOfPagesToCrawl: " + numberOfPagesToCrawlInALoop);
