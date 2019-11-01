@@ -21,6 +21,7 @@ import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingMarkupException;
 import hwu.elixir.scrape.scraper.ScraperCore;
+import hwu.elixir.scrape.scraper.ScraperFilteredCore;
 import hwu.elixir.utils.Helpers;
 
 /**
@@ -30,7 +31,7 @@ import hwu.elixir.utils.Helpers;
  * Output is quads written to a file in a location specified in application.properties.
  *
  */
-public class FileScraper extends ScraperCore {
+public class FileScraper extends ScraperFilteredCore {
 
 	private static final String propertiesJarFile = "application.properties";
 	private static final String propertiesLocalFile = "localProperties.properties";

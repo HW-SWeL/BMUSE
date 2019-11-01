@@ -7,7 +7,7 @@ import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingMarkupException;
-import hwu.elixir.scrape.scraper.ScraperCore;
+import hwu.elixir.scrape.scraper.ScraperFilteredCore;
 
 /**
  * 
@@ -15,7 +15,7 @@ import hwu.elixir.scrape.scraper.ScraperCore;
  * 
  * 
  */
-public class SingleURLScraper extends ScraperCore {
+public class SingleURLScraper extends ScraperFilteredCore {
 
 	private static String outputFolder = System.getProperty("user.home");
 	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
@@ -47,6 +47,5 @@ public class SingleURLScraper extends ScraperCore {
 		SingleURLScraper scraper = new SingleURLScraper();
 
 		scraper.scrapeASingleURL("https://www.uniprot.org/uniprot/P46736", "uniprot");
-		
 	}
 }
