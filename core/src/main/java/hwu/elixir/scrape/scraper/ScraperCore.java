@@ -2,7 +2,6 @@ package hwu.elixir.scrape.scraper;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -12,8 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.any23.Any23;
 import org.apache.any23.extractor.ExtractionException;
@@ -207,13 +204,13 @@ public abstract class ScraperCore {
 	 * @throws SeleniumException
 	 */
 	public String[] getOnlyJSONLDFromUrl(String url) throws FourZeroFourException {
-		return getOnlyJSONLDFromHtml(wrapHTMLExtraction(url));
+		return getOnlyUnfilteredJSONLDFromHtml(wrapHTMLExtraction(url));
 	}
 
 	/**
 	 * Extract schema markup in JSON-LD form from a given HTML. Will ignore all
 	 * other formats of markup. Some blocks may not be (bio)schema markup. Will not
-	 * process/validate JSON-LD, add @id or change @context etc.
+	 * process/validate JSON-LD, remove content or add/change @id or @context etc.
 	 * 
 	 * @param html to find JSON-LD in
 	 * @return An array in which each element is a block of JSON-LD containing
@@ -221,26 +218,26 @@ public abstract class ScraperCore {
 	 * @throws FourZeroFourException
 	 * @throws SeleniumException
 	 */
-	protected String[] getOnlyJSONLDFromHtml(String html) {
+	protected String[] getOnlyUnfilteredJSONLDFromHtml(String html) {
 		Document doc = Jsoup.parse(html);
 		Elements jsonElements = doc.getElementsByTag("script").attr("type", "application/ld+json");
 
-		ArrayList<String> filteredJson = new ArrayList<String>();
+		ArrayList<String> jsonMarkup = new ArrayList<String>();
 		for (Element jsonElement : jsonElements) {
 			if (jsonElement.data() != "" && jsonElement.data() != null) {
 				if (jsonElement.data().contains("\"@type") || jsonElement.data().contains("\"@context")) {
 					int positionOfClosingTag = jsonElement.data().indexOf("</script");
 					if (positionOfClosingTag == -1) {
-						filteredJson.add(jsonElement.data());
+						jsonMarkup.add(jsonElement.data());
 					} else {
-						filteredJson.add(jsonElement.data().substring(0, positionOfClosingTag));
+						jsonMarkup.add(jsonElement.data().substring(0, positionOfClosingTag));
 					}
 				}
 			}
 		}
 
-		String[] toReturn = new String[filteredJson.size()];
-		filteredJson.toArray(toReturn);
+		String[] toReturn = new String[jsonMarkup.size()];
+		jsonMarkup.toArray(toReturn);
 		return toReturn;
 	}
 
@@ -772,7 +769,7 @@ public abstract class ScraperCore {
 			allMarkup[0] = html;
 
 		} else {
-			allMarkup = getOnlyJSONLDFromHtml(html);
+			allMarkup = getOnlyUnfilteredJSONLDFromHtml(html);
 		}
 
 		logger.debug("Number of JSONLD sections: " + allMarkup.length);

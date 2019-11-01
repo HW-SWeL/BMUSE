@@ -541,7 +541,7 @@ public class ScraperCoreTest {
 			e.printStackTrace();
 			fail();
 		}
-		String[] allJsonMarkup = scraperCore.getOnlyJSONLDFromHtml(html);
+		String[] allJsonMarkup = scraperCore.getOnlyUnfilteredJSONLDFromHtml(html);
 		assertTrue(allJsonMarkup.length == 4);
 
 		for (String json : allJsonMarkup) {
@@ -578,7 +578,7 @@ public class ScraperCoreTest {
 			fail();
 		}
 
-		String[] allMarkup = scraperCore.getOnlyJSONLDFromHtml(html);
+		String[] allMarkup = scraperCore.getOnlyUnfilteredJSONLDFromHtml(html);
 		int i = 10;
 		for (String oldMarkup : allMarkup) {
 			JSONObject obj = new JSONObject();
@@ -590,7 +590,7 @@ public class ScraperCoreTest {
 			assertFalse(html.contains(oldMarkup));
 		}
 
-		String[] newAllMarkup = scraperCore.getOnlyJSONLDFromHtml(html);
+		String[] newAllMarkup = scraperCore.getOnlyUnfilteredJSONLDFromHtml(html);
 		for (String newMarkup : newAllMarkup) {
 			assertTrue(html.contains(newMarkup));
 		}
