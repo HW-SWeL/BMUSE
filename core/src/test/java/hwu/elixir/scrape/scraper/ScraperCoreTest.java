@@ -174,7 +174,7 @@ public class ScraperCoreTest {
 
 	@Test
 	public void test_getOnlyJSONLD() throws FourZeroFourException, SeleniumException {
-		String[] allJsonLD = scraperCore.getOnlyJSONLDFromUrl("http://www.macs.hw.ac.uk");
+		String[] allJsonLD = scraperCore.getOnlyUnfilteredJSONLDFromUrl("http://www.macs.hw.ac.uk");
 		assertTrue(allJsonLD.length == 3);
 		for (String json : allJsonLD) {
 			json = json.trim();

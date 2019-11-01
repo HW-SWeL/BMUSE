@@ -203,7 +203,7 @@ public abstract class ScraperCore {
 	 * @throws FourZeroFourException
 	 * @throws SeleniumException
 	 */
-	public String[] getOnlyJSONLDFromUrl(String url) throws FourZeroFourException {
+	public String[] getOnlyUnfilteredJSONLDFromUrl(String url) throws FourZeroFourException {
 		return getOnlyUnfilteredJSONLDFromHtml(wrapHTMLExtraction(url));
 	}
 
