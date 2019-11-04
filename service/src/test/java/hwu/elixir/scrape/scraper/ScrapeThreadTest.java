@@ -14,7 +14,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import hwu.elixir.scrape.db.crawl.CrawlRecord;
-import hwu.elixir.scrape.db.crawl.StateOfCrawl;
+import hwu.elixir.scrape.db.crawl.StatusOfScrape;
 import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
@@ -84,7 +84,7 @@ public class ScrapeThreadTest {
 	public void test_uRLtoCrawl_butFails() throws NoSuchFieldException, SecurityException, FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
 		when(state.pagesLeftToScrape()).thenReturn(true, false);
 		when(state.getURLToProcess()).thenReturn(record);
-		when(scraper.scrape("http://www.abc.com", 1L, outputLoction, StateOfCrawl.UNTRIED)).thenReturn(false);
+		when(scraper.scrape("http://www.abc.com", 1L, outputLoction, StatusOfScrape.UNTRIED)).thenReturn(false);
 
 		ScrapeThread thread = new ScrapeThread(scraper, state, 1, outputLoction);
 		thread.run();
@@ -92,7 +92,7 @@ public class ScrapeThreadTest {
 		
 		verify(state, times(2)).pagesLeftToScrape();
 		verify(state).getURLToProcess();		
-		verify(scraper).scrape("http://www.abc.com", 1L, outputLoction, StateOfCrawl.UNTRIED);
+		verify(scraper).scrape("http://www.abc.com", 1L, outputLoction, StatusOfScrape.UNTRIED);
 		verify(state).addFailedToScrapeURL(record);
 	}
 
@@ -101,7 +101,7 @@ public class ScrapeThreadTest {
 
 		when(state.pagesLeftToScrape()).thenReturn(true, false);
 		when(state.getURLToProcess()).thenReturn(record);
-		when(scraper.scrape("http://www.abc.com", 1L, outputLoction, StateOfCrawl.UNTRIED)).thenReturn(true);
+		when(scraper.scrape("http://www.abc.com", 1L, outputLoction, StatusOfScrape.UNTRIED)).thenReturn(true);
 
 		ScrapeThread thread = new ScrapeThread(scraper, state, 1, outputLoction);
 		thread.run();
@@ -109,7 +109,7 @@ public class ScrapeThreadTest {
 		
 		verify(state, times(2)).pagesLeftToScrape();
 		verify(state).getURLToProcess();		
-		verify(scraper).scrape("http://www.abc.com", 1L, outputLoction, StateOfCrawl.UNTRIED);
+		verify(scraper).scrape("http://www.abc.com", 1L, outputLoction, StatusOfScrape.UNTRIED);
 		verify(state).addSuccessfulScrapedURL(record);
 	}
 	
@@ -119,7 +119,7 @@ public class ScrapeThreadTest {
 		
 		when(state.pagesLeftToScrape()).thenReturn(true, false);
 		when(state.getURLToProcess()).thenReturn(record);
-		when(scraper.scrape("http://www.abc.com", 1L, outputLoction, StateOfCrawl.UNTRIED)).thenThrow(FourZeroFourException.class);
+		when(scraper.scrape("http://www.abc.com", 1L, outputLoction, StatusOfScrape.UNTRIED)).thenThrow(FourZeroFourException.class);
 
 		ScrapeThread thread = new ScrapeThread(scraper, state, 1, outputLoction);
 		thread.run();
@@ -127,7 +127,7 @@ public class ScrapeThreadTest {
 		
 		verify(state, times(2)).pagesLeftToScrape();
 		verify(state).getURLToProcess();		
-		verify(scraper).scrape("http://www.abc.com", 1L, outputLoction, StateOfCrawl.UNTRIED);
+		verify(scraper).scrape("http://www.abc.com", 1L, outputLoction, StatusOfScrape.UNTRIED);
 	}	
 	
 	@Test
@@ -135,7 +135,7 @@ public class ScrapeThreadTest {
 
 		when(state.pagesLeftToScrape()).thenReturn(true, false);
 		when(state.getURLToProcess()).thenReturn(record);
-		when(scraper.scrape("http://www.abc.com", 1L, outputLoction, StateOfCrawl.UNTRIED)).thenThrow(FourZeroFourException.class);
+		when(scraper.scrape("http://www.abc.com", 1L, outputLoction, StatusOfScrape.UNTRIED)).thenThrow(FourZeroFourException.class);
 
 		ScrapeThread thread = new ScrapeThread(scraper, state, 1, outputLoction);
 		thread.run();
@@ -143,7 +143,7 @@ public class ScrapeThreadTest {
 		
 		verify(state, times(2)).pagesLeftToScrape();
 		verify(state).getURLToProcess();		
-		verify(scraper).scrape("http://www.abc.com", 1L, outputLoction, StateOfCrawl.UNTRIED);
+		verify(scraper).scrape("http://www.abc.com", 1L, outputLoction, StatusOfScrape.UNTRIED);
 		verify(state).setStatusTo404(record);
 	}	
 	
@@ -152,7 +152,7 @@ public class ScrapeThreadTest {
 
 		when(state.pagesLeftToScrape()).thenReturn(true, false);
 		when(state.getURLToProcess()).thenReturn(record);
-		when(scraper.scrape("http://www.abc.com", 1L, outputLoction, StateOfCrawl.UNTRIED)).thenThrow(JsonLDInspectionException.class);
+		when(scraper.scrape("http://www.abc.com", 1L, outputLoction, StatusOfScrape.UNTRIED)).thenThrow(JsonLDInspectionException.class);
 
 		ScrapeThread thread = new ScrapeThread(scraper, state, 1, outputLoction);
 		thread.run();
@@ -160,7 +160,7 @@ public class ScrapeThreadTest {
 		
 		verify(state, times(2)).pagesLeftToScrape();
 		verify(state).getURLToProcess();		
-		verify(scraper).scrape("http://www.abc.com", 1L, outputLoction, StateOfCrawl.UNTRIED);
+		verify(scraper).scrape("http://www.abc.com", 1L, outputLoction, StatusOfScrape.UNTRIED);
 		verify(state).setStatusToHumanInspection(record);
 	}		
 }

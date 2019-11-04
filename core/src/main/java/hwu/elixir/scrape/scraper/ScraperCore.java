@@ -1,24 +1,15 @@
 package hwu.elixir.scrape.scraper;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Random;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.any23.Any23;
 import org.apache.any23.extractor.ExtractionException;
 import org.apache.any23.source.DocumentSource;
-import org.apache.any23.source.StringDocumentSource;
 import org.apache.any23.writer.NTriplesWriter;
 import org.apache.any23.writer.TripleHandler;
 import org.apache.any23.writer.TripleHandlerException;
@@ -26,19 +17,12 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
-import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.jsoup.Connection.Response;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
@@ -46,6 +30,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchSessionException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -53,17 +38,12 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
-import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
-import hwu.elixir.scrape.exceptions.MissingHTMLException;
-import hwu.elixir.scrape.exceptions.MissingMarkupException;
 import hwu.elixir.scrape.exceptions.NTriplesParsingException;
 import hwu.elixir.scrape.exceptions.SeleniumException;
 import hwu.elixir.scrape.scraper.examples.FileScraper;
 import hwu.elixir.scrape.scraper.examples.SingleURLScraper;
 import hwu.elixir.utils.ChromeDriverCreator;
-import hwu.elixir.utils.Helpers;
 
 /**
  * Provides core functionality for scraping, but is not an actual scraper. See
@@ -76,10 +56,14 @@ import hwu.elixir.utils.Helpers;
  */
 public abstract class ScraperCore {
 
+	private WebDriver driver;
+ 
 	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
-	private WebDriver driver = ChromeDriverCreator.getInstance();
-
-	private int countOfJSONLD = 0; // number of JSON-LB blocks found in HTML
+	
+	public ScraperCore() {
+		driver = ChromeDriverCreator.getInstance();
+	}
+	
 
 	/**
 	 * Close the chromedriver opened by Selenium. Should always be closed at the end
@@ -166,7 +150,14 @@ public abstract class ScraperCore {
 				driver = ChromeDriverCreator.getInstance();
 			}
 
-			driver.get(url);
+			try {
+				driver.get(url);
+			} catch(NoSuchSessionException e) {
+				System.out.println("TRY AGAIN!");
+				driver = ChromeDriverCreator.killAndReopen();
+				
+				driver.get(url);
+			}
 
 			// possibly worthless as Selenium does not support HTTP codes:
 			// https://github.com/seleniumhq/selenium-google-code-issue-archive/issues/141
@@ -195,188 +186,46 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Extract schema markup in JSON-LD form from a given URL. Will ignore all other
-	 * formats of markup. Some blocks may not be (bio)schema markup. Will not
-	 * process/validate JSON-LD, add @id or change @context etc.
+	 * Changes the HTML such that Any23 can parse it. Bugs in Any23 mean that some
+	 * predicates (that should work) break the parser.
 	 * 
 	 * 
-	 * @param url URL to scrape
-	 * @return An array in which each element is a block of JSON-LD containing
-	 *         schema.org markup.
-	 * @throws FourZeroFourException
-	 * @throws SeleniumException
+	 * @param html HTML to be corrected
+	 * @return Corrected HTML
+	 * @see #fixAny23WeirdIssues(String)
 	 */
-	public String[] getOnlyJSONLDFromUrl(String url) throws FourZeroFourException {
-		return getOnlyJSONLDFromHtml(wrapHTMLExtraction(url));
+	protected String fixAny23WeirdIssues(String html) {
+		return html.replaceAll("license", "licensE").replaceAll("fileFormat", "FileFormat").replaceAll("additionalType",
+				"addType");
 	}
 
 	/**
-	 * Extract schema markup in JSON-LD form from a given HTML. Will ignore all
-	 * other formats of markup. Some blocks may not be (bio)schema markup. Will not
-	 * process/validate JSON-LD, add @id or change @context etc.
+	 * Writes the success or failure of a scrape to the log.
 	 * 
-	 * @param html to find JSON-LD in
-	 * @return An array in which each element is a block of JSON-LD containing
-	 *         schema.org markup.
-	 * @throws FourZeroFourException
-	 * @throws SeleniumException
+	 * @param url          URL scraped
+	 * @param result       TRUE for success; FALSE for fail.
+	 * @param outputFolder Where the output was written.
 	 */
-	protected String[] getOnlyJSONLDFromHtml(String html) {
-		Document doc = Jsoup.parse(html);
-		Elements jsonElements = doc.getElementsByTag("script").attr("type", "application/ld+json");
-
-		ArrayList<String> filteredJson = new ArrayList<String>();
-		for (Element jsonElement : jsonElements) {
-			if (jsonElement.data() != "" && jsonElement.data() != null) {
-				if (jsonElement.data().contains("\"@type") || jsonElement.data().contains("\"@context")) {
-					int positionOfClosingTag = jsonElement.data().indexOf("</script");
-					if (positionOfClosingTag == -1) {
-						filteredJson.add(jsonElement.data());
-					} else {
-						filteredJson.add(jsonElement.data().substring(0, positionOfClosingTag));
-					}
-				}
-			}
+	protected void displayResult(String url, boolean result, String outputFolder) {
+		if (result) {
+			logger.info(url + " was successfully scraped and written to " + outputFolder);
+		} else {
+			logger.error(url + " was NOT successfully scraped.");
 		}
-
-		String[] toReturn = new String[filteredJson.size()];
-		filteredJson.toArray(toReturn);
-		return toReturn;
+		logger.info("\n\n");
 	}
 
 	/**
-	 * Returns the raw/unprocessed structured data from a given URL in JSON-LD. Will
-	 * include rdfa and json-ld (if they exist). Will change the triples so that
-	 * Any23 will parse them without throwing an error and then change them back.
+	 * Removes trailing # or / at the end of a URL
 	 * 
-	 * Will not:
-	 * <ol>
-	 * <li>remove triples from:
-	 * <ol>
-	 * <li>{@link https://ogp.me/}</li>
-	 * <li>nofollow</li>
-	 * <li>xhtml/vocab</li>
-	 * <li>vocab.sindice</li>
-	 * <li>or anywhere else</li>
-	 * <ol>
-	 * <li>replace blank nodes
-	 * <li>
-	 * </ol>
-	 * 
-	 * 
-	 * @param url The URL to be scraped
-	 * @return The unfiltered structured data as a JSONLD string
-	 * @throws FourZeroFourException
-	 * @throws MissingHTMLException     Cannot retrieve HTML from URL
-	 * @throws MissingMarkupException   Can retrieve HTML from URL, but cannot
-	 *                                  obtain triples from that HTML
-	 * @throws NTriplesParsingException Cannot parse the NTriples generated from the
-	 *                                  given URL
+	 * @param url
+	 * @return Remove with # or / removed (if they existing)
 	 */
-	protected String getUnfilteredMarkupAsJsonLDFromUrl(String url)
-			throws FourZeroFourException, MissingHTMLException, MissingMarkupException, NTriplesParsingException {
-		Model model = extractUnfilteredMarkupAsRdf4jModel(url);
+	protected String fixURL(String url) {
+		if (url.endsWith("/") || url.endsWith("#"))
+			url = url.substring(0, url.length() - 1);
 
-		try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-			Rio.write(model, out, RDFFormat.JSONLD);
-			return out.toString("UTF-8");
-		} catch (IOException e) {
-			logger.error("IO error whilst writing JSONLD", e);
-		}
-		return "";
-	}
-
-	/**
-	 * Returns the raw/unprocessed structured data from a given URL in NTriples.
-	 * Will include rdfa and json-ld (if they exist). Will change the triples so
-	 * that Any23 will parse them without throwing an error and then change them
-	 * back.
-	 * 
-	 * Will not:
-	 * <ol>
-	 * <li>remove triples from:
-	 * <ol>
-	 * <li>{@link https://ogp.me/}</li>
-	 * <li>nofollow</li>
-	 * <li>xhtml/vocab</li>
-	 * <li>vocab.sindice</li>
-	 * <li>or anywhere else</li>
-	 * <ol>
-	 * <li>replace blank nodes
-	 * <li>
-	 * </ol>
-	 * 
-	 * @param url The URL to be scraped
-	 * @return The unfiltered structured data as a NTriples string
-	 * @throws FourZeroFourException
-	 * @throws MissingHTMLException     Cannot retrieve HTML from URL
-	 * @throws MissingMarkupException   Can retrieve HTML from URL, but cannot
-	 *                                  obtain triples from that HTML
-	 * @throws NTriplesParsingException Cannot parse the NTriples generated from the
-	 *                                  given URL
-	 */
-	protected String getUnfilteredMarkupAsNTriplesFromUrl(String url)
-			throws FourZeroFourException, MissingHTMLException, MissingMarkupException, NTriplesParsingException {
-		Model model = extractUnfilteredMarkupAsRdf4jModel(url);
-
-		try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-			Rio.write(model, out, RDFFormat.NTRIPLES);
-			return out.toString("UTF-8");
-		} catch (IOException e) {
-			logger.error("IO error whilst writing NTriples", e);
-		}
-		return "";
-	}
-
-	/**
-	 * Returns the raw/unprocessed structured data from a given URL as an RDF4J
-	 * {@link Model}. Will include rdfa and json-ld (if they exist). Will change the
-	 * triples so that Any23 will parse them without throwing an error and then
-	 * change them back.
-	 * 
-	 * Will not:
-	 * <ol>
-	 * <li>remove triples from:
-	 * <ol>
-	 * <li>{@link https://ogp.me/}</li>
-	 * <li>nofollow</li>
-	 * <li>xhtml/vocab</li>
-	 * <li>vocab.sindice</li>
-	 * <li>or anywhere else</li>
-	 * <ol>
-	 * <li>replace blank nodes
-	 * <li>
-	 * </ol>
-	 * 
-	 * @param url The URL to be scraped
-	 * @return The unfiltered structured data as a RDF4J Model
-	 * @throws FourZeroFourException
-	 * @throws MissingHTMLException     Cannot retrieve HTML from URL
-	 * @throws MissingMarkupException   Can retrieve HTML from URL, but cannot
-	 *                                  obtain triples from that HTML
-	 * @throws NTriplesParsingException Cannot parse the NTriples generated from the
-	 *                                  given URL
-	 * @see {@link Model}
-	 */
-	private Model extractUnfilteredMarkupAsRdf4jModel(String url)
-			throws FourZeroFourException, MissingHTMLException, MissingMarkupException, NTriplesParsingException {
-
-		url = fixURL(url);
-		String html = wrapHTMLExtraction(url);
-
-		if (html.contentEquals(""))
-			throw new MissingHTMLException(url);
-
-		// not injecting id as leaving blank nodes
-
-		DocumentSource source = new StringDocumentSource(html, url);
-		String n3 = getTriplesInNTriples(source);
-		if (n3 == null)
-			throw new MissingMarkupException(url);
-
-		Model model = processTriplesLeaveBlankNodes(n3);
-
-		return model;
+		return url;
 	}
 
 	/**
@@ -407,171 +256,6 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Processes a string containing nTriples to obtain a RDF4J {@link Model}.
-	 * 
-	 * Takes a series of triples as a string and filters them removing triples with
-	 * the following predicates:
-	 * <ol>
-	 * <li>nofollow</li>
-	 * <li>{@link https://ogp.me/}</li>
-	 * <li>xhtml/vocab</li>
-	 * <li>vocab.sindice</li>
-	 * </ol>
-	 * 
-	 * Also, replaces blank nodes with a URI based on the context counter and the
-	 * current time.
-	 * 
-	 * The triples are placed in a context based on the context counter.
-	 * 
-	 * Ultimately produces an RDF4J Model based on the filtered triples
-	 * 
-	 * @param nTriples       The triples to be processed
-	 * @param sourceIRI      The URL of the page from which the triples were
-	 *                       obtained
-	 * @param contextCounter The current counter for the context. Assumes the
-	 *                       triples will be placed into crawl repo. If not, any
-	 *                       number can be used here.
-	 * @return An RDF4J model containing the processed triples
-	 * @throws NTriplesParsingException Thrown when the nTriples string cannot be
-	 *                                  parsed
-	 * @see Model
-	 */
-	protected Model processTriples(String nTriples, IRI sourceIRI, Long contextCounter)
-			throws NTriplesParsingException {
-
-		Model model = createModelFromNTriples(nTriples);
-
-		Iterator<Statement> it = model.iterator();
-
-		String nSpace = "https://bioschemas.org/crawl/v1/";
-		String nGraph = nSpace + contextCounter++;
-
-		ModelBuilder builder = new ModelBuilder();
-		builder.setNamespace(" ", nSpace);
-		builder.setNamespace("bsc", nSpace);
-		builder.namedGraph(nGraph).add(nGraph, "http://purl.org/pav/retrievedFrom", sourceIRI);
-		builder.namedGraph(nGraph).add(nGraph, "http://purl.org/pav/retrievedOn", Helpers.getFullDateWithTime());
-
-		HashMap<String, String> replaceBlankNodes = new HashMap<String, String>();
-
-		while (it.hasNext()) {
-			Statement temp = it.next();
-			Resource subject = temp.getSubject();
-			IRI predicate = temp.getPredicate();
-			Value object = temp.getObject();
-
-			if (predicate.stringValue().contains("vocab.sindice"))
-				continue;
-			if (predicate.stringValue().contains("xhtml/vocab"))
-				continue;
-			if (predicate.stringValue().contains("nofollow"))
-				continue;
-			if (predicate.stringValue().contains("ogp.me"))
-				continue;
-
-			predicate = fixPredicate(predicate);
-
-			object = fixObject(object);
-
-			if (subject instanceof BNode) {
-				if (replaceBlankNodes.containsKey(subject.stringValue())) {
-					subject = SimpleValueFactory.getInstance().createIRI(replaceBlankNodes.get(subject.stringValue()));
-				} else {
-					IRI newSubject = iriGenerator(nGraph, sourceIRI);
-					replaceBlankNodes.put(subject.stringValue(), newSubject.stringValue());
-					subject = newSubject;
-				}
-			}
-
-			if (object instanceof BNode) {
-				if (replaceBlankNodes.containsKey(object.stringValue())) {
-					object = SimpleValueFactory.getInstance().createIRI(replaceBlankNodes.get(object.stringValue()));
-				} else {
-					IRI newObject = iriGenerator(nGraph, sourceIRI);
-					replaceBlankNodes.put(object.stringValue(), newObject.stringValue());
-					object = newObject;
-				}
-			}
-			builder.namedGraph(nGraph).add(subject, predicate, object);
-		}
-
-		return builder.build();
-	}
-
-	/**
-	 * Processes a string containing nTriples to obtain a RDF4J {@link Model}
-	 * 
-	 * Does NOT replace the following:
-	 * <ol>
-	 * <li>nofollow</li>
-	 * <li>{@link https://ogp.me/}</li>
-	 * <li>xhtml/vocab</li>
-	 * <li>vocab.sindice</li>
-	 * </ol>
-	 * 
-	 * DOES NOT replace blank nodes.
-	 * 
-	 * Triples are NOT placed in a context.
-	 * 
-	 * DOES rectify the changes made to predicates and objects to ensure Any23 can
-	 * parse them (see {@link #fixAny23WeirdIssues(String)}
-	 * 
-	 * @param nTriples The triples to be processed
-	 * @return An RDF4J model containing the UNprocessed triples
-	 * @throws NTriplesParsingException Thrown when the nTriples string cannot be
-	 *                                  parsed
-	 * @see Model
-	 */
-	protected Model processTriplesLeaveBlankNodes(String nTriples) throws NTriplesParsingException {
-
-		Model model = createModelFromNTriples(nTriples);
-		Iterator<Statement> it = model.iterator();
-		ModelBuilder builder = new ModelBuilder();
-
-		while (it.hasNext()) {
-			Statement temp = it.next();
-			Resource subject = temp.getSubject();
-			IRI predicate = temp.getPredicate();
-			Value object = temp.getObject();
-
-			predicate = fixPredicate(predicate);
-
-			object = fixObject(object);
-
-			builder.add(subject, predicate, object);
-		}
-		return builder.build();
-	}
-
-	/**
-	 * Generates a RDF4J {@link Model} from a string of NTriples.
-	 * 
-	 * @param nTriples The string containing the N-Triples to be turned into a Model
-	 * @return The Model containing the triples from nTriples
-	 * @throws NTriplesParsingException Thrown when the input param cannot be parsed
-	 *                                  as NTriples
-	 */
-	private Model createModelFromNTriples(String nTriples) throws NTriplesParsingException {
-
-		try {
-			return createModelFromNTriples2(nTriples);
-		} catch (RDFParseException e) {
-			// RDF4J doesn't like | (ie character U+7C) inside URLs.
-			// this removes | from everywhere in the doc...
-			nTriples = nTriples.replaceAll("\\|", "");
-			try {
-				return createModelFromNTriples2(nTriples);
-			} catch (RDFParseException | UnsupportedRDFormatException | IOException e2) {
-				logger.error("Cannot parse triples into a model", e2);
-				throw new NTriplesParsingException("Cannot parse triples into a model");
-			}
-		} catch (UnsupportedRDFormatException | IOException e2) {
-			logger.error("Cannot parse triples into a model. Already tried removing |", e2);
-			throw new NTriplesParsingException("Cannot parse triples into a model");
-		}
-	}
-
-	/**
 	 * Loads nTriples into a InputStream and passes that to RDF4J NTriples parser to
 	 * generate a {@link Model}
 	 * 
@@ -588,58 +272,6 @@ public abstract class ScraperCore {
 		InputStream input = new ByteArrayInputStream(nTriples.getBytes(StandardCharsets.UTF_8));
 
 		return Rio.parse(input, "", RDFFormat.NTRIPLES);
-	}
-
-	/**
-	 * Generates a new IRI based on the named graph and the source's IRI. Includes a
-	 * random element based on time to ensure no collisions.
-	 * 
-	 * @param ngraph
-	 * @param sourceIRI
-	 * @return New IRI
-	 */
-	protected IRI iriGenerator(String ngraph, IRI sourceIRI) {
-		String source = "";
-		if (sourceIRI.toString().indexOf("https://") != -1) {
-			source = sourceIRI.toString().replaceAll("https://", "");
-		} else {
-			source = sourceIRI.toString().replaceAll("http://", "");
-		}
-
-		if (!(source.endsWith("/") || source.endsWith("#"))) {
-			source += "/";
-		}
-
-		Random rand = new Random();
-		int randomInt = Math.abs(rand.nextInt());
-		return SimpleValueFactory.getInstance().createIRI(ngraph + "/" + source + randomInt);
-	}
-
-	/**
-	 * Removes trailing # or / at the end of a URL
-	 * 
-	 * @param url
-	 * @return Remove with # or / removed (if they existing)
-	 */
-	protected String fixURL(String url) {
-		if (url.endsWith("/") || url.endsWith("#"))
-			url = url.substring(0, url.length() - 1);
-
-		return url;
-	}
-
-	/**
-	 * Changes the HTML such that Any23 can parse it. Bugs in Any23 mean that some
-	 * predicates (that should work) break the parser.
-	 * 
-	 * 
-	 * @param html HTML to be corrected
-	 * @return Corrected HTML
-	 * @see #fixAny23WeirdIssues(String)
-	 */
-	protected String fixAny23WeirdIssues(String html) {
-		return html.replaceAll("license", "licensE").replaceAll("fileFormat", "FileFormat").replaceAll("additionalType",
-				"addType");
 	}
 
 	/**
@@ -714,305 +346,64 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Injects an @ id attribute into the given html source; prevents Any23 creating
-	 * blank nodes at the top of the graph
+	 * Generates a RDF4J {@link Model} from a string of NTriples.
 	 * 
-	 * Problems:
-	 * <ol>
-	 * <li>only works with json-ld; won't do anything with rdfa.</li>
-	 * <li>ignoring nesting; only outer layer has id injected thus lower levels will
-	 * use id based on outer.</li>
-	 * </ol>
-	 * 
-	 * Adding the @ id in the wrong location can completely break the parsers
-	 * ability to generate triples. The location of the injection should be checked
-	 * if fewer triples are generated than expected.
-	 * 
-	 * @param html the source to be changed
-	 * @param url  the url to be used for @ id
-	 * @return the original source with @ id added in if missing from a block of
-	 *         JSON-LD. if not, unchanged source
-	 * @throws JsonLDInspectionException
+	 * @param nTriples The string containing the N-Triples to be turned into a Model
+	 * @return The Model containing the triples from nTriples
+	 * @throws NTriplesParsingException Thrown when the input param cannot be parsed
+	 *                                  as NTriples
 	 */
-	protected String injectId(String html, String url) throws MissingHTMLException, JsonLDInspectionException {
+	protected Model createModelFromNTriples(String nTriples) throws NTriplesParsingException {
 
-		countOfJSONLD = 0;
-
-		if (url == null)
-			throw new IllegalArgumentException("url cannot be null");
-
-		if (html == null)
-			throw new MissingHTMLException(url);
-
-		int posContext = html.indexOf("@context");
-		if (posContext == -1) {
-			if (html.indexOf("vocab=\"http://schema.org") != -1 || html.indexOf("vocab=\"https://schema.org") != -1) {
-				logger.info("No @context, but a vocab; appears to be RDFa with no JSON-LD: " + url);
-				return html;
-			}
-		}
-		return fixAllJsonLdBlocks(html, url);
-	}
-
-	/**
-	 * Given HTML source, gets all the JSON-LD blocks and orchestrates the amendment
-	 * of them using {@link #fixASingleJsonLdBlock(String, String)}
-	 * 
-	 * @param html The HTML source
-	 * @param url  The URL from which the source was obtained
-	 * @return HTML in which JSON-LD has been corrected
-	 * @throws JsonLDInspectionException when JSON cannot be parsed
-	 * @see {@link #fixASingleJsonLdBlock(String, String)}
-	 */
-	protected String fixAllJsonLdBlocks(String html, String url) throws JsonLDInspectionException {
-		String[] allMarkup = null;
-		if (html.startsWith("{")) {
-			logger.info("Just JSON no HTML from: " + url);
-			allMarkup = new String[1];
-			allMarkup[0] = html;
-
-		} else {
-			allMarkup = getOnlyJSONLDFromHtml(html);
-		}
-
-		logger.debug("Number of JSONLD sections: " + allMarkup.length);
-
-		for (String markup : allMarkup) {
-			String newMarkup = fixASingleJsonLdBlock(markup, url);
-
-			if (newMarkup.equalsIgnoreCase(markup)) {
-				continue;
-			}
-
-			html = swapJsonLdMarkup(html, markup, newMarkup);
-			countOfJSONLD++;
-		}
-
-		return html;
-	}
-
-	/**
-	 * 
-	 * Corrects/amends a single JSON-LD block markup extracted from the HTML source.
-	 * A block of JSON can either contain a single JSON description or an array of
-	 * several JSON descriptions. For each description this will:
-	 * <ol>
-	 * <li>Changes context to https://schema.org</li>
-	 * <li>adds @id based on url</li>
-	 * </ol>
-	 * 
-	 * 
-	 * @param markup A single block of JSON-LD (bio)schema markup as a String
-	 * @param url    The URL of the site the markup was scraped from
-	 * @return mended JSON-LD markup as a String
-	 * @throws JsonLDInspectionException when JSON cannot be parsed
-	 */
-	protected String fixASingleJsonLdBlock(String markup, String url) throws JsonLDInspectionException {
-		JSONParser parser = new JSONParser();
-		JSONArray jsonArray = null;
-		JSONObject jsonObj = null;
 		try {
-			Object obj = parser.parse(markup);
-
-			if (obj instanceof JSONArray) {
-				jsonArray = (JSONArray) obj;
-				return fixAJsonLdArray(jsonArray, url);
-			} else if (obj instanceof JSONObject) {
-				jsonObj = (JSONObject) obj;
-				return fixASingleJsonLdObject(jsonObj, url);
+			return createModelFromNTriples2(nTriples);
+		} catch (RDFParseException e) {
+			// RDF4J doesn't like | (ie character U+7C) inside URLs.
+			// this removes | from everywhere in the doc...
+			nTriples = nTriples.replaceAll("\\|", "");
+			try {
+				return createModelFromNTriples2(nTriples);
+			} catch (RDFParseException | UnsupportedRDFormatException | IOException e2) {
+				logger.error("Cannot parse triples into a model", e2);
+				throw new NTriplesParsingException("Cannot parse triples into a model");
 			}
-
-			throw new JsonLDInspectionException("Unkown object obtained from JSON parser :" + url);
-
-		} catch (ParseException e) {
-			logger.error("Failed to parse JSONArray from :" + url);
-			throw new JsonLDInspectionException("Failed to parse JSON from :" + url);
+		} catch (UnsupportedRDFormatException | IOException e2) {
+			logger.error("Cannot parse triples into a model. Already tried removing |", e2);
+			throw new NTriplesParsingException("Cannot parse triples into a model");
 		}
 	}
 
 	/**
-	 * Corrects an {@link JSONArray} of (bio)schemas markup; each element is a
-	 * {@link JSONObject}. Uses {@link #fixASingleJSONLdObject(JSONObject, String)}
+	 * Extract schema markup in JSON-LD form from a given HTML. Will ignore all
+	 * other formats of markup. Some blocks may not be (bio)schema markup. Will not
+	 * process/validate JSON-LD, remove content or add/change @id or @context etc.
 	 * 
-	 * @param array An {@link JSONArray} of (bio)schemas markup
-	 * @param url   The URL from which the markup was scraped
-	 * @return The corrected markup stringified; will still be in array
-	 */
-	protected String fixAJsonLdArray(JSONArray array, String url) {
-		for (int i = 0; i < array.size(); i++) {
-			JSONObject jsonObj = (JSONObject) array.get(i);
-
-			JSONObject correctedObj = fixASingleJSONLdObject(jsonObj, url);
-
-			array.remove(i);
-			array.add(i, correctedObj);
-		}
-
-		return array.toJSONString().replaceAll("\\\\", "");
-	}
-
-	/**
-	 * Wrapper that converts {@link #fixASingleJSONLdObject(JSONObject, String)}
-	 * such that it returns a String rather than a {@link JSONObject}
-	 * 
-	 * @param jsonObj A {@link JSONObject} containing the (bio)schema markup to be
-	 *                corrected
-	 * @param url     The URL from where the jsonObj was obtained
-	 * @return A stringified version of the corrected {@link JSONObject}
-	 */
-	protected String fixASingleJsonLdObject(JSONObject jsonObj, String url) {
-
-		JSONObject correctedObj = fixASingleJSONLdObject(jsonObj, url);
-
-		return correctedObj.toJSONString().replaceAll("\\\\", "");
-	}
-
-	/**
-	 * Corrects/amends a single JSON-LD object markup extracted from the HTML source
-	 * <ol>
-	 * <li>Changes context to https://schema.org</li>
-	 * <li>adds @id based on url</li>
-	 * </ol>
-	 * 
-	 * @param jsonObj A single block of JSON-LD (bio)schema markup as a
-	 *                {@link JSONObject}
-	 * @param url     The URL of the site the markup was scraped from
-	 * @return Amended JSON-LD markup as a {@link JSONObject}
-	 */
-	protected JSONObject fixASingleJSONLdObject(JSONObject jsonObj, String url) {
-		if (jsonObj.containsKey("@context")) {
-			String contextValue = jsonObj.get("@context").toString();
-			if (!(contextValue.equalsIgnoreCase("https://schema.org"))) {
-				jsonObj.remove("@context");
-				jsonObj.put("@context", "https://schema.org");
-			}
-			contextValue = jsonObj.get("@context").toString();
-
-		} else {
-			jsonObj.put("@context", "https://schema.org");
-		}
-
-		if (!jsonObj.containsKey("@id")) {
-			if (countOfJSONLD > 0) {
-				jsonObj.put("@id", url + "#" + countOfJSONLD);
-			} else {
-				jsonObj.put("@id", url);
-			}
-		}
-
-		return jsonObj;
-	}
-
-	/**
-	 * Replaces the old JSON-LD markup with the new markup
-	 * 
-	 * @param html      Current HTML
-	 * @param oldMarkup The markup to be replaced
-	 * @param newMarkup The new markup to be added
-	 * @return HTML with the newMarkup replacing the oldMarkup
-	 */
-	protected String swapJsonLdMarkup(String html, String oldMarkup, String newMarkup) {
-
-		int oldPosition = html.indexOf(oldMarkup);
-		String newHtml = html.substring(0, oldPosition) + newMarkup + html.substring(oldPosition + oldMarkup.length());
-
-		return newHtml;
-	}
-
-	/**
-	 * Orchestrates the scraping of a given URL and writes the output (as quads) to
-	 * a file specified in the arguments. If the fileName is not specified, ie null,
-	 * the contextCounter will be used to name the file.
-	 * 
-	 * contextCounter is used a way of keeping track of which URL in a list is being
-	 * scraped. This is managed by the calling class.
-	 * 
-	 * The file will be located in the location specified in application.properties
-	 * 
-	 * @param url              URL to scrape
-	 * @param outputFileName   name of file the output will be written to
-	 * @param contextCounter   The value of the counter used to record which number
-	 *                         of URL is being scraped
-	 * @param outputFolderName Folder where output is written to
-	 * @return FALSE if failed else TRUE
+	 * @param html to find JSON-LD in
+	 * @return An array in which each element is a block of JSON-LD containing
+	 *         schema.org markup.
 	 * @throws FourZeroFourException
-	 * @throws JsonLDInspectionException
-	 * @throws CannotWriteException      Cannot write the markup to the specified
-	 *                                   file
-	 * @throws MissingMarkupException    Can retrieve HTML from URL, but cannot
-	 *                                   obtain triples from that HTML
+	 * @throws SeleniumException
 	 */
-	public boolean scrape(String url, String outputFolderName, String outputFileName, Long contextCounter)
-			throws FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
+	protected String[] getOnlyUnfilteredJSONLDFromHtml(String html) {
+		Document doc = Jsoup.parse(html);
+		Elements jsonElements = doc.getElementsByTag("script").attr("type", "application/ld+json");
 
-		url = fixURL(url);
-
-		String html = wrapHTMLExtraction(url);
-
-		if (html == null || html.contentEquals(""))
-			return false;
-
-		try {
-			html = injectId(html, url);
-		} catch (MissingHTMLException e) {
-			logger.error(e.toString());
-			return false;
+		ArrayList<String> jsonMarkup = new ArrayList<String>();
+		for (Element jsonElement : jsonElements) {
+			if (jsonElement.data() != "" && jsonElement.data() != null) {
+				if (jsonElement.data().contains("\"@type") || jsonElement.data().contains("\"@context")) {
+					int positionOfClosingTag = jsonElement.data().indexOf("</script");
+					if (positionOfClosingTag == -1) {
+						jsonMarkup.add(jsonElement.data());
+					} else {
+						jsonMarkup.add(jsonElement.data().substring(0, positionOfClosingTag));
+					}
+				}
+			}
 		}
 
-		DocumentSource source = new StringDocumentSource(html, url);
-		IRI sourceIRI = SimpleValueFactory.getInstance().createIRI(source.getDocumentIRI());
-
-		String n3 = getTriplesInNTriples(source);
-		if (n3 == null)
-			throw new MissingMarkupException(url);
-
-		Model updatedModel = null;
-		try {
-			updatedModel = processTriples(n3, sourceIRI, contextCounter);
-		} catch (NTriplesParsingException e1) {
-			logger.error("Failed to process triples into model; the NTriples generated from the URL (" + url
-					+ ") could not be parsed into a model.");
-			return false;
-		}
-		if (updatedModel == null)
-			return false;
-
-		File directory = new File(outputFolderName);
-		if (!directory.exists())
-			directory.mkdir();
-
-		if (outputFileName == null) {
-			outputFileName = outputFolderName + "/" + contextCounter + ".nq";
-		} else {
-			outputFileName = outputFolderName + "/" + outputFileName + ".nq";
-		}
-
-		try (PrintWriter out = new PrintWriter(new File(outputFileName))) {
-			Rio.write(updatedModel, out, RDFFormat.NQUADS);
-		} catch (Exception e) {
-			logger.error("Problem writing file for " + url, e);
-			throw new CannotWriteException(url);
-		}
-
-		if (!new File(outputFileName).exists())
-			System.exit(0);
-
-		return true;
-	}
-
-	/**
-	 * Writes the success or failure of a scrape to the log.
-	 * 
-	 * @param url          URL scraped
-	 * @param result       TRUE for success; FALSE for fail.
-	 * @param outputFolder Where the output was written.
-	 */
-	protected void displayResult(String url, boolean result, String outputFolder) {
-		if (result) {
-			logger.info(url + " was successfully scraped and written to " + outputFolder);
-		} else {
-			logger.error(url + " was NOT successfully scraped.");
-		}
-		logger.info("\n\n");
+		String[] toReturn = new String[jsonMarkup.size()];
+		jsonMarkup.toArray(toReturn);
+		return toReturn;
 	}
 }

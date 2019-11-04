@@ -19,12 +19,11 @@ import hwu.elixir.utils.Helpers;
 
 
 /** 
- * Runs the scrape. Connects to DBMS to collect a list of URLs (in the forms of CrawlRecords) to scrape. 
- * Scrapes them in turn (using 8 threads), writes the (bio)schema markup extracted to a file (1 file per URL)
+ * Runs the scrape. Connects to a DBMS to collect a list of URLs (in the form of CrawlRecords) to scrape. 
+ * Scrapes them in turn, writes the (bio)schema markup extracted to a file (1 file per URL)
  * and adds provenance to the CrawlRecord. Once all URLs extracted, the CrawlRecords are synced to the DBMS and 
  * another batch are fetched.
  * 
- * @author kcm
  *
  */
 public class ServiceScrapeDriver {
@@ -58,13 +57,16 @@ public class ServiceScrapeDriver {
 	/** 
 	 * Fires off threads and organises update of DBMS at end before starting another loop
 	 * 
+	 * Originally designed as a multi-threaded process; now reduced to a single thread as 
+	 * the selenium webdriver is too expensive to run multi-threaded. However, the threading
+	 * as been left in situ in case it is useful in the future.
+	 * 
 	 */
 	private void runScrape() {
 		processProperties();
 		ServiceScraper scrapeOne = new ServiceScraper();		
 		logger.info("STARTING CRAWL: " + formatter.format(new Date(System.currentTimeMillis())));
 		while (pagesCounter < totalNumberOfPagesToCrawlInASession) {
-			System.out.println(pagesCounter + " is less than " + totalNumberOfPagesToCrawlInASession);
 			logger.info(pagesCounter + " scraped of " + totalNumberOfPagesToCrawlInASession);
 			List<CrawlRecord> pagesToPull = generatePagesToPull();
 			if (pagesToPull.isEmpty()) {
@@ -82,31 +84,33 @@ public class ServiceScrapeDriver {
 			try {
 				scrape1.join();
 			} catch (InterruptedException e) {
-				System.out.println("Exception waiting on thread");
+				logger.error("Exception waiting on thread");
 				e.printStackTrace();
+				dba.resetBeingScraped(scrapeState.getPagesProcessedAndUnprocessed());
+				dba.shutdown();
+				scrapeOne.shutdown();
+				return;				
 			}
 			
-			if(!scrape1.isWorked()) {
+			if(!scrape1.isFileWritten()) {
 				logger.error("Could not write output file so shutting down!");
 				dba.resetBeingScraped(scrapeState.getPagesProcessedAndUnprocessed());
 				scrapeOne.shutdown();
 				dba.shutdown();
 				Date date = new Date(System.currentTimeMillis());
-				logger.info("ENDING CRAWL after failure at: " + formatter.format(date));	
-				System.out.println("CRAWL OVER!");
-				System.exit(0);
+				logger.info("ENDING CRAWL after failure at: " + formatter.format(date));					
+				return;
 			}
 			
-			logger.debug("Value of isWorked: " + scrape1.isWorked());
+			logger.debug("Value of isFileWritten: " + scrape1.isFileWritten());
 
 			long endTime = System.nanoTime();
 			long timeElapsed = endTime - startTime;
-			System.out.println("Time in s to complete: " + timeElapsed / 1e+9);
 			logger.info("Time in s to complete: " + timeElapsed / 1e+9);
 
 			updateDatabase(scrapeState);
 			pagesCounter += numberOfPagesToCrawlInALoop;
-			System.out.println("ENDED loop");
+			logger.info("ENDED loop");
 		}
 		scrapeOne.shutdown();
 		dba.shutdown();
@@ -183,7 +187,7 @@ public class ServiceScrapeDriver {
 		waitTime = Integer.parseInt(prop.getProperty("waitTime").trim());
 		logger.info("     waitTime: " + waitTime);
 		outputFolder = prop.getProperty("outputFolder").trim();
-		outputFolder += Helpers.getDateForName()+"/";
+		outputFolder += "_"+Helpers.getDateForName()+"/";
 		logger.info("     outputFolder: " + outputFolder);		
 		numberOfPagesToCrawlInALoop = Integer.parseInt(prop.getProperty("numberOfPagesToCrawlInALoop").trim());
 		logger.info("     numberOfPagesToCrawl: " + numberOfPagesToCrawlInALoop);

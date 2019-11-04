@@ -1,0 +1,154 @@
+[ {
+  "@id" : "_:genid-7efc64897b2047b98e48b33d8756bb74-214461C38730AEA11BD3C0E01AAF84B9",
+  "@type" : [ "https://schema.org/BioChemEntity" ],
+  "https://schema.org/identifier" : [ {
+    "@value" : "CHEMBL612817"
+  } ],
+  "https://schema.org/url" : [ {
+    "@id" : "https://www.ebi.ac.uk/chembl/target_report_card/CHEMBL612817"
+  } ]
+}, {
+  "@id" : "_:genid-7efc64897b2047b98e48b33d8756bb74-2883525401DBE1134DE609D74D5DE26A",
+  "@type" : [ "https://schema.org/BioChemEntity" ],
+  "https://schema.org/identifier" : [ {
+    "@value" : "CHEMBL2170"
+  } ],
+  "https://schema.org/url" : [ {
+    "@id" : "https://www.ebi.ac.uk/chembl/target_report_card/CHEMBL2170"
+  } ]
+}, {
+  "@id" : "_:genid-7efc64897b2047b98e48b33d8756bb74-2BC33EC19791A6FF59644DEE1E532B98",
+  "@type" : [ "https://schema.org/BioChemEntity" ],
+  "https://schema.org/identifier" : [ {
+    "@value" : "CHEMBL4096"
+  } ],
+  "https://schema.org/url" : [ {
+    "@id" : "https://www.ebi.ac.uk/chembl/target_report_card/CHEMBL4096"
+  } ]
+}, {
+  "@id" : "_:genid-7efc64897b2047b98e48b33d8756bb74-4A8DC0F98F77E4DA16FB8BA9A3061399",
+  "@type" : [ "https://schema.org/BioChemEntity" ],
+  "https://schema.org/identifier" : [ {
+    "@value" : "CHEMBL1850"
+  } ],
+  "https://schema.org/url" : [ {
+    "@id" : "https://www.ebi.ac.uk/chembl/target_report_card/CHEMBL1850"
+  } ]
+}, {
+  "@id" : "_:genid-7efc64897b2047b98e48b33d8756bb74-6977C1827A096BA262FE90E8435A3405",
+  "@type" : [ "https://schema.org/MolecularEntity" ],
+  "https://schema.org/alternateName" : [ {
+    "@value" : "Sinemet"
+  }, {
+    "@value" : "Carbilev"
+  }, {
+    "@value" : "Dopamine"
+  }, {
+    "@value" : "Intropin"
+  }, {
+    "@value" : "Parcopa"
+  } ],
+  "https://schema.org/biochemicalInteraction" : [ {
+    "@id" : "_:genid-7efc64897b2047b98e48b33d8756bb74-214461C38730AEA11BD3C0E01AAF84B9"
+  }, {
+    "@id" : "_:genid-7efc64897b2047b98e48b33d8756bb74-2883525401DBE1134DE609D74D5DE26A"
+  }, {
+    "@id" : "_:genid-7efc64897b2047b98e48b33d8756bb74-2BC33EC19791A6FF59644DEE1E532B98"
+  }, {
+    "@id" : "_:genid-7efc64897b2047b98e48b33d8756bb74-4A8DC0F98F77E4DA16FB8BA9A3061399"
+  }, {
+    "@id" : "_:genid-7efc64897b2047b98e48b33d8756bb74-B0822D15E186CBEE08BFF0C4974697E6"
+  } ],
+  "https://schema.org/canonical_smiles" : [ {
+    "@value" : "NCCc1ccc(O)c(O)c1"
+  } ],
+  "https://schema.org/identifier" : [ {
+    "@value" : "CHEMBL59"
+  } ],
+  "https://schema.org/image" : [ {
+    "@id" : "https://www.ebi.ac.uk/chembl/api/data/image/CHEMBL59.svg?engine=indigo"
+  } ],
+  "https://schema.org/inChI" : [ {
+    "@value" : "InChI=1S/C8H11NO2/c9-4-3-6-1-2-7(10)8(11)5-6/h1-2,5,10-11H,3-4,9H2"
+  } ],
+  "https://schema.org/inChIKey" : [ {
+    "@value" : "VYFYYTLLBUKUHU-UHFFFAOYSA-N"
+  } ],
+  "https://schema.org/molecularFormula" : [ {
+    "@value" : "C8H11NO2"
+  } ],
+  "https://schema.org/molecularWeight" : [ {
+    "@value" : "1.5318E2"
+  } ],
+  "https://schema.org/monoisotopicMolecularWeight" : [ {
+    "@value" : "1.53079E2"
+  } ],
+  "https://schema.org/name" : [ {
+    "@value" : "DOPAMINE"
+  } ],
+  "https://schema.org/url" : [ {
+    "@id" : "https://www.ebi.ac.uk/chembl/compound_report_card/CHEMBL59"
+  } ]
+}, {
+  "@id" : "_:genid-7efc64897b2047b98e48b33d8756bb74-B0822D15E186CBEE08BFF0C4974697E6",
+  "@type" : [ "https://schema.org/BioChemEntity" ],
+  "https://schema.org/identifier" : [ {
+    "@value" : "CHEMBL4040"
+  } ],
+  "https://schema.org/url" : [ {
+    "@id" : "https://www.ebi.ac.uk/chembl/target_report_card/CHEMBL4040"
+  } ]
+}, {
+  "@id" : "https://raw.githubusercontent.com/HW-SWeL/Scraper/master/core/src/test/resources/testHtml/chembl.html",
+  "http://purl.org/dc/terms/title" : [ {
+    "@value" : "Compound Report Card"
+  } ],
+  "http://www.w3.org/1999/xhtml/vocab#icon" : [ {
+    "@id" : "https://raw.githubusercontent.com/chembl/static/favicon.png"
+  } ],
+  "http://www.w3.org/1999/xhtml/vocab#meta" : [ {
+    "@id" : "http://rdf.ebi.ac.uk/resource/chembl/molecule/CHEMBL59"
+  } ],
+  "http://www.w3.org/1999/xhtml/vocab#stylesheet" : [ {
+    "@id" : "https://fonts.googleapis.com/icon?family=Material+Icons"
+  }, {
+    "@id" : "https://raw.githubusercontent.com/chembl/static/CACHE/css/output.78acb578e7b4.css"
+  }, {
+    "@id" : "https://raw.githubusercontent.com/chembl/static/CACHE/css/output.46d7ab86e706.css"
+  }, {
+    "@id" : "https://raw.githubusercontent.com/chembl/static/CACHE/css/output.0db9d487fd03.css"
+  }, {
+    "@id" : "https://raw.githubusercontent.com/chembl/static/CACHE/css/output.998664b79464.css"
+  }, {
+    "@id" : "https://raw.githubusercontent.com/chembl/static/CACHE/css/output.1489ba7114db.css"
+  }, {
+    "@id" : "https://raw.githubusercontent.com/chembl/static/css/jquery.qtip.min.css"
+  } ],
+  "https://ogp.me/ns#description" : [ {
+    "@value" : "Molecule Type: Small molecule, Molecular Formula: C8H11NO2, Molecular Weight: 153.18, Synonyms: Sinemet;Carbilev;Dopamine;Intropin;Parcopa"
+  } ],
+  "https://ogp.me/ns#image" : [ {
+    "@value" : "https://www.ebi.ac.uk/chembl/api/data/image/CHEMBL59.png?bgColor=white"
+  } ],
+  "https://ogp.me/ns#image:height" : [ {
+    "@value" : "300"
+  } ],
+  "https://ogp.me/ns#image:secure_url" : [ {
+    "@value" : "https://www.ebi.ac.uk/chembl/api/data/image/CHEMBL59.png?bgColor=white"
+  } ],
+  "https://ogp.me/ns#image:type" : [ {
+    "@value" : "image/png"
+  } ],
+  "https://ogp.me/ns#image:width" : [ {
+    "@value" : "300"
+  } ],
+  "https://ogp.me/ns#title" : [ {
+    "@value" : "Compound: DOPAMINE"
+  } ],
+  "https://ogp.me/ns#type" : [ {
+    "@value" : "object"
+  } ],
+  "https://ogp.me/ns#url" : [ {
+    "@value" : "https://www.ebi.ac.uk/chembl/compound_report_card/CHEMBL59/"
+  } ]
+} ]

@@ -12,13 +12,11 @@ import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingMarkupException;
 
 /**
- * Provides a thread wrapper for the process of scraping. Scraping defined
- * elsewhere. Utilises the Scrape class to maintain the list of sites to scrape
- * and those already scraped.
+ * {@link hwu.elixir.scrape.scraper.ScrapeThread} manages the process of scraping. Obtaining a URL from {@link hwu.elixir.scrape.scraper.ScrapeState}
+ * and giving it to {@link hwu.elixir.scrape.scraper.ServiceScraper} for actual scraping.
  * 
- * @author kcm
  *
- * @see Scraper
+ * @see ServiceScraper
  * @see ScrapeState
  *
  */
@@ -27,10 +25,10 @@ public class ScrapeThread extends Thread {
 	private ServiceScraper process;
 	private int waitTime;
 	private String folderToWriteNQTo;
-	private boolean worked = true;
+	private boolean fileWritten = true;
 	
 	
-	private static Logger logger = LoggerFactory.getLogger("hwu.elixir.scrape.scraper.ScrapeThread");
+	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
 	
 
 	/**
@@ -77,16 +75,18 @@ public class ScrapeThread extends Thread {
 				}
 			} catch(FourZeroFourException fourZeroFourException) {
 				scrapeState.setStatusTo404(record);
+				fileWritten = false;
 			} catch (JsonLDInspectionException je) {
 				scrapeState.setStatusToHumanInspection(record);
+				fileWritten = false;
 			} catch (CannotWriteException cannotWrite) {		
 				logger.error("Caught cannot read file, setting worked to false!");
-				worked = false;
+				fileWritten = false;
 				scrapeState.addFailedToScrapeURL(record);
-				return;
+				return; // no point in continuing
 			} catch (MissingMarkupException e) {
 				logger.error("Cannot obtain markup from " + record.getUrl() +".");
-				worked = false;
+				fileWritten = false;
 				scrapeState.addFailedToScrapeURL(record);
 			}
 			try {
@@ -97,7 +97,7 @@ public class ScrapeThread extends Thread {
 		}
 	}
 	
-	public boolean isWorked() {
-		return worked;
+	public boolean isFileWritten() {
+		return fileWritten;
 	}
 }
