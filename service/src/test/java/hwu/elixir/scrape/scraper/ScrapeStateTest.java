@@ -8,7 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import hwu.elixir.scrape.db.crawl.CrawlRecord;
-import hwu.elixir.scrape.db.crawl.StateOfCrawl;
+import hwu.elixir.scrape.db.crawl.StatusOfScrape;
 
 public class ScrapeStateTest {
 
@@ -43,7 +43,7 @@ public class ScrapeStateTest {
 		assertFalse(state.pagesLeftToScrape());
 		state.addSuccessfulScrapedURL(record2);
 		assertEquals(1, state.getPagesProcessed().size());
-		assertEquals(StateOfCrawl.SUCCESS, record2.getStatus());
+		assertEquals(StatusOfScrape.SUCCESS, record2.getStatus());
 	}		
 
 	
@@ -53,23 +53,23 @@ public class ScrapeStateTest {
 		assertFalse(state.pagesLeftToScrape());
 		state.addFailedToScrapeURL(record2);
 		assertEquals(1, state.getPagesProcessed().size());
-		assertEquals(StateOfCrawl.FAILED, record2.getStatus());
+		assertEquals(StatusOfScrape.FAILED, record2.getStatus());
 		
 		state.addFailedToScrapeURL(record2);
 		assertEquals(2, state.getPagesProcessed().size());
-		assertEquals(StateOfCrawl.GIVEN_UP, record2.getStatus());
+		assertEquals(StatusOfScrape.GIVEN_UP, record2.getStatus());
 		
 		state.addSuccessfulScrapedURL(record2);
 		assertEquals(3, state.getPagesProcessed().size());
-		assertEquals(StateOfCrawl.SUCCESS, record2.getStatus());	
+		assertEquals(StatusOfScrape.SUCCESS, record2.getStatus());	
 		
 		state.setStatusTo404(record2);
 		assertEquals(4, state.getPagesProcessed().size());
-		assertEquals(StateOfCrawl.DOES_NOT_EXIST, record2.getStatus());	
+		assertEquals(StatusOfScrape.DOES_NOT_EXIST, record2.getStatus());	
 		
 		state.setStatusToHumanInspection(record2);
 		assertEquals(5, state.getPagesProcessed().size());
-		assertEquals(StateOfCrawl.HUMAN_INSPECTION, record2.getStatus());			
+		assertEquals(StatusOfScrape.HUMAN_INSPECTION, record2.getStatus());			
 	}
 	
 	@Test

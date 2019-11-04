@@ -55,7 +55,7 @@ public class DBAccessTest {
 	public void test_getSomeCrawlRecords_plus_beingScraped() {
 		List<CrawlRecord> list = dba.getSomeCrawlRecords(1);
 		assertTrue(list.size() == 1);		
-		assertEquals(StateOfCrawl.UNTRIED, list.get(0).getStatus());
+		assertEquals(StatusOfScrape.UNTRIED, list.get(0).getStatus());
 		assertEquals(true, list.get(0).isBeingScraped());
 		
 		dba.resetBeingScraped(list);
@@ -68,7 +68,7 @@ public class DBAccessTest {
 	public void test_getAllCrawlRecords() {
 		List<CrawlRecord> list = dba.getAllCrawlRecords();
 		assertTrue(list.size() == 2);		
-		assertEquals(StateOfCrawl.UNTRIED, list.get(0).getStatus());		
+		assertEquals(StatusOfScrape.UNTRIED, list.get(0).getStatus());		
 	}	
 	
 	@Test
@@ -76,7 +76,7 @@ public class DBAccessTest {
 		CrawlRecord one = dba.findCrawlRecordById(1L);
 		assertTrue(one.getId() == 1L);
 		assertEquals("http://www.hw.ac.uk", one.getUrl());
-		assertEquals(StateOfCrawl.UNTRIED, one.getStatus());
+		assertEquals(StatusOfScrape.UNTRIED, one.getStatus());
 	}
 	
 	@Test
@@ -90,7 +90,7 @@ public class DBAccessTest {
 		CrawlRecord one = dba.findCrawlRecordByURL("http://www.macs.hw.ac.uk");
 		assertTrue(one.getId() == 2L);
 		assertEquals("http://www.macs.hw.ac.uk", one.getUrl());
-		assertEquals(StateOfCrawl.UNTRIED, one.getStatus());
+		assertEquals(StatusOfScrape.UNTRIED, one.getStatus());
 	}
 	
 	@Test
@@ -104,7 +104,7 @@ public class DBAccessTest {
 		List<CrawlRecord> list = dba.getAllCrawlRecords();
 		for(CrawlRecord record : list) {
 			record.setDateScraped(new Date());
-			record.setStatus(StateOfCrawl.SUCCESS);
+			record.setStatus(StatusOfScrape.SUCCESS);
 			record.setContext("the context");
 		}
 		dba.updateAllCrawlRecords(list);
@@ -112,12 +112,12 @@ public class DBAccessTest {
 		CrawlRecord one = dba.findCrawlRecordById(1L);
 		assertTrue(one.getId() == 1L);
 		assertEquals("http://www.hw.ac.uk", one.getUrl());
-		assertEquals(StateOfCrawl.SUCCESS, one.getStatus());
+		assertEquals(StatusOfScrape.SUCCESS, one.getStatus());
 		
 		list = dba.getAllCrawlRecords();
 		for(CrawlRecord record : list) {
 			record.setDateScraped(null);
-			record.setStatus(StateOfCrawl.UNTRIED);
+			record.setStatus(StatusOfScrape.UNTRIED);
 			record.setContext("");
 		}
 		dba.updateAllCrawlRecords(list);
@@ -127,7 +127,7 @@ public class DBAccessTest {
 	@Test
 	public void test_updateAllRecords_fail() {
 		CrawlRecord one = new CrawlRecord("http://www.bbc.co.uk");
-		one.setStatus(StateOfCrawl.DOES_NOT_EXIST);
+		one.setStatus(StatusOfScrape.DOES_NOT_EXIST);
 		List<CrawlRecord> list = new ArrayList<CrawlRecord>();
 		list.add(one);
 		try {

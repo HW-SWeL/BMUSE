@@ -36,13 +36,13 @@ public class CrawlRecord {
 	private Date dateScraped;
 
 	@Enumerated(EnumType.STRING)
-	private StateOfCrawl status;
+	private StatusOfScrape status;
 	
 	@Column(columnDefinition = "boolean default false")
 	private boolean beingScraped;
 
 	public CrawlRecord() {		
-		status = StateOfCrawl.UNTRIED;
+		status = StatusOfScrape.UNTRIED;
 	}
 
 	public CrawlRecord(String url) {
@@ -50,7 +50,7 @@ public class CrawlRecord {
 		if(validation.validateURI(url)) {
 			this.url = url;
 			context = "";
-			status = StateOfCrawl.UNTRIED;
+			status = StatusOfScrape.UNTRIED;
 			dateScraped = null;
 		} else {
 			throw new IllegalArgumentException(url +" is not a valid url");
@@ -77,11 +77,11 @@ public class CrawlRecord {
 		this.dateScraped = dateScraped;
 	}
 
-	public StateOfCrawl getStatus() {
+	public StatusOfScrape getStatus() {
 		return status;
 	}
 
-	public void setStatus(StateOfCrawl status) {
+	public void setStatus(StatusOfScrape status) {
 		this.status = status;
 	}
 
