@@ -22,7 +22,7 @@ public class ServiceScraper extends ScraperFilteredCore {
 
 	private StateOfCrawl status= null;
 	
-	private static Logger logger = LoggerFactory.getLogger("hwu.elixir.scrape.SimpleScraperImpl");
+	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
 
 	/**
 	 * Orchestrates the process of scraping a site before converting the extracted
