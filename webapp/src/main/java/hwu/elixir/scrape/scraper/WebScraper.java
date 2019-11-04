@@ -17,7 +17,7 @@ import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
 import hwu.elixir.scrape.exceptions.SeleniumException;
 
-public class WebScraper extends ScraperCore {
+public class WebScraper extends ScraperUnFilteredCore {
 
 	private static final Logger logger = LoggerFactory.getLogger(System.class.getName());
 
@@ -29,7 +29,7 @@ public class WebScraper extends ScraperCore {
 
 		String html = getHtmlViaSelenium(url);		
 		
-		html = injectId(html, url);
+//		html = injectId(html, url);
 		
 		DocumentSource source = new StringDocumentSource(html, url);
 		String triples = getTriplesInNTriples(source);
