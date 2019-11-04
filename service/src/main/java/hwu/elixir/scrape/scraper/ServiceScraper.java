@@ -18,7 +18,7 @@ import hwu.elixir.scrape.exceptions.SeleniumException;
  * @see ScraperCore
  * 
  */
-public class ServiceScraper extends ScraperCore {
+public class ServiceScraper extends ScraperFilteredCore {
 
 	private StateOfCrawl status= null;
 	
