@@ -11,6 +11,12 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+/**
+ * Creates and managers the chromium driver for Selenium.
+ * Based on singleton pattern
+ *
+ */
 public class ChromeDriverCreator {
 	
 	private static final String propertiesFile = "application.properties";
