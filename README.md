@@ -46,7 +46,8 @@ To use this:
 1. Update `core > src > main > resources > applications.properties`. You need to specify:
     * output loction: currently all RDF is saved as NQuads to a folder. 
     * location of sites file: where is the list of URLs you wish to scrape located? There is an example in `core > src > main > resources > urls2scrape.txt`
-    * location of the chrome driver.
+    * location of the chrome driver. This is not the location of the folder, but the full path to the driver file. On windows this will be called `chromedriver.exe`
+    * **NOTE**: if you are using windows you will have to use a double backslash as the file separator; i.e., `\\` not `\` 
 2. Create/edit your list of urls file.
 3. Package with maven: `mvn clean package` 
    * If you only want to compile/run *core* you can do this from inside the *core* directory.
