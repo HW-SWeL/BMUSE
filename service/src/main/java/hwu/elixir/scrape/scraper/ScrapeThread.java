@@ -26,16 +26,44 @@ public class ScrapeThread extends Thread {
 	private int waitTime;
 	private String folderToWriteNQTo;
 	private boolean fileWritten = true;
+	private int scrapeVersion = 1;
 	
 	
 	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
 	
 
 	/**
+	 * Sets up a thread for actually scrapping. 
+	 * 
+	 * @param scraper Scraper that will actually do the scraping.
+	 * @param scrapeState Object that maintains state across threads.
+	 * @param waitTime    How long (in seconds) thread should wait after scraping
+	 *                    page before attempting new page.
+	 * @param folderToWriteNQTo Output folder for the NQuads files generated in this process.
+	 * @param contextVersion The context URL used is 'https://bioschemas.org/crawl/CONTEXTVERSION/ID' Where ID is the id of the CrawlRecord pulled from the DBMS.
+	 * 
+	 * @see ScrapeState
+	 * @see Scraper
+	 */
+	public ScrapeThread(ServiceScraper scraper, ScrapeState scrapeState, int waitTime, String folderToWriteNQTo, int contextVersion) {
+		this.scrapeState = scrapeState;
+		process = scraper;
+		this.waitTime = waitTime;
+		this.folderToWriteNQTo = folderToWriteNQTo;
+		this.scrapeVersion = contextVersion;
+
+	}
+	
+	/**
+	 * 
+	 * Sets up a thread for actually scrapping. contextVersion is set to 1.
 	 * 
 	 * @param scrapeState Object that maintains state across threads.
 	 * @param waitTime    How long (in seconds) thread should wait after scraping
 	 *                    page before attempting new page.
+	 * @param waitTime    How long (in seconds) thread should wait after scraping
+	 *                    page before attempting new page.
+	 * @param folderToWriteNQTo Output folder for the NQuads files generated in this process.                    
 	 * 
 	 * @see ScrapeState
 	 * @see Scraper
@@ -45,8 +73,7 @@ public class ScrapeThread extends Thread {
 		process = scraper;
 		this.waitTime = waitTime;
 		this.folderToWriteNQTo = folderToWriteNQTo;
-
-	}
+	}	
 
 	@Override
 	/**
@@ -64,7 +91,7 @@ public class ScrapeThread extends Thread {
 			if (record == null)
 				break;
 
-			record.setContext("https://bioschemas.org/crawl/v1/" + record.getId());			
+			record.setContext("https://bioschemas.org/crawl/" + scrapeVersion +"/" + record.getId());			
 			record.setDateScraped(new Date());
 			
 			try {				

@@ -30,11 +30,12 @@ public class ServiceScrapeDriver {
 
 	private static final String propertiesFile = "application.properties";
 
-	private static int waitTime = 1;
-	private static int numberOfPagesToCrawlInALoop;
-	private static int totalNumberOfPagesToCrawlInASession;
-	private static String outputFolder;
-	private static int pagesCounter = 0;
+	private int waitTime = 1;
+	private int numberOfPagesToCrawlInALoop;
+	private int totalNumberOfPagesToCrawlInASession;
+	private String outputFolder;
+	private int pagesCounter = 0;
+	private int scrapeVersion = 1;
 
 	private DBAccess dba;
 	
@@ -75,7 +76,7 @@ public class ServiceScrapeDriver {
 			}
 			ScrapeState scrapeState = new ScrapeState(pagesToPull);
 			
-			ScrapeThread scrape1 = new ScrapeThread(scrapeOne, scrapeState, waitTime, outputFolder);
+			ScrapeThread scrape1 = new ScrapeThread(scrapeOne, scrapeState, waitTime, outputFolder, scrapeVersion);
 			scrape1.setName("S1");
 
 			scrape1.start();
@@ -193,6 +194,8 @@ public class ServiceScrapeDriver {
 		logger.info("     numberOfPagesToCrawl: " + numberOfPagesToCrawlInALoop);
 		totalNumberOfPagesToCrawlInASession = Integer.parseInt(prop.getProperty("totalNumberOfPagesToCrawlInASession").trim());
 		logger.info("     totalNumberOfPagesToCrawlInASession: " + totalNumberOfPagesToCrawlInASession);
+		scrapeVersion = Integer.parseInt(prop.getProperty("scrapeVersion").trim());
+		logger.info("     scrapeVersion: " + scrapeVersion);		
 		logger.info("\n\n\n");
 	}
 
