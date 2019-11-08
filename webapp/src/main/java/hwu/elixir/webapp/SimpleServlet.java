@@ -14,133 +14,118 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import hwu.elixir.scrape.exceptions.FourZeroFourException;
-import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
-import hwu.elixir.scrape.exceptions.MissingHTMLException;
-import hwu.elixir.scrape.exceptions.SeleniumException;
 import hwu.elixir.scrape.scraper.WebScraper;
 import hwu.elixir.utils.Validation;
 
-
-
+/**
+ * 
+ * Basic servlet that provides access to an unfiltered scraper. Scrapes (without
+ * processing) a given URL.
+ * 
+ * Output is NTriples wrapped in JSON.
+ * 
+ */
 @WebServlet(name = "SimpleServlet", urlPatterns = "/getRDF")
 public class SimpleServlet extends HttpServlet {
-	
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
-	
+
 	private static final Logger logger = Logger.getLogger(System.class.getName());
 
 	@Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
- 
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+
 		Map<String, String[]> allParams = request.getParameterMap();
-						
-		if(allParams == null || !allParams.containsKey("url")) {
-			JSONObject json = new JSONObject();
-			json.put("result", "error");
-			json.put("message", "must supply 1 *url* parameter");
+		boolean error = false;
+		JSONObject jsonObject = null;
+		if (allParams == null || !allParams.containsKey("url")) {
+			jsonObject = new JSONObject();
+			jsonObject.put("result", "error");
+			jsonObject.put("message", "must supply 1 *url* parameter");
+			logger.info(jsonObject.toJSONString());
 			
-			response.setStatus(400);
-			response.setHeader("Access-Control-Allow-Origin", "*");
-			response.setCharacterEncoding("UTF-8");
-			
-			PrintWriter out = response.getWriter();
-			out.print(json.toJSONString());
-			out.close();
-			logger.info(json.toJSONString());
+			error = true;
 		}
-		
+
 		String[] allUrls = allParams.get("url");
-		if(allUrls == null || allUrls.length > 1) {
-			JSONObject json = new JSONObject();
-			json.put("result", "error");
-			json.put("message", "must supply *1* url parameter");
+		if (allUrls == null || allUrls.length > 1) {
+			jsonObject = new JSONObject();
+			jsonObject.put("result", "error");
+			jsonObject.put("message", "must supply *1* url parameter");
+			logger.info(jsonObject.toJSONString());
 			
+			error = true;
+		}
+		
+		if(error) {
 			response.setStatus(400);
 			response.setHeader("Access-Control-Allow-Origin", "*");
 			response.setCharacterEncoding("UTF-8");
-			
+
 			PrintWriter out = response.getWriter();
-			out.print(json.toJSONString());
-			out.close();
-			logger.info(json.toJSONString());
+			out.print(jsonObject.toJSONString());
+			out.close();	
 		}
-		
-		for(String url : allUrls) {
+
+		for (String url : allUrls) {
 			logger.info(url);
 		}
-		
-		
+
 		String url2Scrape = allUrls[0];
-		
+
 		Validation validation = new Validation();
-		if(!validation.validateURI(url2Scrape)) {
-			JSONObject json = new JSONObject();
-			json.put("result", "error");
-			json.put("message", "must supply 1 *valid* url");
-			
+		if (!validation.validateURI(url2Scrape)) {
+			jsonObject = new JSONObject();
+			jsonObject.put("result", "error");
+			jsonObject.put("message", "must supply 1 *valid* url");
+
 			response.setStatus(400);
 			response.setHeader("Access-Control-Allow-Origin", "*");
 			response.setCharacterEncoding("UTF-8");
-			
+
 			PrintWriter out = response.getWriter();
-			out.print(json.toJSONString());
-			out.close();			
-			logger.info(json.toJSONString());
+			out.print(jsonObject.toJSONString());
+			out.close();
+			logger.info(jsonObject.toJSONString());
 		}
-		
-		logger.info("About to create scraper");		
+
+		logger.info("About to create scraper");
 		WebScraper scraper = new WebScraper();
-		JSONObject json = new JSONObject();
+		jsonObject = new JSONObject();
 		JSONArray result = new JSONArray();
+		boolean success = true;
 		try {
-			logger.info("About to scrape");	
+			logger.info("About to scrape");
 			result = scraper.scrape(url2Scrape);
-			logger.info("Scraped");	
-		} catch (Exception e) {			
-			e.printStackTrace();
-			json.put("result", "error");
-			json.put("message", e.getMessage());
-			
-			response.setStatus(500);
-			response.setHeader("Access-Control-Allow-Origin", "*");
-			response.setCharacterEncoding("UTF-8");
-			
-			PrintWriter out = response.getWriter();
-			out.print(json.toJSONString());
-			out.close();
-		} 
-		
-		if(result == null) {
-			json.put("result", "error");
-			json.put("message", "cannot find any markup");
-			
-			response.setStatus(500);
-			response.setHeader("Access-Control-Allow-Origin", "*");
-			response.setCharacterEncoding("UTF-8");
-			
-			PrintWriter out = response.getWriter();
-
-			out.print(json.toJSONString());
-			out.close();
+			logger.info("Scraped");
+		} catch (Exception e) {
+			jsonObject.put("result", "error");
+			jsonObject.put("message", e.getMessage());
+			success = false;
 		}
 
-		json.put("result", "success");
-		json.put("type", "n3");		
-		json.put("rdf", result);
+		if (result == null) {
+			jsonObject.put("result", "error");
+			jsonObject.put("message", "cannot find any markup");
+			success = false;
+
+		}
 		
-		response.setStatus(200);
+		if (!success) {
+			response.setStatus(500);
+		} else {
+			jsonObject.put("result", "success");
+			jsonObject.put("type", "n3");
+			jsonObject.put("rdf", result);
+
+			response.setStatus(200);
+		}
 		response.setHeader("Access-Control-Allow-Origin", "*");
 		response.setCharacterEncoding("UTF-8");
-		
 		PrintWriter out = response.getWriter();
+		out.print(jsonObject.toJSONString());
+		out.close();
+	}
 
-		out.print(json.toJSONString());
-		out.close();		
-    }
-	
 }

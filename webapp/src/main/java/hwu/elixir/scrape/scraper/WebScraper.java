@@ -17,21 +17,19 @@ import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
 import hwu.elixir.scrape.exceptions.SeleniumException;
 
+/** 
+ * Scrapes a given site and returns the raw (unfiltered/unprocessed) n-triples wrapped in a {@link JSONArray}
+ * 
+ *
+ */
 public class WebScraper extends ScraperUnFilteredCore {
 
 	private static final Logger logger = LoggerFactory.getLogger(System.class.getName());
 
 	public JSONArray scrape(String url) throws FourZeroFourException,
-			JsonLDInspectionException, MissingHTMLException, SeleniumException, Exception {
-
-		if (url.endsWith("/") || url.endsWith("#"))
-			url = url.substring(0, url.length() - 1);
-
-		String html = getHtmlViaSelenium(url);		
-		
-//		html = injectId(html, url);
-		
-		DocumentSource source = new StringDocumentSource(html, url);
+			JsonLDInspectionException, MissingHTMLException, SeleniumException, Exception {				
+			
+		DocumentSource source = new StringDocumentSource(getHtmlViaSelenium(fixURL(url)), url);
 		String triples = getTriplesInNTriples(source);
 		
 		if (triples == null) {
@@ -52,6 +50,12 @@ public class WebScraper extends ScraperUnFilteredCore {
 		return writeN3ToJSONArray(quads);
 	}
 
+	/** Wraps NTriples in {@link JSONArray}
+	 * 
+	 * 
+	 * @param n3 NTriples as a String
+	 * @return Triples as a {@link JSONArray}
+	 */
 	private JSONArray writeN3ToJSONArray(String n3) {
 		JSONArray array = new JSONArray();
 		StringTokenizer st = new StringTokenizer(n3, "\n");
