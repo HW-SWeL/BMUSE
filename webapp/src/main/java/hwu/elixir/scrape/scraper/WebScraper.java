@@ -1,7 +1,6 @@
 package hwu.elixir.scrape.scraper;
 
 import java.io.ByteArrayOutputStream;
-import java.util.StringTokenizer;
 
 import org.apache.any23.source.DocumentSource;
 import org.apache.any23.source.StringDocumentSource;
@@ -9,6 +8,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.json.simple.JSONArray;
+import org.json.simple.parser.JSONParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,25 +44,13 @@ public class WebScraper extends ScraperUnFilteredCore {
 		}
 			
 		ByteArrayOutputStream stream = new ByteArrayOutputStream();
-		Rio.write(model, stream, RDFFormat.NTRIPLES);
+		Rio.write(model, stream, RDFFormat.JSONLD);
 		String quads = new String(stream.toByteArray());
-
-		return writeN3ToJSONArray(quads);
-	}
-
-	/** Wraps NTriples in {@link JSONArray}
-	 * 
-	 * 
-	 * @param n3 NTriples as a String
-	 * @return Triples as a {@link JSONArray}
-	 */
-	private JSONArray writeN3ToJSONArray(String n3) {
-		JSONArray array = new JSONArray();
-		StringTokenizer st = new StringTokenizer(n3, "\n");
-		while (st.hasMoreTokens()) {
-			array.add(st.nextToken());
-		}
-		return array;
+		
+		JSONParser parser = new JSONParser();
+		JSONArray outputArray= (JSONArray) parser.parse(quads);
+		
+		return outputArray;
 	}
 
 }
