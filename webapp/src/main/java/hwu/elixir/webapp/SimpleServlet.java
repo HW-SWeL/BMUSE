@@ -116,12 +116,15 @@ public class SimpleServlet extends HttpServlet {
 			response.setStatus(500);
 		} else {
 			jsonObject.put("result", "success");
-			jsonObject.put("type", "n3");
+			jsonObject.put("type", "json-ld");
 			jsonObject.put("rdf", result);
 
 			response.setStatus(200);
 		}
 		response.setHeader("Access-Control-Allow-Origin", "*");
+		response.setHeader("Access-Control-Allow-Methods", "GET");
+		response.setHeader("Access-Control-Allow-Headers", "*");
+
 		response.setCharacterEncoding("UTF-8");
 		PrintWriter out = response.getWriter();
 		out.print(jsonObject.toJSONString());
