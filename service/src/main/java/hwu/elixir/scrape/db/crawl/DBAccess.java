@@ -18,14 +18,13 @@ import org.slf4j.LoggerFactory;
  * standard JPA
  * 
  * @see CrawlRecord
- * @author kcm
  */
 public class DBAccess {
 
 	private EntityManager em;
 	private static EntityManagerFactory emf = Persistence.createEntityManagerFactory("hibernate");
 
-	private Logger logger = LoggerFactory.getLogger(DBAccess.class);
+	private Logger logger = LoggerFactory.getLogger(System.class.getName());
 
 	public DBAccess() {
 		java.util.logging.Logger.getLogger("org.hibernate").setLevel(Level.OFF);
@@ -45,7 +44,9 @@ public class DBAccess {
 
 	public void shutdown() {
 		close();
-		emf.close();
+		if(emf.isOpen()) {
+			emf.close();
+		}
 	}
 
 	/**
@@ -67,7 +68,7 @@ public class DBAccess {
 			for (String uri : allURIs) {
 				if (!crawlRecordExists(uri)) {
 					CrawlRecord temp = new CrawlRecord(uri);
-					temp.setStatus(StateOfCrawl.UNTRIED);
+					temp.setStatus(StatusOfScrape.UNTRIED);
 					em.persist(temp);
 					if (counter++ % 20 == 0) {
 						em.flush();
@@ -78,9 +79,9 @@ public class DBAccess {
 			txn.commit();
 		} catch (Exception e) {
 			if (txn != null)
-				txn.commit();
+				txn.rollback();
 
-			logger.error("    ERROR in DBAccess: " + e.getLocalizedMessage());
+			logger.error("ERROR in DBAccess: " + e.getLocalizedMessage());
 			return false;
 		}
 		logger.info("Written " + counter + " records to CrawlRecord table");
@@ -88,7 +89,7 @@ public class DBAccess {
 	}
 
 	/**
-	 * Syncs the local copy of the CrawlRecord with the 1 in the database
+	 * Syncs the local copy of the CrawlRecord with the one in the database.
 	 * 
 	 * @param allRecords List of CrawlRecord objects to sync
 	 * @return true if worked else false
@@ -120,6 +121,12 @@ public class DBAccess {
 				if (record.getStatus() != null) {
 					retrievedRecord.setStatus(record.getStatus());
 				}
+				if(record.isBeingScraped()) {
+					retrievedRecord.setBeingScraped(false);
+				} else {
+					logger.error("RECORD IS BEING UPDATED AFTER CRAWL YET WAS NOT SET TO BEING CRAWLED!");							
+				}
+				
 				em.persist(retrievedRecord);
 				if (counter++ % 20 == 0) {
 					em.flush();
@@ -129,13 +136,64 @@ public class DBAccess {
 			txn.commit();
 		} catch (Exception e) {
 			if (txn != null)
-				txn.commit();
+				txn.rollback();
 
-			logger.error("    ERROR in DBAccess: " + e.getLocalizedMessage());
+			logger.error("ERROR in DBAccess: " + e.getLocalizedMessage());
 			return false;
 		}
 		logger.info("Updated " + counter + " records to CrawlRecord table");
 
+		return true;
+	}
+	
+	/**
+	 * For every CrawlRecord given as input the beingScraped property is set to false and 
+	 * the CrawlRecord is synced to the DBMS.
+	 * 
+	 * 
+	 * @param allRecords List of CrawlRecords
+	 * @return true if worked else false
+	 * @see CrawlRecord
+	 */
+	public boolean resetBeingScraped(List<CrawlRecord> allRecords) {
+		if (!em.isOpen()) {
+			open();
+		}
+
+		logger.info("Resetting " + allRecords.size() + " records");
+		int counter = 0;
+		EntityTransaction txn = null;
+		try {
+			txn = em.getTransaction();
+			txn.begin();
+
+			for (CrawlRecord record : allRecords) {
+				CrawlRecord retrievedRecord = findCrawlRecordById(record.getId());
+
+				if(record.isBeingScraped()) {
+					retrievedRecord.setBeingScraped(false);
+				} else {
+					logger.error("RECORD IS BEING UPDATED AFTER CRAWL YET WAS NOT SET TO BEING CRAWLED!");
+					return false;
+				}
+				
+				em.persist(retrievedRecord);
+				if (counter++ % 20 == 0) {
+					em.flush();
+					em.clear();
+				}
+			}
+			txn.commit();
+		} catch (Exception e) {
+			if (txn != null)
+				txn.rollback();
+
+			logger.error("ERROR in DBAccess: " + e.getLocalizedMessage());
+			return false;
+		}
+		logger.info("Reset " + counter + " records to CrawlRecord table");		
+		
+		
 		return true;
 	}
 
@@ -149,11 +207,11 @@ public class DBAccess {
 		if (!em.isOpen()) {
 			open();
 		}
-
 		try {
 			String queryString = "FROM CrawlRecord";
 			Query query = em.createQuery(queryString);
-			List<CrawlRecord> allRecords = query.getResultList();
+			List<CrawlRecord> allRecords = query.getResultList();			
+			
 			return allRecords;
 		} catch (Exception e) {
 			return null;
@@ -162,21 +220,33 @@ public class DBAccess {
 
 	/**
 	 * Retrieves a given number of instances of CrawlRecord from DBMS. Each CrawlRecord is a URL that needs to be scraped, with provenance if scraped.
+	 * Will not retrieve URLs which have a status that is one of: GIVEN_UP, SUCCESS, DOES_NOT_EXIST or HUMAN_INSPECTION.
 	 * 
 	 * @param number of CrawlRecords to fetch
-	 * @return *amount* number of CrawlRecords from DBMS. Or null if not possible.
+	 * @return List of CrawlRecords where the size of the list is determined by the *amount* parameter.
 	 * @see CrawlRecord
 	 */
 	public List<CrawlRecord> getSomeCrawlRecords(int amount) {
 		if (!em.isOpen()) {
 			open();
 		}
-
+		
+		EntityTransaction txn = null;
 		try {
-			String queryString = "FROM CrawlRecord WHERE status NOT IN ('GIVEN_UP', 'SUCCESS', 'DOES_NOT_EXIST', 'HUMAN_INSPECTION') ";
+			txn = em.getTransaction();
+			txn.begin();		
+			
+			String queryString = "FROM CrawlRecord WHERE status NOT IN ('GIVEN_UP', 'SUCCESS', 'DOES_NOT_EXIST', 'HUMAN_INSPECTION') and beingScraped != 1";
 			Query query = em.createQuery(queryString);
 			query.setMaxResults(amount);
-			List<CrawlRecord> allRecords = query.getResultList();
+			List<CrawlRecord> allRecords = query.getResultList();			
+			
+			for(CrawlRecord record : allRecords) {				
+				record.setBeingScraped(true);
+				em.persist(record);
+			}			
+			
+			txn.commit();			
 			return allRecords;
 		} catch (Exception e) {
 			return null;
@@ -184,7 +254,7 @@ public class DBAccess {
 	}
 
 	/**
-	 * Retrieves a specific instance of CrawlRecord from DBMS.
+	 * Retrieves a specific instance of CrawlRecord from DBMS regardless of status.
 	 * 
 	 * @param id Unique ID of CrawlRecord to fetch. IDs are auto-generated by DBMS.
 	 * @return The CrawlRecord or null if not found/error.
@@ -206,7 +276,7 @@ public class DBAccess {
 	}
 
 	/**
-	 * Retrieves a specific instance of CrawlRecord from DBMS.
+	 * Retrieves a specific instance of CrawlRecord from DBMS regardless of status.
 	 * 
 	 * @param url The URL of the CrawlRecord.
 	 * @return The CrawlRecord or null if not found/error.

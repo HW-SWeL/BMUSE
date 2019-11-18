@@ -13,9 +13,9 @@ public class CrawlRecordTest {
 		CrawlRecord cr = new CrawlRecord("http://www.bbc.co.uk");
 		assertTrue(cr.getUrl().equalsIgnoreCase("http://www.bbc.co.uk"));
 		
-		assertTrue(cr.getStatus().equals(StateOfCrawl.UNTRIED));
-		cr.setStatus(StateOfCrawl.DOES_NOT_EXIST);
-		assertTrue(cr.getStatus().equals(StateOfCrawl.DOES_NOT_EXIST));
+		assertTrue(cr.getStatus().equals(StatusOfScrape.UNTRIED));
+		cr.setStatus(StatusOfScrape.DOES_NOT_EXIST);
+		assertTrue(cr.getStatus().equals(StatusOfScrape.DOES_NOT_EXIST));
 		
 		assertTrue(cr.getId() == null);
 		cr.setId(1L);
@@ -39,7 +39,7 @@ public class CrawlRecordTest {
 	public void test_equals() {
 		CrawlRecord cr = new CrawlRecord("https://www.bbc.co.uk");
 		CrawlRecord cr2 = new CrawlRecord("https://www.bbc.co.uk");
-		cr2.setStatus(StateOfCrawl.DOES_NOT_EXIST);
+		cr2.setStatus(StatusOfScrape.DOES_NOT_EXIST);
 		assertTrue(cr.equals(cr2));
 		
 		cr2.setDateScraped(new Date());

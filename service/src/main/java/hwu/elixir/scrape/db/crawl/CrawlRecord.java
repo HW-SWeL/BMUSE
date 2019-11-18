@@ -15,10 +15,8 @@ import hwu.elixir.utils.Validation;
 
 /**
  * 
- * Store the current status of a single URL.
+ * Store the current status of a single URL in the scrape service.
  * 
- * 
- * @author kcm
  *
  */
 
@@ -38,10 +36,13 @@ public class CrawlRecord {
 	private Date dateScraped;
 
 	@Enumerated(EnumType.STRING)
-	private StateOfCrawl status;
+	private StatusOfScrape status;
+	
+	@Column(columnDefinition = "boolean default false")
+	private boolean beingScraped;
 
 	public CrawlRecord() {		
-		status = StateOfCrawl.UNTRIED;
+		status = StatusOfScrape.UNTRIED;
 	}
 
 	public CrawlRecord(String url) {
@@ -49,7 +50,7 @@ public class CrawlRecord {
 		if(validation.validateURI(url)) {
 			this.url = url;
 			context = "";
-			status = StateOfCrawl.UNTRIED;
+			status = StatusOfScrape.UNTRIED;
 			dateScraped = null;
 		} else {
 			throw new IllegalArgumentException(url +" is not a valid url");
@@ -76,11 +77,11 @@ public class CrawlRecord {
 		this.dateScraped = dateScraped;
 	}
 
-	public StateOfCrawl getStatus() {
+	public StatusOfScrape getStatus() {
 		return status;
 	}
 
-	public void setStatus(StateOfCrawl status) {
+	public void setStatus(StatusOfScrape status) {
 		this.status = status;
 	}
 
@@ -91,6 +92,14 @@ public class CrawlRecord {
 	public void setContext(String context) {
 		this.context = context;
 	}
+	
+	public boolean isBeingScraped() {
+		return beingScraped;
+	}
+
+	public void setBeingScraped(boolean beingScraped) {
+		this.beingScraped = beingScraped;
+	}	
 
 	@Override
 	public boolean equals(Object o) {

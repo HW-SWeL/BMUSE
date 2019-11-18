@@ -3,17 +3,13 @@ package hwu.elixir.scrape.scraper;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Random;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
 
 import org.apache.any23.Any23;
 import org.apache.any23.extractor.ExtractionException;
 import org.apache.any23.source.DocumentSource;
-import org.apache.any23.writer.NQuadsWriter;
 import org.apache.any23.writer.NTriplesWriter;
 import org.apache.any23.writer.TripleHandler;
 import org.apache.any23.writer.TripleHandlerException;
@@ -21,11 +17,8 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
-import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
@@ -33,44 +26,95 @@ import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.jsoup.Connection.Response;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchSessionException;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
-import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
-import hwu.elixir.scrape.exceptions.MissingContextException;
-import hwu.elixir.scrape.exceptions.MissingHTMLException;
-import hwu.elixir.utils.ChromeDriverFactory;
-import hwu.elixir.utils.Helpers;
+import hwu.elixir.scrape.exceptions.NTriplesParsingException;
+import hwu.elixir.scrape.exceptions.SeleniumException;
+import hwu.elixir.scrape.scraper.examples.FileScraper;
+import hwu.elixir.scrape.scraper.examples.SingleURLScraper;
+import hwu.elixir.utils.ChromeDriverCreator;
 
 /**
- * Provides core functionality for scraping, but is not an actual scraper
+ * Provides core functionality for scraping, but is not an actual scraper. See
+ * {@link FileScraper} or {@link SingleURLScraper} for examples of how to use
+ * this.
  * 
- * 
- * @author kcm
- * @see Scraper
+ * @see FileScraper
+ * @see hwu.elixir.scrape.ServiceScrapeDriver
  * 
  */
 public abstract class ScraperCore {
 
+	private WebDriver driver;
+ 
 	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
-	private WebDriver driver = ChromeDriverFactory.getInstance();
 	
+	public ScraperCore() {
+		driver = ChromeDriverCreator.getInstance();
+	}
 	
+
 	/**
-	 * Uses JSoup to pull the HTML of a NON dynamic web page
+	 * Close the chromedriver opened by Selenium. Should always be closed at the end
+	 * of the scrape.
+	 * 
+	 * @see ChromeDriverCreator
+	 * @see https://github.com/HW-SWeL/Scraper/issues/42
+	 */
+	public void shutdown() {
+		if (driver != null) {
+			logger.info("driver is not null... trying to close!");
+			driver.quit();
+			logger.info("driver closed?!");
+		} else {
+			logger.info("Driver is null... no need to close.");
+		}
+	}
+
+	/**
+	 * 
+	 * Wraps methods to obtain HTML; can be changed for different types of scraper.
+	 * 
+	 * @param url
+	 * @return
+	 * @throws FourZeroFourException
+	 */
+	protected String wrapHTMLExtraction(String url) throws FourZeroFourException {
+
+		String html = "";
+		try {
+			html = getHtmlViaSelenium(url);
+		} catch (SeleniumException e) {
+			// try again
+			try {
+				html = getHtmlViaSelenium(url);
+			} catch (SeleniumException e2) {
+				return "";
+			}
+		}
+		return html;
+	}
+
+	/**
+	 * Uses JSoup to pull the HTML of a NON dynamic web page. Much faster than
+	 * Selenium BUT will not execute JS.
 	 * 
 	 * @param url The address of the site to parse
 	 * @return The HTML as a string
 	 * @throws FourZeroFourException when url is 404
 	 */
-	public String getHtml(String url) throws FourZeroFourException {
+	protected String getHtml(String url) throws FourZeroFourException {
 		try {
 			Response response = Jsoup.connect(url).execute();
 			return fixAny23WeirdIssues(response.parse().normalise().html());
@@ -80,70 +124,131 @@ public abstract class ScraperCore {
 				throw new FourZeroFourException(url);
 			}
 			logger.error(url + " produced a " + status.getStatusCode());
+		} catch (UnknownHostException ehe) {
+			logger.error(url + " cannot be found; UnknownHostException thrown!");
+			return null;
 		} catch (IOException e) {
 			logger.error(url + " produced a " + e.getMessage());
-			System.out.println(url + " produced a " + e.getMessage());
 		} catch (IllegalArgumentException e1) {
 			logger.error(url + " produced a " + e1.getMessage());
-			System.out.println(url + " produced a " + e1.getMessage());
 		}
 		return null;
 	}
 
 	/**
-	 * Uses Selenium to pull the HTML of a NON dynamic web page
+	 * Uses Selenium to pull the HTML of a dynamic web page (ie, executes the
+	 * JavaScript).
 	 * 
-	 * @param url The address of the site to parse
+	 * @param url The address of the page to parse
 	 * @return The HTML as a string
 	 * @throws FourZeroFourException when page title is 404
+	 * @throws SeleniumException
 	 */
-	public String getHtmlViaSelenium(String url) throws FourZeroFourException {
+	protected String getHtmlViaSelenium(String url) throws FourZeroFourException, SeleniumException {
 		try {
-		driver.get(url);
+			if (driver == null) {
+				driver = ChromeDriverCreator.getInstance();
+			}
 
-		// possibly worthless as Selenium do not support HTTP codes:
-		// https://github.com/seleniumhq/selenium-google-code-issue-archive/issues/141
-		if (driver.getTitle().contains("404")) {
-			logger.error(url + " produced a 404");
-			throw new FourZeroFourException(url);
-		}
+			try {
+				driver.get(url);
+			} catch(NoSuchSessionException e) {
+				System.out.println("TRY AGAIN!");
+				driver = ChromeDriverCreator.killAndReopen();
+				
+				driver.get(url);
+			}
 
-		WebDriverWait wait = new WebDriverWait(driver, 10);
-		wait.until(
-				ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath("//script[@type=\"application/ld+json\"]")));
-		
-		} catch(org.openqa.selenium.WebDriverException crashed) {
-			
-			logger.error("Selenium crashed - shutting down");
-			System.exit(0);
+			// possibly worthless as Selenium does not support HTTP codes:
+			// https://github.com/seleniumhq/selenium-google-code-issue-archive/issues/141
+			if (driver.getTitle().contains("404")) {
+				logger.error(url + " produced a 404");
+				throw new FourZeroFourException(url);
+			}
+
+			WebDriverWait wait = new WebDriverWait(driver, 10);
+			wait.until(ExpectedConditions
+					.presenceOfAllElementsLocatedBy(By.xpath("//script[@type=\"application/ld+json\"]")));
+
+		} catch (TimeoutException to) {
+			logger.error("URL timed out: " + url + ". Trying JSoup.");
+			return getHtml(url);
+
+		} catch (org.openqa.selenium.WebDriverException crashed) {
+			crashed.printStackTrace();
+			if (driver == null) {
+				driver = ChromeDriverCreator.getInstance();
+			}
+			throw new SeleniumException(url);
 		}
 
 		return fixAny23WeirdIssues(driver.getPageSource());
 	}
 
 	/**
-	 * Takes an Any23 DocumentSource and converts into triples in N3 form.
+	 * Changes the HTML such that Any23 can parse it. Bugs in Any23 mean that some
+	 * predicates (that should work) break the parser.
+	 * 
+	 * 
+	 * @param html HTML to be corrected
+	 * @return Corrected HTML
+	 * @see #fixAny23WeirdIssues(String)
+	 */
+	protected String fixAny23WeirdIssues(String html) {
+		return html.replaceAll("license", "licensE").replaceAll("fileFormat", "FileFormat").replaceAll("additionalType",
+				"addType");
+	}
+
+	/**
+	 * Writes the success or failure of a scrape to the log.
+	 * 
+	 * @param url          URL scraped
+	 * @param result       TRUE for success; FALSE for fail.
+	 * @param outputFolder Where the output was written.
+	 */
+	protected void displayResult(String url, boolean result, String outputFolder) {
+		if (result) {
+			logger.info(url + " was successfully scraped and written to " + outputFolder);
+		} else {
+			logger.error(url + " was NOT successfully scraped.");
+		}
+		logger.info("\n\n");
+	}
+
+	/**
+	 * Removes trailing # or / at the end of a URL
+	 * 
+	 * @param url
+	 * @return Remove with # or / removed (if they existing)
+	 */
+	protected String fixURL(String url) {
+		if (url.endsWith("/") || url.endsWith("#"))
+			url = url.substring(0, url.length() - 1);
+
+		return url;
+	}
+
+	/**
+	 * Takes an Any23 DocumentSource and converts into triples in NTriples form.
 	 * 
 	 * @param source The HTML as an Any23 DocumentSource
-	 * @return Triples in N3 form as a long String
+	 * @return Triples in NTriples form as a long String
 	 * @see DocumentSource
 	 */
-	public String getTriplesInN3(DocumentSource source) {
+	protected String getTriplesInNTriples(DocumentSource source) {
 
 		Any23 runner = new Any23();
 		try (ByteArrayOutputStream out = new ByteArrayOutputStream();
 				TripleHandler handler = new NTriplesWriter(out);) {
 
 			runner.extract(source, handler);
+
 			return out.toString("UTF-8");
 		} catch (ExtractionException e) {
-			System.out.println("Cannot extract triples!");
 			logger.error("Cannot extract triples", e);
 		} catch (IOException e) {
-			System.out.println("IO error whilst extracting triples!");
 			logger.error(" IO error whilst extracting triples", e);
 		} catch (TripleHandlerException e1) {
-			System.out.println("TripleHanderException!");
 			logger.error("TripleHanderException", e1);
 		}
 
@@ -151,184 +256,33 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Takes an Any23 DocumentSource and converts into triples in quads form.
+	 * Loads nTriples into a InputStream and passes that to RDF4J NTriples parser to
+	 * generate a {@link Model}
 	 * 
-	 * @param source The HTML as an Any23 DocumentSource
-	 * @return Triples in N3 form as a long String
-	 * @see DocumentSource
+	 * @param nTriples String of nTriples
+	 * @return RDF4J Model with the triples loaded inside it
+	 * @throws RDFParseException            Cannot parse the nTriples for some
+	 *                                      reason. Common problem is a URL with an
+	 *                                      inappropriate character, e.g., |
+	 * @throws UnsupportedRDFormatException
+	 * @throws IOException
 	 */
-	public String getTriplesInNQ(DocumentSource source) {
+	private Model createModelFromNTriples2(String nTriples)
+			throws RDFParseException, UnsupportedRDFormatException, IOException {
+		InputStream input = new ByteArrayInputStream(nTriples.getBytes(StandardCharsets.UTF_8));
 
-		Any23 runner = new Any23();
-		try (ByteArrayOutputStream out = new ByteArrayOutputStream(); TripleHandler handler = new NQuadsWriter(out);) {
-
-			runner.extract(source, handler);
-			return out.toString("UTF-8");
-		} catch (ExtractionException e) {
-			System.out.println("Cannot extract triples!");
-			logger.error("Cannot extract triples", e);
-		} catch (IOException e) {
-			System.out.println("IO error whilst extracting triples!");
-			logger.error(" IO error whilst extracting triples", e);
-		} catch (TripleHandlerException e1) {
-			System.out.println("TripleHanderException!");
-			logger.error("TripleHanderException", e1);
-		}
-
-		return null;
+		return Rio.parse(input, "", RDFFormat.NTRIPLES);
 	}
 
 	/**
-	 * Takes a series of N3 triples as a string and filters them removing triples
-	 * with the following predicates:
-	 * <ol>
-	 * <li>nofollow</li>
-	 * <li>ogp.me/...</li>
-	 * <li>xhtml/vocab</li>
-	 * <li>vocab.sindice</li>
-	 * </ol>
-	 * Also, replaces blank nodes with a URI based on the context counter and the
-	 * current time.
-	 * 
-	 * The triples are placed in a context based on the context counter.
-	 * 
-	 * Ultimately produces an RDF4J Model based on the filtered triples
-	 * 
-	 * @param n3             The triples to be processed
-	 * @param sourceIRI      The URL of the page from which the triples were
-	 *                       obtained
-	 * @param contextCounter The current counter for the context. Assumes the
-	 *                       triples will be placed into crawl repo. If not, any
-	 *                       number can be used here.
-	 * @return An RDF4J model containing the processed triples
-	 * @see Model
-	 */
-	public Model processTriples(String n3, IRI sourceIRI, Long contextCounter) {
-		InputStream input = new ByteArrayInputStream(n3.getBytes(StandardCharsets.UTF_8));
-
-		Model model;
-		try {
-			model = Rio.parse(input, "", RDFFormat.N3);
-		} catch (RDFParseException | UnsupportedRDFormatException | IOException e) {
-			System.out.println("Cannot parse N3 into model");
-			logger.error("Cannot parse n3 into a model", e);
-			return null;
-		}
-		Iterator<Statement> it = model.iterator();
-
-		String nSpace = "https://bioschemas.org/crawl/v1/";
-		String nGraph = nSpace + contextCounter++;
-
-		ModelBuilder builder = new ModelBuilder();
-		builder.setNamespace(" ", nSpace);
-		builder.setNamespace("bsc", nSpace);
-		builder.namedGraph(nGraph).add(nGraph, "http://purl.org/pav/retrievedFrom", sourceIRI);
-		builder.namedGraph(nGraph).add(nGraph, "http://purl.org/pav/retrievedOn", Helpers.getFullDateWithTime());
-
-		HashMap<String, String> replaceBlankNodes = new HashMap<String, String>();
-
-		while (it.hasNext()) {
-			Statement temp = it.next();
-			Resource subject = temp.getSubject();
-			IRI predicate = temp.getPredicate();
-			Value object = temp.getObject();
-
-			if (predicate.stringValue().contains("vocab.sindice"))
-				continue;
-			if (predicate.stringValue().contains("xhtml/vocab"))
-				continue;
-			if (predicate.stringValue().contains("nofollow"))
-				continue;
-			if (predicate.stringValue().contains("ogp.me"))
-				continue;
-
-			predicate = fixPredicate(predicate);
-
-			object = fixObject(object);
-
-			if (subject instanceof BNode) {
-				if (replaceBlankNodes.containsKey(subject.stringValue())) {
-					subject = SimpleValueFactory.getInstance().createIRI(replaceBlankNodes.get(subject.stringValue()));
-				} else {
-					IRI newSubject = iriGenerator(nGraph, sourceIRI);
-					replaceBlankNodes.put(subject.stringValue(), newSubject.stringValue());
-					subject = newSubject;
-				}
-			}
-
-			if (object instanceof BNode) {
-				if (replaceBlankNodes.containsKey(object.stringValue())) {
-					object = SimpleValueFactory.getInstance().createIRI(replaceBlankNodes.get(object.stringValue()));
-				} else {
-					IRI newObject = iriGenerator(nGraph, sourceIRI);
-					replaceBlankNodes.put(object.stringValue(), newObject.stringValue());
-					object = newObject;
-				}
-			}
-			builder.namedGraph(nGraph).add(subject, predicate, object);
-		}
-
-		return builder.build();
-	}
-
-	/**
-	 * Takes a series of N3 triples as a string and filters them removing triples
-	 * with the following predicates:
-	 * <ol>
-	 * <li>nofollow</li>
-	 * <li>ogp.me/...</li>
-	 * <li>xhtml/vocab</li>
-	 * <li>vocab.sindice</li>
-	 * </ol>
-	 * DOES NOT replace blank nodes.
-	 * 
-	 * Triples are NOT placed in a context.
-	 * 
-	 * Ultimately produces an RDF4J Model based on the filtered triples
-	 * 
-	 * @param n3 The triples to be processed
-	 * @return An RDF4J model containing the processed triples
-	 * @see Model
-	 */
-	public Model processTriplesLeaveBlankNodes(String n3) {
-		InputStream input = new ByteArrayInputStream(n3.getBytes(StandardCharsets.UTF_8));
-
-		Model model;
-		try {
-			model = Rio.parse(input, "", RDFFormat.N3);
-		} catch (RDFParseException | UnsupportedRDFormatException | IOException e) {
-			System.out.println("Cannot parse N3 into model");
-			logger.error("Cannot parse n3 into a model", e);
-			return null;
-		}
-		Iterator<Statement> it = model.iterator();
-
-		ModelBuilder builder = new ModelBuilder();
-
-		while (it.hasNext()) {
-			Statement temp = it.next();
-			Resource subject = temp.getSubject();
-			IRI predicate = temp.getPredicate();
-			Value object = temp.getObject();
-
-			predicate = fixPredicate(predicate);
-
-			object = fixObject(object);
-
-			builder.add(subject, predicate, object);
-		}
-
-		return builder.build();
-	}
-
-	/**
-	 * Removes changes made to allow Any23 to parse the html
+	 * Removes changes made to allow Any23 to parse the html & standardises on
+	 * httpS://schema.org
 	 * 
 	 * @param predicate
 	 * @return Corrected IRI
 	 * @see #fixAny23WeirdIssues(String)
 	 */
-	public IRI fixPredicate(IRI predicate) {
+	protected IRI fixPredicate(IRI predicate) {
 		String tempPred = predicate.stringValue().trim().replaceAll("licensE", "license")
 				.replaceAll("FileFormat", "fileFormat").replaceAll("addType", "additionalType");
 		if (tempPred.endsWith("/")) {
@@ -351,7 +305,7 @@ public abstract class ScraperCore {
 	 * @return Corrected IRI
 	 * @see #fixAny23WeirdIssues(String)
 	 */
-	public Value fixObject(Value object) {
+	protected Value fixObject(Value object) {
 		if (object instanceof BNode)
 			return object;
 		if (object instanceof IRI) {
@@ -392,115 +346,64 @@ public abstract class ScraperCore {
 	}
 
 	/**
-	 * Injects an @ id attribute into the given html source; prevents Any23
-	 * creating blank nodes at the top of the graph
+	 * Generates a RDF4J {@link Model} from a string of NTriples.
 	 * 
-	 * Problems: only works with json-ld not rdfa etc AND only deals with 1st block
-	 * 
-	 * Hard to deal with multiple @ contexts as they may be nested in a single
-	 * block, or there may be multiple blocks (or a hybrid).
-	 * 
-	 * Handles contexts that declare prefixes by looking to see if @ context is
-	 * followed by a {.
-	 * 
-	 * 
-	 * Adding the @ id in the wrong location can completely break the parsers
-	 * ability to generate triples. The location of the injection should be checked
-	 * if fewer triples are generated than expected.
-	 * 
-	 * @param html the source to be changed
-	 * @param url  the url to be used for @ id
-	 * @return the original source with @ id added in however many blocks there are
-	 * @throws JsonLDInspectionException
+	 * @param nTriples The string containing the N-Triples to be turned into a Model
+	 * @return The Model containing the triples from nTriples
+	 * @throws NTriplesParsingException Thrown when the input param cannot be parsed
+	 *                                  as NTriples
 	 */
-	public String injectId(String html, String url)
-			throws MissingContextException, MissingHTMLException, JsonLDInspectionException {
+	protected Model createModelFromNTriples(String nTriples) throws NTriplesParsingException {
 
-		if (url == null)
-			throw new IllegalArgumentException("url cannot be null");
-
-		if (html == null)
-			throw new MissingHTMLException(url);
-
-		int posContext = html.indexOf("@context");
-		if (posContext == -1) {
-			if (html.indexOf("vocab=\"http://schema.org") != -1 || html.indexOf("vocab=\"https://schema.org") != -1) {
-				logger.info("No @context, but a vocab; appears to be RDFa with no JSON-LD: " + url);
-				return html;
+		try {
+			return createModelFromNTriples2(nTriples);
+		} catch (RDFParseException e) {
+			// RDF4J doesn't like | (ie character U+7C) inside URLs.
+			// this removes | from everywhere in the doc...
+			nTriples = nTriples.replaceAll("\\|", "");
+			try {
+				return createModelFromNTriples2(nTriples);
+			} catch (RDFParseException | UnsupportedRDFormatException | IOException e2) {
+				logger.error("Cannot parse triples into a model", e2);
+				throw new NTriplesParsingException("Cannot parse triples into a model");
 			}
-			logger.info("Does not appear to be rdfa, but there is no @context in: " + url);
-			throw new MissingContextException(url);
-		} else {
-			// there may be multiple blocks of JSON-LD & thus contexts, only some may have
-			// an at ID.
+		} catch (UnsupportedRDFormatException | IOException e2) {
+			logger.error("Cannot parse triples into a model. Already tried removing |", e2);
+			throw new NTriplesParsingException("Cannot parse triples into a model");
+		}
+	}
 
-			if (posContext != html.lastIndexOf("@context")) {
-				logger.info("Multiple @context blocks in: " + url);
-				throw new JsonLDInspectionException("Multiple @context blocks in: " + url);
-			} else {
-				// only 1 context block
-				if (html.indexOf("@id") != -1) {
-					logger.info("Not injecting id into: " + url);
-				} else {
-					String toInject = "\"@id\": \"" + url + "\"";
+	/**
+	 * Extract schema markup in JSON-LD form from a given HTML. Will ignore all
+	 * other formats of markup. Some blocks may not be (bio)schema markup. Will not
+	 * process/validate JSON-LD, remove content or add/change @id or @context etc.
+	 * 
+	 * @param html to find JSON-LD in
+	 * @return An array in which each element is a block of JSON-LD containing
+	 *         schema.org markup.
+	 * @throws FourZeroFourException
+	 * @throws SeleniumException
+	 */
+	protected String[] getOnlyUnfilteredJSONLDFromHtml(String html) {
+		Document doc = Jsoup.parse(html);
+		Elements jsonElements = doc.getElementsByTag("script").attr("type", "application/ld+json");
 
-					Pattern pattern = Pattern.compile("\"?@context\"?\\s*:\\s*\"?");
-					Matcher matcher = pattern.matcher(html);
-					if (matcher.find()) {
-						String tempStart = html.substring(0, matcher.start());
-						tempStart += " " + toInject + ", ";
-						tempStart += html.substring(matcher.start());
-						return tempStart;
+		ArrayList<String> jsonMarkup = new ArrayList<String>();
+		for (Element jsonElement : jsonElements) {
+			if (jsonElement.data() != "" && jsonElement.data() != null) {
+				if (jsonElement.data().contains("\"@type") || jsonElement.data().contains("\"@context")) {
+					int positionOfClosingTag = jsonElement.data().indexOf("</script");
+					if (positionOfClosingTag == -1) {
+						jsonMarkup.add(jsonElement.data());
+					} else {
+						jsonMarkup.add(jsonElement.data().substring(0, positionOfClosingTag));
 					}
-
-					// should never happen
-					logger.warn(url + " has a @context, but no @id yet did not have an @id injected!");
-					throw new JsonLDInspectionException(url);
 				}
 			}
 		}
 
-		return html;
+		String[] toReturn = new String[jsonMarkup.size()];
+		jsonMarkup.toArray(toReturn);
+		return toReturn;
 	}
-
-	/**
-	 * Changes the HTML such that Any23 can parse it. Bugs in Any23 mean that some
-	 * predicates (that should work) break the parser.
-	 * 
-	 * 
-	 * @param html HTML to be corrected
-	 * @return Corrected HTML
-	 * @see #fixAny23WeirdIssues(String)
-	 */
-	public String fixAny23WeirdIssues(String html) {
-		// any23 has problems with license & fileFormat
-		return html.replaceAll("license", "licensE").replaceAll("fileFormat", "FileFormat").replaceAll("additionalType",
-				"addType");
-	}
-
-	/**
-	 * Generates a new IRI based on the named graph and the source's IRI. Includes a
-	 * random element based on time to ensure no collisions.
-	 * 
-	 * @param ngraph
-	 * @param sourceIRI
-	 * @return New IRI
-	 */
-	public IRI iriGenerator(String ngraph, IRI sourceIRI) {
-		String source = "";
-		if (sourceIRI.toString().indexOf("https://") != -1) {
-			source = sourceIRI.toString().replaceAll("https://", "");
-		} else {
-			source = sourceIRI.toString().replaceAll("http://", "");
-		}
-
-		if (!(source.endsWith("/") || source.endsWith("#"))) {
-			source += "/";
-		}
-
-		Random rand = new Random();
-		int randomInt = Math.abs(rand.nextInt());
-		return SimpleValueFactory.getInstance().createIRI(ngraph + "/" + source + randomInt);
-	}
-
 }

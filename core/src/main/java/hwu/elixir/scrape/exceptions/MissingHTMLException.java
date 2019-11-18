@@ -3,7 +3,7 @@ package hwu.elixir.scrape.exceptions;
 public class MissingHTMLException extends Exception {
 
 	/**
-	 * 
+	 * No HTML obtained.
 	 */
 	private static final long serialVersionUID = 1L;
 	

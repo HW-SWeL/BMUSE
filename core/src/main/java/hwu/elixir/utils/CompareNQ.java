@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Compares 2 files each of which contains quads to determine if they are identical.
  * 
@@ -34,14 +37,17 @@ public class CompareNQ {
 	private ArrayList<String> quads1;
 	private ArrayList<String> quads2;
 
+	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
+	
 	public boolean compare(File file1, File file2) throws FileNotFoundException, IOException {
 
 		quads1 = getQuadsFromFile(file1);
 		quads2 = getQuadsFromFile(file2);
 
-		if (quads1.size() != quads2.size())
-			System.out.println(
-					"Quads are a different length! Quads 1 = " + quads1.size() + ". Quads 2 = " + quads2.size());
+		if (quads1.size() != quads2.size()) {
+			logger.error("Quads are a different length! Quads 1 = " + quads1.size() + ". Quads 2 = " + quads2.size());
+			return false;
+		}
 
 		for (int i = 0; i < quads1.size(); i++) {
 			if (compareQuad(quads1.get(i), quads2.get(i)) == false)
@@ -58,11 +64,12 @@ public class CompareNQ {
 	 * <ol>
 	 * <li>The the predicate is 'http://purl.org/pav/retrievedOn' the object will be
 	 * a date. The value of the date is irrelevant and thus not checked.</li>
-	 * <li>Bnodes have a random value at the end of the IRI. These random parts are
+	 * <li>Unprocessed Bnodes are of the form _:RANDOM_STUFF. The :_ is filtered out and the RANDOM_STUFF ingnored.</li>
+	 * <li>Processed Bnodes have a random value at the end of an IRI (generated from the @id). These random parts are
 	 * not compared. The rest of the IRI is.</li>
 	 * </ol>
 	 * 
-	 * A list of all IRI parts identified as 'random' are displayed to console.
+	 * If debugging on, a list of all IRI parts identified as 'random' are displayed to console.
 	 * 
 	 * When quads are not identical the quads are displayed and the first
 	 * non-matching element type (i.e., subject, predicate, object or context) is
@@ -99,16 +106,14 @@ public class CompareNQ {
 
 		if (!s1.equals(s2)) {
 			if (!checkForRandom(s1, s2)) {
-				System.out.println(quad1 + "\n" + quad2);
-				System.out.println("subject");
+				
 				return false;
 
 			}
 		}
 
 		if (!p1.equals(p2)) {
-			System.out.println(quad1 + "\n" + quad2);
-			System.out.println("subject");
+			logger.error("The following predicates do not match: " + quad1 + "\n" + quad2);
 			return false;
 		}
 
@@ -118,15 +123,13 @@ public class CompareNQ {
 
 		if (!o1.equals(o2)) {
 			if (!checkForRandom(o1, o2)) {
-				System.out.println(quad1 + "\n" + quad2);
-				System.out.println("object");
+				logger.error("The following objects do not match: " + quad1 + "\n" + quad2);
 				return false;
 			}
 		}
 
 		if (!c1.equals(c2)) {
-			System.out.println(quad1 + "\n" + quad2);
-			System.out.println("context");
+			logger.error("The following contexts do not match: " + quad1 + "\n" + quad2);
 			return false;
 		}
 
@@ -148,7 +151,7 @@ public class CompareNQ {
 
 		int numTokens = st1.countTokens();
 		if (st2.countTokens() != numTokens) {
-			System.out.println("Wrong number of tokens!");
+			logger.error("Wrong number of tokens in URI!");
 			return false;
 		}
 
@@ -156,11 +159,11 @@ public class CompareNQ {
 			String t1 = st1.nextToken();
 			String t2 = st2.nextToken();
 			if (!t1.equals(t2)) {
-				if (i != numTokens - 1) {
-					System.out.println(t1 + "  " + t2);
+				if (i != numTokens - 1) {					
+					logger.error("These tokens do not appear to match: " + t1 + "  " + t2);
 					return false;
 				} else {
-					System.out.println("these are random? : " + t1 + "  " + t2);
+					logger.debug("These are random and so don't need to match? If not false, there is a problem! : " + t1 + "  " + t2);
 				}
 			}
 		}

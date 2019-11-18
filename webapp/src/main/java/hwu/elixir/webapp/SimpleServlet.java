@@ -15,10 +15,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
-import hwu.elixir.scrape.exceptions.HtmlExtractorServiceException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
-import hwu.elixir.scrape.exceptions.MissingContextException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
+import hwu.elixir.scrape.exceptions.SeleniumException;
 import hwu.elixir.scrape.scraper.WebScraper;
 import hwu.elixir.utils.Validation;
 
@@ -102,19 +101,7 @@ public class SimpleServlet extends HttpServlet {
 			logger.info("About to scrape");	
 			result = scraper.scrape(url2Scrape);
 			logger.info("Scraped");	
-		} catch (HtmlExtractorServiceException e) {
-			e.printStackTrace();
-			json.put("result", "error");
-			json.put("message", e.getMessage());
-			
-			response.setStatus(500);
-			response.setHeader("Access-Control-Allow-Origin", "*");
-			response.setCharacterEncoding("UTF-8");
-			
-			PrintWriter out = response.getWriter();
-			out.print(json.toJSONString());
-			out.close();			
-		} catch (FourZeroFourException e) {			
+		} catch (Exception e) {			
 			e.printStackTrace();
 			json.put("result", "error");
 			json.put("message", e.getMessage());
@@ -126,43 +113,7 @@ public class SimpleServlet extends HttpServlet {
 			PrintWriter out = response.getWriter();
 			out.print(json.toJSONString());
 			out.close();
-		} catch (JsonLDInspectionException e) {
-			e.printStackTrace();
-			json.put("result", "error");
-			json.put("message", e.getMessage());
-			
-			response.setStatus(500);
-			response.setHeader("Access-Control-Allow-Origin", "*");
-			response.setCharacterEncoding("UTF-8");
-			
-			PrintWriter out = response.getWriter();
-			out.print(json.toJSONString());
-			out.close();
-		} catch (MissingContextException e) {
-			e.printStackTrace();
-			json.put("result", "error");
-			json.put("message", e.getMessage());
-			
-			response.setStatus(500);
-			response.setHeader("Access-Control-Allow-Origin", "*");
-			response.setCharacterEncoding("UTF-8");
-			
-			PrintWriter out = response.getWriter();
-			out.print(json.toJSONString());
-			out.close();
-		} catch (MissingHTMLException e) {
-			e.printStackTrace();
-			json.put("result", "error");
-			json.put("message", e.getMessage());
-			
-			response.setStatus(500);
-			response.setHeader("Access-Control-Allow-Origin", "*");
-			response.setCharacterEncoding("UTF-8");
-			
-			PrintWriter out = response.getWriter();
-			out.print(json.toJSONString());
-			out.close();
-		}
+		} 
 		
 		if(result == null) {
 			json.put("result", "error");

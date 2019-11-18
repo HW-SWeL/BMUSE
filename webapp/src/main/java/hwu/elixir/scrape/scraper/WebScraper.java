@@ -13,38 +13,36 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
-import hwu.elixir.scrape.exceptions.HtmlExtractorServiceException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
-import hwu.elixir.scrape.exceptions.MissingContextException;
 import hwu.elixir.scrape.exceptions.MissingHTMLException;
-import hwu.elixir.utils.GetHTMLFromNode;
+import hwu.elixir.scrape.exceptions.SeleniumException;
 
-public class WebScraper extends ScraperCore {
+public class WebScraper extends ScraperUnFilteredCore {
 
 	private static final Logger logger = LoggerFactory.getLogger(System.class.getName());
 
-	public JSONArray scrape(String url) throws HtmlExtractorServiceException, FourZeroFourException,
-			JsonLDInspectionException, MissingContextException, MissingHTMLException {
+	public JSONArray scrape(String url) throws FourZeroFourException,
+			JsonLDInspectionException, MissingHTMLException, SeleniumException, Exception {
 
 		if (url.endsWith("/") || url.endsWith("#"))
 			url = url.substring(0, url.length() - 1);
 
-		String html = GetHTMLFromNode.getHtml(url);		
+		String html = getHtmlViaSelenium(url);		
 		
-		html = injectId(html, url);
+//		html = injectId(html, url);
 		
 		DocumentSource source = new StringDocumentSource(html, url);
-		String n3 = getTriplesInN3(source);
+		String triples = getTriplesInNTriples(source);
 		
-		if (n3 == null) {
+		if (triples == null) {
 			logger.error("n3 is null");
-			throw new HtmlExtractorServiceException(url);
+			throw new Exception("Cannot obtain triples from "+url);
 		}
 
-		Model model = processTriplesLeaveBlankNodes(n3);
+		Model model = processTriplesLeaveBlankNodes(triples);
 		if (model == null) {
 			logger.error("Model is null");
-			throw new HtmlExtractorServiceException(url);
+			throw new Exception("Cannot build model for " + url);
 		}
 			
 		ByteArrayOutputStream stream = new ByteArrayOutputStream();
