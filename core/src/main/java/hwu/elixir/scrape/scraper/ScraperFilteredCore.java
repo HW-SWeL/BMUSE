@@ -426,7 +426,7 @@ public class ScraperFilteredCore extends ScraperCore {
 
 		if (!jsonObj.containsKey("@id")) {
 			if (countOfJSONLD > 0) {
-				jsonObj.put("@id", url + "#" + countOfJSONLD);
+				jsonObj.put("@id", url + "-" + countOfJSONLD);
 			} else {
 				jsonObj.put("@id", url);
 			}
