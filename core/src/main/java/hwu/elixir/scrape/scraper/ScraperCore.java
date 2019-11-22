@@ -11,6 +11,7 @@ import org.apache.any23.Any23;
 import org.apache.any23.extractor.ExtractionException;
 import org.apache.any23.source.DocumentSource;
 import org.apache.any23.writer.NTriplesWriter;
+import org.apache.any23.writer.JSONLDWriter;
 import org.apache.any23.writer.TripleHandler;
 import org.apache.any23.writer.TripleHandlerException;
 import org.apache.commons.io.output.ByteArrayOutputStream;
@@ -254,6 +255,34 @@ public abstract class ScraperCore {
 
 		return null;
 	}
+	
+	/**
+	 * SHOULD take an Any23 DocumentSource and converts into triples in JSON-LD form.
+	 * SHOULD being the keyword; actually returns an empty string because the JSONLDWriter
+	 * doesn't work :( 
+	 * 
+	 * @param source
+	 * @return
+	 * @deprecated
+	 */
+	protected String getTriplesInJSONLD(DocumentSource source) {
+
+		Any23 runner = new Any23();
+		try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+				TripleHandler handler = new JSONLDWriter(out);) {
+
+			runner.extract(source, handler);
+			return out.toString("UTF-8");
+		} catch (ExtractionException e) {
+			logger.error("Cannot extract triples", e);
+		} catch (IOException e) {
+			logger.error(" IO error whilst extracting triples", e);
+		} catch (TripleHandlerException e1) {
+			logger.error("TripleHanderException", e1);
+		}
+
+		return null;
+	}	
 
 	/**
 	 * Loads nTriples into a InputStream and passes that to RDF4J NTriples parser to
