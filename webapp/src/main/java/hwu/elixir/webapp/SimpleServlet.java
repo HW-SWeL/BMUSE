@@ -62,6 +62,7 @@ public class SimpleServlet extends HttpServlet {
 			response.setStatus(400);
 			response.setHeader("Access-Control-Allow-Origin", "*");
 			response.setCharacterEncoding("UTF-8");
+			response.setContentType("application/json");
 
 			PrintWriter out = response.getWriter();
 			out.print(jsonObject.toJSONString());
@@ -69,7 +70,7 @@ public class SimpleServlet extends HttpServlet {
 		}
 
 		for (String url : allUrls) {
-			logger.info(url);
+			logger.info("URL received by scrape service: " + url);
 		}
 
 		String url2Scrape = allUrls[0];
@@ -83,6 +84,7 @@ public class SimpleServlet extends HttpServlet {
 			response.setStatus(400);
 			response.setHeader("Access-Control-Allow-Origin", "*");
 			response.setCharacterEncoding("UTF-8");
+			response.setContentType("application/json");
 
 			PrintWriter out = response.getWriter();
 			out.print(jsonObject.toJSONString());
@@ -98,14 +100,17 @@ public class SimpleServlet extends HttpServlet {
 		try {
 			logger.info("About to scrape");
 			result = scraper.scrape(url2Scrape);
+			logger.info("RESULT: " +result);
 			logger.info("Scraped");
 		} catch (Exception e) {
+			logger.severe(e.getMessage());
 			jsonObject.put("result", "error");
 			jsonObject.put("message", e.getMessage());
 			success = false;
 		}
 
 		if (result == null) {
+			logger.severe("no markup!");
 			jsonObject.put("result", "error");
 			jsonObject.put("message", "cannot find any markup");
 			success = false;
@@ -114,7 +119,7 @@ public class SimpleServlet extends HttpServlet {
 		
 		if (!success) {
 			response.setStatus(500);
-		} else {
+		} else {			
 			jsonObject.put("result", "success");
 			jsonObject.put("type", "json-ld");
 			jsonObject.put("rdf", result);
@@ -124,7 +129,7 @@ public class SimpleServlet extends HttpServlet {
 		response.setHeader("Access-Control-Allow-Origin", "*");
 		response.setHeader("Access-Control-Allow-Methods", "GET");
 		response.setHeader("Access-Control-Allow-Headers", "*");
-
+		response.setContentType("application/json");
 		response.setCharacterEncoding("UTF-8");
 		PrintWriter out = response.getWriter();
 		out.print(jsonObject.toJSONString());
