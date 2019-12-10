@@ -1,0 +1,64 @@
+{
+  "openapi" : "3.0.0",
+  "info" : {
+    "title" : "Scraper",
+    "description" : "A [Bioschemas](https://www.bioschemas.org) project by [SWeL](http://www.macs.hw.ac.uk/SWeL/) funded through [Elixir-Excelerate](https://elixir-europe.org/about-us/how-funded/eu-projects/excelerate). Bioschemas aims to improve the Findability of data in the life sciences. It does this by encouraging people in the life sciences to use Schema.org markup in their websites so that they are indexable by search engines and other services. This service will scrape JSON-LD or RDFa from a given URL and return the triples in a JSON wrapper.",
+    "contact" : {
+      "email" : "p.papadopoulos@hw.ac.uk"
+    },
+    "license" : {
+      "name" : "Apache 2.0",
+      "url" : "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version" : "1.0.0-oas3"
+  },
+  "servers" : [ {
+    "url" : "http://lxbisel.macs.hw.ac.uk:8080/scraper"
+  } ],
+  "paths" : {
+    "/getRDF" : {
+      "get" : {
+        "tags" : [ "developers" ],
+        "summary" : "retrieves HTML soure from a given URL",
+        "description" : "retrieves HTML soure from a given URL and returns triples in JSON-LD wrapper\n",
+        "operationId" : "getRDF",
+        "parameters" : [ {
+          "name" : "url",
+          "in" : "query",
+          "description" : "URL to retrieve source from (must include protocol)",
+          "required" : true,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "example" : "https://ega-archive.org/"
+          }
+        }, {
+          "name" : "output",
+          "in" : "query",
+          "description" : "What format of RDF do you wish returned inside the JSON wrapper. JSON-LD given by default.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "example" : "jsonld",
+            "enum" : [ "jsonld", "turtle" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "RDF triples given in JSON wrapper"
+          },
+          "400" : {
+            "description" : "missing input parameter"
+          },
+          "500" : {
+            "description" : "could not pull source from given URL"
+          }
+        }
+      }
+    }
+  },
+  "components" : { }
+}
