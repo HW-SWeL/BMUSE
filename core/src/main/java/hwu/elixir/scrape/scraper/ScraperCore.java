@@ -86,6 +86,7 @@ public abstract class ScraperCore {
 	/**
 	 * 
 	 * Wraps methods to obtain HTML; can be changed for different types of scraper.
+	 *  This is the entry point to the ScraperCore abstract class
 	 * 
 	 * @param url
 	 * @return
@@ -94,6 +95,7 @@ public abstract class ScraperCore {
 	protected String wrapHTMLExtraction(String url) throws FourZeroFourException {
 
 		String html = "";
+
 		try {
 			html = getHtmlViaSelenium(url);
 		} catch (SeleniumException e) {
@@ -152,6 +154,7 @@ public abstract class ScraperCore {
 			}
 
 			try {
+				// Try dynamic page
 				driver.get(url);
 			} catch(NoSuchSessionException e) {
 				System.out.println("TRY AGAIN!");
@@ -173,6 +176,7 @@ public abstract class ScraperCore {
 
 		} catch (TimeoutException to) {
 			logger.error("URL timed out: " + url + ". Trying JSoup.");
+			// Try static page
 			return getHtml(url);
 
 		} catch (org.openqa.selenium.WebDriverException crashed) {
