@@ -13,6 +13,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 
+import org.eclipse.rdf4j.query.algebra.In;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +44,9 @@ public class FileScraper extends ScraperFilteredCore {
 	private static String locationOfSitesFile = "";
 	private static String outputFolderOriginal = "";
 	private static String outputFolder = System.getProperty("user.home");
-	private static long contextCounter = 0L; 
+	private static long contextCounter = 0L;
+	private static int maxLimitScrape = 5; //Default setting if none is set on the application.properties file
+	private static boolean isDynamic = true; //Default setting if none is set on the application.properties file
 
 	private static ArrayList<String> urlsToScrape = new ArrayList<>();
 
@@ -64,6 +71,10 @@ public class FileScraper extends ScraperFilteredCore {
 		outputFolder = outputFolderOriginal + "_" + Helpers.getDateForName() + "/";
 		locationOfSitesFile = properties.getProperty("locationOfSitesFile").trim();
 		contextCounter = Long.parseLong(properties.getProperty("contextCounter").trim());
+		//logger.info(properties.getProperty("maxLimitScrape").trim());
+		//maxLimitScrape = Integer.parseInt(properties.getProperty("maxLimitScrape").trim());
+		//isDynamic = Boolean.parseBoolean(properties.getProperty("isDynamic").trim());
+
 		
 		displayPropertyValues();
 	}
@@ -76,6 +87,8 @@ public class FileScraper extends ScraperFilteredCore {
 		logger.info("outputFolder: " + outputFolder);
 		logger.info("locationOfSitesFile: " + locationOfSitesFile);
 		logger.info("contextCounter: " + contextCounter);
+		logger.info("Max limit of URLs to scrape: " + maxLimitScrape);
+		logger.info("Dynamic scrape: " + isDynamic);
 		logger.info("\n\n\n");
 	}
 	
@@ -152,6 +165,8 @@ public class FileScraper extends ScraperFilteredCore {
 			properties.setProperty("locationOfSitesFile", locationOfSitesFile);
 			properties.setProperty("outputFolder", outputFolderOriginal);
 			properties.setProperty("contextCounter", Long.toString(contextCounter));
+			//properties.setProperty("maxLimitScrape", Integer.toString(maxLimitScrape));
+			//properties.setProperty("isDynamic", Boolean.toString(isDynamic));
 			
 			properties.store(writer, "updating contextCounter");
 		} catch (IOException e) {
@@ -206,6 +221,22 @@ public class FileScraper extends ScraperFilteredCore {
 		logger.info("Read " + urlsToScrape.size() + " urls to scrape from " + locationOfSitesFile+".\n");
 	}
 
+	public Elements getSitemapList(String url, String sitemapURLKey) throws IOException {
+
+		Document doc = null;
+
+		try {
+			doc = Jsoup.connect(url).get();
+		} catch (IOException e) {
+			logger.error(e.getMessage());
+		}
+
+		Elements elements = doc.select(sitemapURLKey);
+		//Document doc = Jsoup.parse(html, "", Parser.xmlParser());
+
+		return elements;
+	}
+
 	
 	/**
 	 * Reads a list of URLs from a specified file; scrapes each one sequentially and writes the parsed (bio)schema 
@@ -218,22 +249,62 @@ public class FileScraper extends ScraperFilteredCore {
 	public void scrapeAllUrls() {
 		readFileList();
 		for (String url : urlsToScrape) {
+			boolean result = false;
+
 			logger.info("Attempting to scrape: " + url);
 
-			boolean result = false;
-			try {
-				result = scrape(url, outputFolder, null, contextCounter++);
-			} catch (FourZeroFourException e) {
-				logger.error(url + "returned a 404.");
-			} catch (JsonLDInspectionException e) {
-				logger.error("The JSON-LD could be not parsed for " + url);
-			} catch (CannotWriteException e) {
-				logger.error("Problem writing file for " + url + " to the " + outputFolder + " directory.");			
-			} catch (MissingMarkupException e) {
-				logger.error("Problem obtaining markup from " + url + ".");
+			// Check if the word sitemap is part of the URL (assumes that the URL is a sitemap if true)
+			if (url.toLowerCase().indexOf("sitemap") != -1) {
+				int sitemapCount = 0;
+				Elements sitemapList = null;
+				try {
+					sitemapList = getSitemapList(url, "loc"); //loc will only parse the url of the sample
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				sitemapList.toArray();
+				logger.info("Sitemap found in URL: " + url);
+				// get sitemap list
+				// for url in sitemap list
+				for (Element sitemapURL : sitemapList){
+					logger.info("Attempting to scrape: " + sitemapURL.text());
+					try {
+						result = scrape(sitemapURL.text(), outputFolder, null, contextCounter++);
+					} catch (FourZeroFourException e) {
+						logger.error(url + "returned a 404.");
+					} catch (JsonLDInspectionException e) {
+						logger.error("The JSON-LD could be not parsed for " + url);
+					} catch (CannotWriteException e) {
+						logger.error("Problem writing file for " + url + " to the " + outputFolder + " directory.");
+					} catch (MissingMarkupException e) {
+						logger.error("Problem obtaining markup from " + url + ".");
+					}
+					displayResult(sitemapURL.text(), result, outputFolder);
+					sitemapCount++;
+					if (maxLimitScrape < sitemapCount) {
+						logger.info("MAX SITEMAP LIMIT REACHED: " + maxLimitScrape);
+						logger.info("Scraping over");
+						break;
+					}
+				}
+
+			} else {
+				try {
+					result = scrape(url, outputFolder, null, contextCounter++);
+				} catch (FourZeroFourException e) {
+					logger.error(url + "returned a 404.");
+				} catch (JsonLDInspectionException e) {
+					logger.error("The JSON-LD could be not parsed for " + url);
+				} catch (CannotWriteException e) {
+					logger.error("Problem writing file for " + url + " to the " + outputFolder + " directory.");
+				} catch (MissingMarkupException e) {
+					logger.error("Problem obtaining markup from " + url + ".");
+				}
+
+				displayResult(url, result, outputFolder);
 			}
 
-			displayResult(url, result, outputFolder);
+
 		}
 		logger.info("Scraping over");
 		updateContextCounter();
