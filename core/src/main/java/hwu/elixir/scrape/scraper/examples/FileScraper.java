@@ -39,6 +39,7 @@ import hwu.elixir.utils.Helpers;
 public class FileScraper extends ScraperFilteredCore {
 
 	private static final String propertiesJarFile = "application.properties";
+	private static final String configurationJarFile = "configuration.properties";
 	private static final String propertiesLocalFile = "localProperties.properties";
 
 	private static String locationOfSitesFile = "";
@@ -55,10 +56,15 @@ public class FileScraper extends ScraperFilteredCore {
 
 	/**
 	 * Updates properties based on properties file in src > main > resources
-	 * 
+	 * Please note that this will only read the properties from the file
+	 * only the first time it is executed, after that it will always read
+	 * from local file and any changes to the application.properties will not be picked up
 	 */
 	private void readProperties() {
 		Properties properties = null;
+		Properties configurationProperties = null;
+
+		configurationProperties = readConfigurationPropertiesFromJar();
 
 		File contextCounterFile = new File(propertiesLocalFile);
 		if (contextCounterFile.exists()) {
@@ -71,9 +77,9 @@ public class FileScraper extends ScraperFilteredCore {
 		outputFolder = outputFolderOriginal + "_" + Helpers.getDateForName() + "/";
 		locationOfSitesFile = properties.getProperty("locationOfSitesFile").trim();
 		contextCounter = Long.parseLong(properties.getProperty("contextCounter").trim());
-		//logger.info(properties.getProperty("maxLimitScrape").trim());
-		//maxLimitScrape = Integer.parseInt(properties.getProperty("maxLimitScrape").trim());
-		//isDynamic = Boolean.parseBoolean(properties.getProperty("isDynamic").trim());
+		logger.info(configurationProperties.getProperty("maxLimitScrape").trim());
+		maxLimitScrape = Integer.parseInt(configurationProperties.getProperty("maxLimitScrape").trim());
+		isDynamic = Boolean.parseBoolean(configurationProperties.getProperty("isDynamic").trim());
 
 		
 		displayPropertyValues();
@@ -152,6 +158,39 @@ public class FileScraper extends ScraperFilteredCore {
 		return properties;
 	}
 
+
+	/**
+	 * Read configuration properties from JAR. Will be called every time you run the scraper.
+	 *
+	 * @return
+	 */
+	private Properties readConfigurationPropertiesFromJar() {
+		logger.info("Reading configuration properties from jar file");
+		ClassLoader classLoader = ScraperCore.class.getClassLoader();
+		InputStream is = classLoader.getResourceAsStream(configurationJarFile);
+		if (is == null) {
+			logger.error("     Cannot find " + configurationJarFile + " file");
+			throw new IllegalArgumentException(configurationJarFile + "file is not found!");
+		}
+
+		Properties properties = new Properties();
+		try {
+			properties.load(is);
+			properties.setProperty("contextCounter", "0");
+		} catch (IOException e) {
+			logger.error("Cannot load configuration.properties ", e);
+			shutdown();
+			System.exit(-1);
+		} finally {
+			try {
+				is.close();
+			} catch (IOException e) {
+				// ignoring
+			}
+		}
+		return properties;
+	}
+
 	/**
 	 * Write contextCounter to local properties file
 	 * 
@@ -165,8 +204,8 @@ public class FileScraper extends ScraperFilteredCore {
 			properties.setProperty("locationOfSitesFile", locationOfSitesFile);
 			properties.setProperty("outputFolder", outputFolderOriginal);
 			properties.setProperty("contextCounter", Long.toString(contextCounter));
-			//properties.setProperty("maxLimitScrape", Integer.toString(maxLimitScrape));
-			//properties.setProperty("isDynamic", Boolean.toString(isDynamic));
+			properties.setProperty("maxLimitScrape", Integer.toString(maxLimitScrape));
+			properties.setProperty("isDynamic", Boolean.toString(isDynamic));
 			
 			properties.store(writer, "updating contextCounter");
 		} catch (IOException e) {
@@ -221,6 +260,11 @@ public class FileScraper extends ScraperFilteredCore {
 		logger.info("Read " + urlsToScrape.size() + " urls to scrape from " + locationOfSitesFile+".\n");
 	}
 
+	/**
+	 * Method that parses a sitemap and then returns the list of URLs of all samples as Elements
+	 *
+	 *
+	 */
 	public Elements getSitemapList(String url, String sitemapURLKey) throws IOException {
 
 		Document doc = null;
@@ -247,7 +291,10 @@ public class FileScraper extends ScraperFilteredCore {
 	 *  
 	 */
 	public void scrapeAllUrls() {
+
+		// Load the settings from the application.properties file
 		readFileList();
+
 		for (String url : urlsToScrape) {
 			boolean result = false;
 
