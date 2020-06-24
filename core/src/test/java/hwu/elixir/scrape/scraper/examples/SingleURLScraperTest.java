@@ -38,7 +38,7 @@ public class SingleURLScraperTest {
 	public void test_scrapeASingleURL() {
 		String fileName = "resultOfScrape";
 		SingleURLScraper scraper = new SingleURLScraper();
-		scraper.scrapeASingleURL("https://www.macs.hw.ac.uk", fileName);
+		scraper.scrapeASingleURL("https://www.macs.hw.ac.uk/SWeL/BMUSE/tests/20191024203151_MACS.htm", fileName);
 		
 		File outputFile = new File(outputFolder + File.separator + fileName+".nq");
 		assertTrue(outputFile.exists());
@@ -57,8 +57,8 @@ public class SingleURLScraperTest {
 			fail();
 		}
 		
-		assertTrue(fileContent.contains("<https://www.hw.ac.uk/schools/mathematical-computer-sciences.htm> <https://schema.org/name> \"Mathematical and Computer Sciences\""));
-		assertTrue(fileContent.contains("<https://www.macs.hw.ac.uk> <http://purl.org/dc/terms/title> \"Mathematical and Computer Sciences | Heriot-Watt University\""));
+		assertTrue(fileContent.contains("<http://web.archive.org/web/20191024203151/https://www.hw.ac.uk/schools/mathematical-computer-sciences.htm> <https://schema.org/name> \"Mathematical and Computer Sciences\""));
+		assertTrue(fileContent.contains("<https://www.macs.hw.ac.uk/SWeL/BMUSE/tests/20191024203151_MACS.htm> <http://purl.org/dc/terms/title> \"Mathematical and Computer Sciences | Heriot-Watt University\""));
 		
 		outputFile.delete();
 	}

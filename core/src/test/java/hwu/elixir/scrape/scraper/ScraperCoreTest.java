@@ -122,7 +122,7 @@ public class ScraperCoreTest {
 
 	@Test
 	public void test_getHtml() throws FourZeroFourException {
-		String html = scraperCore.getHtml("https://www.macs.hw.ac.uk");
+		String html = scraperCore.getHtml("https://www.macs.hw.ac.uk/SWeL/BMUSE/tests/20191024203151_MACS.htm");
 		assert (html.contains("CollegeOrUniversity") && html.contains("BreadcrumbList"));
 	}
 
@@ -130,7 +130,7 @@ public class ScraperCoreTest {
 	
 	@Test
 	public void test_getHtmlViaSelenium() throws FourZeroFourException, SeleniumException {
-		String html = scraperCore.getHtmlViaSelenium("https://www.macs.hw.ac.uk");
+		String html = scraperCore.getHtmlViaSelenium("https://www.macs.hw.ac.uk/SWeL/BMUSE/tests/20191024203151_MACS.htm");
 		assert (html.contains("CollegeOrUniversity") && html.contains("BreadcrumbList"));
 	}
 
