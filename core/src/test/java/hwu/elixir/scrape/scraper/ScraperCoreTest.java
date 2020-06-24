@@ -220,7 +220,7 @@ public class ScraperCoreTest {
 	
 	@Test
 	public void test_wrapHTMLExtraction_basic() throws FourZeroFourException, SeleniumException {
-		String url = "https://www.macs.hw.ac.uk";
+		String url = "https://www.macs.hw.ac.uk/SWeL/BMUSE/tests/20191024203151_MACS.htm";
 		String html1 = scraperCore.getHtmlViaSelenium(url);
 		String html2 = scraperCore.wrapHTMLExtraction(url);
 		
