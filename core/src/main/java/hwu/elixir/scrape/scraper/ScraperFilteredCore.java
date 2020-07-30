@@ -51,7 +51,7 @@ import hwu.elixir.utils.Helpers;
  */
 public class ScraperFilteredCore extends ScraperCore {
 
-	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(ScraperFilteredCore.class.getName());
 	private int countOfJSONLD = 0; // number of JSON-LD blocks found in HTML
 	
 	/**

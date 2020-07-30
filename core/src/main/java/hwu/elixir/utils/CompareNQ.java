@@ -37,7 +37,7 @@ public class CompareNQ {
 	private ArrayList<String> quads1;
 	private ArrayList<String> quads2;
 
-	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(CompareNQ.class.getName());
 	
 	public boolean compare(File file1, File file2) throws FileNotFoundException, IOException {
 

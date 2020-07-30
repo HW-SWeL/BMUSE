@@ -23,7 +23,7 @@ public class ChromeDriverCreator {
 	
 	private volatile static WebDriver driver = null;
 	private static ChromeOptions chromeOptions = new ChromeOptions();
-	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(ChromeDriverCreator.class.getName());
 	
 	static {
 		ClassLoader classLoader = ChromeDriverCreator.class.getClassLoader();

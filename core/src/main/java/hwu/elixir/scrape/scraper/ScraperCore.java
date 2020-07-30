@@ -59,7 +59,7 @@ public abstract class ScraperCore {
 
 	private WebDriver driver;
  
-	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(ScraperCore.class.getName());
 	
 	public ScraperCore() {
 		driver = ChromeDriverCreator.getInstance();
