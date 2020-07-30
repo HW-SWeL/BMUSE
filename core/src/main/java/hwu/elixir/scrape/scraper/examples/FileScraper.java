@@ -44,7 +44,7 @@ public class FileScraper extends ScraperFilteredCore {
 	private static ArrayList<String> urlsToScrape = new ArrayList<>();
 
 	private static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
-	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(FileScraper.class.getName());
 
 	/**
 	 * Updates properties based on properties file in src > main > resources
@@ -57,14 +57,20 @@ public class FileScraper extends ScraperFilteredCore {
 		if (contextCounterFile.exists()) {
 			properties = readPropertiesFromLocalFile();
 		} else {
+			logger.info("File " + propertiesLocalFile + " not found in local file system. Reading " + propertiesJarFile + " from JAR.");
 			properties = readPropertiesFromJar();
 		}
 		
 		outputFolderOriginal = properties.getProperty("outputFolder").trim();
-		outputFolder = outputFolderOriginal + "_" + Helpers.getDateForName() + "/";
+		outputFolder = outputFolderOriginal + "/" + Helpers.getDateForName() + "/";
 		locationOfSitesFile = properties.getProperty("locationOfSitesFile").trim();
 		contextCounter = Long.parseLong(properties.getProperty("contextCounter").trim());
 		
+		if (properties.containsKey("contextCounter"))
+			contextCounter = Long.parseLong(properties.getProperty("contextCounter").trim());
+		else
+			properties.setProperty("contextCounter", "0");
+
 		displayPropertyValues();
 	}
 
@@ -86,20 +92,18 @@ public class FileScraper extends ScraperFilteredCore {
 	 * @return
 	 */
 	private Properties readPropertiesFromLocalFile() {
-		logger.info("Reading properties from local file");
 		Properties properties = null;
 		Reader reader = null;
 		try {
 			reader = new FileReader(propertiesLocalFile);
 			properties = new Properties();
 			properties.load(reader);
+			logger.info("Properties read from local file " + propertiesLocalFile);
 		} catch (IOException e) {
-			return readPropertiesFromJar();
-		} finally {
 			if (reader != null) {
 				try {
 					reader.close();
-				} catch (IOException e) {
+				} catch (IOException ee) {
 					// ignoring
 				}
 			}
@@ -113,7 +117,6 @@ public class FileScraper extends ScraperFilteredCore {
 	 * @return
 	 */
 	private Properties readPropertiesFromJar() {
-		logger.info("Reading properties from jar file");
 		ClassLoader classLoader = ScraperCore.class.getClassLoader();
 		InputStream is = classLoader.getResourceAsStream(propertiesJarFile);
 		if (is == null) {
@@ -124,6 +127,7 @@ public class FileScraper extends ScraperFilteredCore {
 		Properties properties = new Properties();
 		try {
 			properties.load(is);
+			logger.info("Properties read from jar file");
 			properties.setProperty("contextCounter", "0");
 		} catch (IOException e) {
 			logger.error("Cannot load application.properties ", e);
@@ -173,8 +177,6 @@ public class FileScraper extends ScraperFilteredCore {
 	 * 
 	 */
 	private void readFileList() {
-		readProperties();
-
 		if (locationOfSitesFile.equals("") || locationOfSitesFile == null) {
 			logger.error("Please set *locationOfSitesFile* in src > main > resources > application.properties");
 			shutdown();
@@ -244,6 +246,9 @@ public class FileScraper extends ScraperFilteredCore {
 		logger.info("STARTING SCRAPE: " + formatter.format(new Date(System.currentTimeMillis())));
 		FileScraper core = new FileScraper();
 	
+		// Read properties file
+		core.readProperties();
+
 		// to scrape all URLs in the file specified in applications.properties
 		core.scrapeAllUrls();
 		
