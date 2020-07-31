@@ -6,28 +6,29 @@
 	<timestamp key="timestamp" datePattern="yyyy-MM-dd" />
 
 	<appender name="FILE" class="ch.qos.logback.core.FileAppender">
-		<file>${user.home}/${timestamp}_bscFileScraper.log</file>
-		<append>scraper.log</append>
+		<file>${timestamp}_bscFileScraper.log</file>
 		<encoder>
-			<pattern>[%level] %message%n%xException
+			<pattern>
+				%d{HH:mm:ss.SSS} [%level] %logger - %message%n%xException
 			</pattern>
 		</encoder>
 	</appender>
 
-	<appender name="STDOUT"
-		class="ch.qos.logback.core.ConsoleAppender">
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<layout class="ch.qos.logback.classic.PatternLayout">
 			<Pattern>
-				%msg%n
+				%d{HH:mm:ss.SSS} [%level] %logger - %message%n%xException
 			</Pattern>
 		</layout>
 	</appender>
 
-	<root level="error">
+    <logger name="org" level="error" />
+    <logger name="hwu.elixir.scrape" level="debug" />
+    <logger name="org.apache.any23" level="info" />
+
+	<root level="info">
 		<appender-ref ref="STDOUT" />
 		<appender-ref ref="FILE" />
 	</root>
-
-	<root level="INFO"> <appender-ref ref="FILE" /> </root>
-
+    
 </configuration>
