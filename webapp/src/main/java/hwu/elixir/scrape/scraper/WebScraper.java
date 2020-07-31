@@ -26,7 +26,7 @@ public class WebScraper extends ScraperUnFilteredCore {
 
 	private static final Logger logger = LoggerFactory.getLogger(System.class.getName());
 
-	public JSONArray scrape(String url) throws FourZeroFourException,
+	public JSONArray scrape(String url, ScraperOutput scraperOutputType) throws FourZeroFourException,
 			JsonLDInspectionException, MissingHTMLException, SeleniumException, Exception {				
 			
 		DocumentSource source = new StringDocumentSource(getHtmlViaSelenium(fixURL(url)), url);
@@ -42,13 +42,21 @@ public class WebScraper extends ScraperUnFilteredCore {
 			logger.error("Model is null");
 			throw new Exception("Cannot build model for " + url);
 		}
-			
-		ByteArrayOutputStream stream = new ByteArrayOutputStream();
-		Rio.write(model, stream, RDFFormat.JSONLD);
-		String quads = new String(stream.toByteArray());
 		
-		JSONParser parser = new JSONParser();
-		JSONArray outputArray= (JSONArray) parser.parse(quads);
+		JSONArray outputArray = new JSONArray();
+		ByteArrayOutputStream stream = new ByteArrayOutputStream();
+		if(scraperOutputType.equals(ScraperOutput.JSONLD)) {
+			
+			Rio.write(model, stream, RDFFormat.JSONLD);
+			String quads = new String(stream.toByteArray());
+		
+			JSONParser parser = new JSONParser();
+			outputArray = (JSONArray) parser.parse(quads);
+		} else if(scraperOutputType.equals(ScraperOutput.TURTLE)) {
+			Rio.write(model, stream, RDFFormat.TURTLE);
+			String quads = new String(stream.toByteArray());			
+			outputArray.add(quads);
+		}
 		
 		return outputArray;
 	}

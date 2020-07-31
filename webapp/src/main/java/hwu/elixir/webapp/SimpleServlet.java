@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import hwu.elixir.scrape.scraper.ScraperOutput;
 import hwu.elixir.scrape.scraper.WebScraper;
 import hwu.elixir.utils.Validation;
 
@@ -74,6 +75,15 @@ public class SimpleServlet extends HttpServlet {
 		}
 
 		String url2Scrape = allUrls[0];
+		
+		String[] allOutputTypes = allParams.get("output");
+		ScraperOutput outputType = ScraperOutput.JSONLD; 
+		if (allOutputTypes != null) {
+			logger.info("Output type requested: " + allOutputTypes[0]);
+			
+			if(allOutputTypes[0].equalsIgnoreCase("turtle")) outputType = ScraperOutput.TURTLE;
+		}		
+		
 
 		Validation validation = new Validation();
 		if (!validation.validateURI(url2Scrape)) {
@@ -99,7 +109,7 @@ public class SimpleServlet extends HttpServlet {
 		boolean success = true;
 		try {
 			logger.info("About to scrape");
-			result = scraper.scrape(url2Scrape);
+			result = scraper.scrape(url2Scrape, outputType);
 			logger.info("RESULT: " +result);
 			logger.info("Scraped");
 		} catch (Exception e) {
@@ -121,7 +131,8 @@ public class SimpleServlet extends HttpServlet {
 			response.setStatus(500);
 		} else {			
 			jsonObject.put("result", "success");
-			jsonObject.put("type", "json-ld");
+						
+			jsonObject.put("type", outputType.toString());
 			jsonObject.put("rdf", result);
 
 			response.setStatus(200);
@@ -131,7 +142,7 @@ public class SimpleServlet extends HttpServlet {
 		response.setHeader("Access-Control-Allow-Headers", "*");
 		response.setContentType("application/json");
 		response.setCharacterEncoding("UTF-8");
-		PrintWriter out = response.getWriter();
+		PrintWriter out = response.getWriter();		
 		out.print(jsonObject.toJSONString());
 		out.close();
 	}

@@ -2,6 +2,8 @@ package hwu.elixir.scrape.scraper;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
@@ -179,6 +181,61 @@ public class ScraperFilteredCore extends ScraperCore {
 		Iterator<Statement> it = model.iterator();
 
 		String nSpace = "https://bioschemas.org/crawl/v1/";
+
+		// Relating to issue #1 COVID-19 repo
+		SimpleDateFormat dateF = new SimpleDateFormat("yyyyMMdd");
+		Date date = new Date();
+
+		// This block of code does some simple string manipulation to extract domain name and local name
+		// Please note that these 2 methods i.e. getNamespace and getLocalName have been deprecated, so
+		// at some point they will be removed and must take into account if a later version of rdf4j is used
+		String tempNSS = sourceIRI.getNamespace();
+		String domLN = sourceIRI.getLocalName();
+		String IRItoString = sourceIRI.toString();
+		// adjust position by 2 to not include "//"
+		int tempNSSSoD = IRItoString.indexOf("//") + 2;
+		String domName =  IRItoString.substring(tempNSSSoD, IRItoString.indexOf(".", tempNSSSoD));
+
+		if (domName.equalsIgnoreCase("www")){
+			// adjust position by 4 to not include "www" and "."
+			tempNSSSoD = IRItoString.indexOf("www") + 4;
+			domName =  IRItoString.substring(tempNSSSoD, IRItoString.indexOf(".", tempNSSSoD));
+		}
+
+		int IRILength = IRItoString.length();
+		String tempIRILN = "";
+
+		int IRICount = IRILength - 1;
+		// TODO extract local name from IRI
+		for (int i=0; i < IRILength; i++) {
+			// if the IRI ends with / it will not be added to the local name
+			if (IRItoString.charAt(IRICount) == '/' && i == 0) {
+
+			}
+			if (IRItoString.charAt(IRICount) != '/') {
+				// Check in the case that there is a local name and it is not the main website
+				if (IRItoString.charAt(IRICount) == '.') {
+					tempIRILN = null;
+					break;
+				}
+				if (IRItoString.charAt(IRICount) == '/') {
+					break;
+				}
+				tempIRILN = tempIRILN + IRItoString.charAt(IRICount);
+			}
+
+			IRICount--;
+		}
+
+		if (domLN.indexOf('.') != -1) {
+			// TODO remove . from local domain name
+			int lnEnd = domLN.indexOf('.');
+			domLN = domLN.substring(0, lnEnd);
+			logger.info("remove domain local name");
+		}
+		nSpace = nSpace.concat(domName + "/" + domLN + "/");
+		nSpace = nSpace.concat(dateF.format(date) + "/");
+
 		String nGraph = nSpace + contextCounter++;
 
 		ModelBuilder builder = new ModelBuilder();
@@ -369,8 +426,7 @@ public class ScraperFilteredCore extends ScraperCore {
 			throw new JsonLDInspectionException("Unkown object obtained from JSON parser :" + url);
 
 		} catch (ParseException e) {
-			logger.error("Failed to parse JSONArray from :" + url);
-			throw new JsonLDInspectionException("Failed to parse JSON from :" + url);
+			throw new JsonLDInspectionException("JSON ParseException. Failed to parse JSON from :" + url + " Parser Error: " + e);
 		}
 	}
 
@@ -424,12 +480,23 @@ public class ScraperFilteredCore extends ScraperCore {
 			String contextValue = jsonObj.get("@context").toString();
 			if (!(contextValue.equalsIgnoreCase("https://schema.org"))) {
 				jsonObj.remove("@context");
-				jsonObj.put("@context", "https://schema.org");
+				//TODO This was added to replace https://schema.org temporary fix only
+				jsonObj.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
+				//jsonObj.put("@context", "https://schema.org");
 			}
+			//TODO This was added to replace https://schema.org temporary fix only
+			if ((contextValue.equalsIgnoreCase("https://schema.org"))) {
+				jsonObj.remove("@context");
+				//TODO This was added to replace https://schema.org temporary fix only
+				jsonObj.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
+				//jsonObj.put("@context", "https://schema.org");
+			}
+
 			contextValue = jsonObj.get("@context").toString();
 
 		} else {
-			jsonObj.put("@context", "https://schema.org");
+			jsonObj.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
+			//jsonObj.put("@context", "https://schema.org");
 		}
 
 		if (!jsonObj.containsKey("@id")) {
