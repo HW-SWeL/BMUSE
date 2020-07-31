@@ -20,7 +20,6 @@ import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingMarkupException;
 import hwu.elixir.scrape.scraper.ScraperFilteredCore;
-import hwu.elixir.utils.ScraperProperties;
 
 /**
  * Scrapes a list of URLs which come from a given file OR
@@ -35,8 +34,6 @@ public class FileScraper extends ScraperFilteredCore {
 
 	private static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
 	private static Logger logger = LoggerFactory.getLogger(FileScraper.class.getName());
-
-	private ScraperProperties properties;
 
 	/**
 	 * Read the file (specified in application.properties) and puts each URL into a
@@ -178,9 +175,6 @@ public class FileScraper extends ScraperFilteredCore {
 		logger.info("STARTING SCRAPE: " + formatter.format(new Date(System.currentTimeMillis())));
 		FileScraper core = new FileScraper();
 	
-		// Read properties files
-		core.properties = ScraperProperties.getInstance();
-
 		// to scrape all URLs in the file specified in applications.properties
 		core.scrapeAllUrls();
 		

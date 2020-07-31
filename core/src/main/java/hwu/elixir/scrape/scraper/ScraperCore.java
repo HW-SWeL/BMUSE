@@ -45,6 +45,7 @@ import hwu.elixir.scrape.exceptions.SeleniumException;
 import hwu.elixir.scrape.scraper.examples.FileScraper;
 import hwu.elixir.scrape.scraper.examples.SingleURLScraper;
 import hwu.elixir.utils.ChromeDriverCreator;
+import hwu.elixir.utils.ScraperProperties;
 
 /**
  * Provides core functionality for scraping, but is not an actual scraper. See
@@ -60,8 +61,11 @@ public abstract class ScraperCore {
 	private WebDriver driver;
  
 	private static Logger logger = LoggerFactory.getLogger(ScraperCore.class.getName());
-	
+
+	protected ScraperProperties properties;
+
 	public ScraperCore() {
+		properties = ScraperProperties.getInstance(); 
 		driver = ChromeDriverCreator.getInstance();
 	}
 	
