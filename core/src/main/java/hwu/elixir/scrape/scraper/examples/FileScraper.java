@@ -3,17 +3,11 @@ package hwu.elixir.scrape.scraper.examples;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Properties;
 
-import org.eclipse.rdf4j.query.algebra.In;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -25,9 +19,8 @@ import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
 import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingMarkupException;
-import hwu.elixir.scrape.scraper.ScraperCore;
 import hwu.elixir.scrape.scraper.ScraperFilteredCore;
-import hwu.elixir.utils.Helpers;
+import hwu.elixir.utils.ScraperProperties;
 
 /**
  * Scrapes a list of URLs which come from a given file OR
@@ -38,192 +31,12 @@ import hwu.elixir.utils.Helpers;
  */
 public class FileScraper extends ScraperFilteredCore {
 
-	private static final String propertiesJarFile = "application.properties";
-	private static final String configurationJarFile = "configuration.properties";
-	private static final String propertiesLocalFile = "localProperties.properties";
-
-	private static String locationOfSitesFile = "";
-	private static String outputFolderOriginal = "";
-	private static String outputFolder = System.getProperty("user.home");
-	private static long contextCounter = 0L;
-	private static int maxLimitScrape = 5; //Default setting if none is set on the application.properties file
-	private static boolean isDynamic = true; //Default setting if none is set on the application.properties file
-
 	private static ArrayList<String> urlsToScrape = new ArrayList<>();
 
 	private static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
 	private static Logger logger = LoggerFactory.getLogger(FileScraper.class.getName());
 
-	/**
-	 * Updates properties based on properties file in src > main > resources
-	 * Please note that this will only read the properties from the file
-	 * only the first time it is executed, after that it will always read
-	 * from local file and any changes to the application.properties will not be picked up
-	 */
-	private void readProperties() {
-		Properties properties = null;
-		Properties configurationProperties = null;
-
-		configurationProperties = readConfigurationPropertiesFromJar();
-
-		File contextCounterFile = new File(propertiesLocalFile);
-		if (contextCounterFile.exists()) {
-			properties = readPropertiesFromLocalFile();
-		} else {
-			logger.info("File " + propertiesLocalFile + " not found in local file system. Reading " + propertiesJarFile + " from JAR.");
-			properties = readPropertiesFromJar();
-		}
-		
-		outputFolderOriginal = properties.getProperty("outputFolder").trim();
-		outputFolder = outputFolderOriginal + "/" + Helpers.getDateForName() + "/";
-		locationOfSitesFile = properties.getProperty("locationOfSitesFile").trim();
-		contextCounter = Long.parseLong(properties.getProperty("contextCounter").trim());
-		logger.info(configurationProperties.getProperty("maxLimitScrape").trim());
-		maxLimitScrape = Integer.parseInt(configurationProperties.getProperty("maxLimitScrape").trim());
-		isDynamic = Boolean.parseBoolean(configurationProperties.getProperty("isDynamic").trim());
-
-		
-		if (properties.containsKey("contextCounter"))
-			contextCounter = Long.parseLong(properties.getProperty("contextCounter").trim());
-		else
-			properties.setProperty("contextCounter", "0");
-
-		displayPropertyValues();
-	}
-
-	
-	/** 
-	 * Displays values of properties read from properties file.
-	 */
-	private void displayPropertyValues() {
-		logger.info("outputFolder: " + outputFolder);
-		logger.info("locationOfSitesFile: " + locationOfSitesFile);
-		logger.info("contextCounter: " + contextCounter);
-		logger.info("Max limit of URLs to scrape: " + maxLimitScrape);
-		logger.info("Dynamic scrape: " + isDynamic);
-		logger.info("\n\n\n");
-	}
-	
-	
-	/**
-	 * Read properties from local file. 
-	 * 
-	 * @return
-	 */
-	private Properties readPropertiesFromLocalFile() {
-		Properties properties = null;
-		Reader reader = null;
-		try {
-			reader = new FileReader(propertiesLocalFile);
-			properties = new Properties();
-			properties.load(reader);
-			logger.info("Properties read from local file " + propertiesLocalFile);
-		} catch (IOException e) {
-			if (reader != null) {
-				try {
-					reader.close();
-				} catch (IOException ee) {
-					// ignoring
-				}
-			}
-		}
-		return properties;
-	}
-	
-	/**
-	 * Read properties from JAR. Will be called if no local properties file exists.
-	 * 
-	 * @return
-	 */
-	private Properties readPropertiesFromJar() {
-		ClassLoader classLoader = ScraperCore.class.getClassLoader();
-		InputStream is = classLoader.getResourceAsStream(propertiesJarFile);
-		if (is == null) {
-			logger.error("     Cannot find " + propertiesJarFile + " file");
-			throw new IllegalArgumentException(propertiesJarFile + "file is not found!");
-		}
-
-		Properties properties = new Properties();
-		try {
-			properties.load(is);
-			logger.info("Properties read from jar file");
-			properties.setProperty("contextCounter", "0");
-		} catch (IOException e) {
-			logger.error("Cannot load application.properties ", e);
-			shutdown();
-			System.exit(-1);
-		} finally {
-			try {
-				is.close();
-			} catch (IOException e) {
-				// ignoring 
-			}
-		}
-		return properties;
-	}
-
-
-	/**
-	 * Read configuration properties from JAR. Will be called every time you run the scraper.
-	 *
-	 * @return
-	 */
-	private Properties readConfigurationPropertiesFromJar() {
-		logger.info("Reading configuration properties from jar file");
-		ClassLoader classLoader = ScraperCore.class.getClassLoader();
-		InputStream is = classLoader.getResourceAsStream(configurationJarFile);
-		if (is == null) {
-			logger.error("     Cannot find " + configurationJarFile + " file");
-			throw new IllegalArgumentException(configurationJarFile + "file is not found!");
-		}
-
-		Properties properties = new Properties();
-		try {
-			properties.load(is);
-			properties.setProperty("contextCounter", "0");
-		} catch (IOException e) {
-			logger.error("Cannot load configuration.properties ", e);
-			shutdown();
-			System.exit(-1);
-		} finally {
-			try {
-				is.close();
-			} catch (IOException e) {
-				// ignoring
-			}
-		}
-		return properties;
-	}
-
-	/**
-	 * Write contextCounter to local properties file
-	 * 
-	 */
-	private void updateContextCounter() {
-		Properties properties = null;
-		Writer writer = null;
-		try {
-			writer = new FileWriter(propertiesLocalFile);
-			properties = new Properties();
-			properties.setProperty("locationOfSitesFile", locationOfSitesFile);
-			properties.setProperty("outputFolder", outputFolderOriginal);
-			properties.setProperty("contextCounter", Long.toString(contextCounter));
-			properties.setProperty("maxLimitScrape", Integer.toString(maxLimitScrape));
-			properties.setProperty("isDynamic", Boolean.toString(isDynamic));
-			
-			properties.store(writer, "updating contextCounter");
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			if (writer != null) {
-				try {
-					writer.close();
-				} catch (IOException e) {
-					// ignoring
-				}
-			}
-		}		
-	}
+	private ScraperProperties properties;
 
 	/**
 	 * Read the file (specified in application.properties) and puts each URL into a
@@ -231,16 +44,15 @@ public class FileScraper extends ScraperFilteredCore {
 	 * 
 	 */
 	private void readFileList() {
-		if (locationOfSitesFile.equals("") || locationOfSitesFile == null) {
-			logger.error("Please set *locationOfSitesFile* in src > main > resources > application.properties");
+		if (properties.getLocationOfSitesFile().equals("") || properties.getLocationOfSitesFile() == null) {
+			logger.error("Please set property *locationOfSitesFile*");
 			shutdown();
 			System.exit(-1);
 		}
 
-		File sitesList = new File(locationOfSitesFile);
+		File sitesList = new File(properties.getLocationOfSitesFile());
 		if (!sitesList.exists()) {
-			logger.error("Cannot find file *" + locationOfSitesFile
-					+ "*. Please set correct value in src > main > resources > application.properties");
+			logger.error("Cannot find file *" + properties.getLocationOfSitesFile() + "*. Please set correct value for locationOfSitesFile");
 			shutdown();
 			System.exit(-1);
 		}
@@ -254,12 +66,12 @@ public class FileScraper extends ScraperFilteredCore {
 				}
 			}
 		} catch (Exception e) {
-			logger.error("Problem reading sites from file *" + locationOfSitesFile + "*.");
+			logger.error("Problem reading sites from file *" + properties.getLocationOfSitesFile() + "*.");
 			shutdown();
 			System.exit(-1);
 		}
 
-		logger.info("Read " + urlsToScrape.size() + " urls to scrape from " + locationOfSitesFile+".\n");
+		logger.info("Read " + urlsToScrape.size() + " urls to scrape from " + properties.getLocationOfSitesFile() +".\n");
 	}
 
 	/**
@@ -297,6 +109,8 @@ public class FileScraper extends ScraperFilteredCore {
 		// Load the settings from the application.properties file
 		readFileList();
 
+		long contextCounter = properties.getContextCounter();
+		
 		for (String url : urlsToScrape) {
 			boolean result = false;
 
@@ -318,45 +132,45 @@ public class FileScraper extends ScraperFilteredCore {
 				for (Element sitemapURL : sitemapList){
 					logger.info("Attempting to scrape: " + sitemapURL.text());
 					try {
-						result = scrape(sitemapURL.text(), outputFolder, null, contextCounter++);
+						result = scrape(sitemapURL.text(), properties.getOutputFolder(), null, contextCounter++);
 					} catch (FourZeroFourException e) {
 						logger.error(url + "returned a 404.");
 					} catch (JsonLDInspectionException e) {
 						logger.error("The JSON-LD could be not parsed for " + url);
 					} catch (CannotWriteException e) {
-						logger.error("Problem writing file for " + url + " to the " + outputFolder + " directory.");
+						logger.error("Problem writing file for " + url + " to the " + properties.getOutputFolder() + " directory.");
 					} catch (MissingMarkupException e) {
 						logger.error("Problem obtaining markup from " + url + ".");
 					}
-					displayResult(sitemapURL.text(), result, outputFolder);
+					displayResult(sitemapURL.text(), result, properties.getOutputFolder());
 					sitemapCount++;
-					if (maxLimitScrape < sitemapCount) {
-						logger.info("MAX SITEMAP LIMIT REACHED: " + maxLimitScrape);
+					if (properties.getMaxLimitScrape() < sitemapCount) {
+						logger.info("MAX SITEMAP LIMIT REACHED: " + properties.getMaxLimitScrape());
 						logger.info("Scraping over");
 						break;
 					}
 				}
-
 			} else {
 				try {
-					result = scrape(url, outputFolder, null, contextCounter++);
+					result = scrape(url, properties.getOutputFolder(), null, contextCounter++);
 				} catch (FourZeroFourException e) {
 					logger.error(url + "returned a 404.");
 				} catch (JsonLDInspectionException e) {
 					logger.error("The JSON-LD could be not parsed for " + url);
 				} catch (CannotWriteException e) {
-					logger.error("Problem writing file for " + url + " to the " + outputFolder + " directory.");
+					logger.error("Problem writing file for " + url + " to the " + properties.getOutputFolder() + " directory.");
 				} catch (MissingMarkupException e) {
 					logger.error("Problem obtaining markup from " + url + ".");
 				}
 
-				displayResult(url, result, outputFolder);
+				displayResult(url, result, properties.getOutputFolder());
 			}
 
 
 		}
-		logger.info("Scraping over");
-		updateContextCounter();
+		logger.info("Scraping over.");
+		properties.setContextCounter(contextCounter);
+		properties.updateConfig();
 		shutdown();
 	}
 	
@@ -364,8 +178,8 @@ public class FileScraper extends ScraperFilteredCore {
 		logger.info("STARTING SCRAPE: " + formatter.format(new Date(System.currentTimeMillis())));
 		FileScraper core = new FileScraper();
 	
-		// Read properties file
-		core.readProperties();
+		// Read properties files
+		core.properties = ScraperProperties.getInstance();
 
 		// to scrape all URLs in the file specified in applications.properties
 		core.scrapeAllUrls();

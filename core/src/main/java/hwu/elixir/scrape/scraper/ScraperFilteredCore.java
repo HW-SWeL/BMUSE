@@ -478,6 +478,7 @@ public class ScraperFilteredCore extends ScraperCore {
 	protected JSONObject fixASingleJSONLdObject(JSONObject jsonObj, String url) {
 		if (jsonObj.containsKey("@context")) {
 			String contextValue = jsonObj.get("@context").toString();
+			
 			if (!(contextValue.equalsIgnoreCase("https://schema.org"))) {
 				jsonObj.remove("@context");
 				//TODO This was added to replace https://schema.org temporary fix only
