@@ -85,9 +85,17 @@ public class ScraperFilteredCore extends ScraperCore {
 
 		if (html == null || html.contentEquals(""))
 			return false;
-
+		if (logger.isDebugEnabled() ) {
+			logger.trace("Read following html ==============================================================");
+			logger.trace(html);
+		}
+		
 		try {
 			html = injectId(html, url);
+			if (logger.isDebugEnabled() ) {
+				logger.trace("Same HTML after injecting ID ==============================================================");
+				logger.trace(html);
+			}
 		} catch (MissingHTMLException e) {
 			logger.error(e.toString());
 			return false;
