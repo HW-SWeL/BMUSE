@@ -58,6 +58,7 @@ public class ScraperProperties extends Properties {
 			properties.put("locationOfSitesFile", props.getProperty("locationOfSitesFile").trim());
 			properties.put("maxLimitScrape", props.getProperty("maxLimitScrape").trim());
 			properties.put("isDynamic", props.getProperty("isDynamic").trim());
+			properties.put("schemaContext", props.getProperty("schemaContext").trim());
 
 			if (props.containsKey("contextCounter"))
 				properties.put("contextCounter", props.getProperty("contextCounter").trim());
@@ -79,6 +80,7 @@ public class ScraperProperties extends Properties {
 		logger.info("locationOfSitesFile:    " + this.getLocationOfSitesFile());
 		logger.info("contextCounter:         " + this.getContextCounter());
 		logger.info("Max no. URLs to scrape: " + this.getMaxLimitScrape());
+		logger.info("Schema.org context URL: " + this.getSchemaContext());
 		logger.info("Dynamic scrape:         " + this.isDynamic());
 	}
 
@@ -169,5 +171,9 @@ public class ScraperProperties extends Properties {
 
 	public String getChromiumDriverLocation() {
 		return properties.getProperty("chromiumDriverLocation");
+	}
+
+	public String getSchemaContext() {
+		return properties.getProperty("schemaContext");
 	}
 }

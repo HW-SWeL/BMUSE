@@ -481,23 +481,18 @@ public class ScraperFilteredCore extends ScraperCore {
 			
 			if (!(contextValue.equalsIgnoreCase("https://schema.org"))) {
 				jsonObj.remove("@context");
-				//TODO This was added to replace https://schema.org temporary fix only
-				jsonObj.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
-				//jsonObj.put("@context", "https://schema.org");
+				jsonObj.put("@context", properties.getSchemaContext());
 			}
 			//TODO This was added to replace https://schema.org temporary fix only
 			if ((contextValue.equalsIgnoreCase("https://schema.org"))) {
 				jsonObj.remove("@context");
-				//TODO This was added to replace https://schema.org temporary fix only
-				jsonObj.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
-				//jsonObj.put("@context", "https://schema.org");
+				jsonObj.put("@context", properties.getSchemaContext());
 			}
 
 			contextValue = jsonObj.get("@context").toString();
 
 		} else {
-			jsonObj.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
-			//jsonObj.put("@context", "https://schema.org");
+			jsonObj.put("@context", properties.getSchemaContext());
 		}
 
 		if (!jsonObj.containsKey("@id")) {
