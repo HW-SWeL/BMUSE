@@ -84,9 +84,31 @@ public abstract class ScraperCore {
 	}
 
 	/**
+	 *
+	 * Wraps methods to obtain HTML; can be changed for different types of scraper.
+	 *  This is the entry point to the ScraperCore abstract class
+	 *  Please note that both these calls are to get HTML in a static way
+	 *
+	 * @param url
+	 * @return
+	 * @throws FourZeroFourException
+	 */
+	protected String wrapHTMLExtractionStatic(String url) throws FourZeroFourException {
+		String html = "";
+
+		try {
+			html = getHtml(url);
+		} catch (FourZeroFourException e) {
+			logger.error("404 error " + e);
+		}
+		return html;
+	}
+
+	/**
 	 * 
 	 * Wraps methods to obtain HTML; can be changed for different types of scraper.
 	 *  This is the entry point to the ScraperCore abstract class
+	 *  Please note that both these calls are to get HTML in a dynamic way
 	 * 
 	 * @param url
 	 * @return
@@ -111,7 +133,7 @@ public abstract class ScraperCore {
 
 	/**
 	 * Uses JSoup to pull the HTML of a NON dynamic web page. Much faster than
-	 * Selenium BUT will not execute JS.
+	 * 	 * Selenium BUT will not execute JS.
 	 * 
 	 * @param url The address of the site to parse
 	 * @return The HTML as a string
@@ -251,10 +273,10 @@ public abstract class ScraperCore {
 			return out.toString("UTF-8");
 		} catch (ExtractionException e) {
 			logger.error("Cannot extract triples", e);
-		} catch (IOException e) {
-			logger.error(" IO error whilst extracting triples", e);
-		} catch (TripleHandlerException e1) {
-			logger.error("TripleHanderException", e1);
+		} catch (IOException e1) {
+			logger.error(" IO error whilst extracting triples", e1);
+		} catch (TripleHandlerException e2) {
+			logger.error("TripleHanderException", e2);
 		}
 
 		return null;
@@ -391,6 +413,7 @@ public abstract class ScraperCore {
 		try {
 			return createModelFromNTriples2(nTriples);
 		} catch (RDFParseException e) {
+			logger.error("RDFParseException, the exception is dealt with by removing some characters and trying again: " + e);
 			// RDF4J doesn't like | (ie character U+7C) inside URLs.
 			// this removes | from everywhere in the doc...
 			nTriples = nTriples.replaceAll("\\|", "");
