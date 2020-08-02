@@ -47,7 +47,7 @@ public class FileScraper extends ScraperFilteredCore {
 	private static String outputFolder = System.getProperty("user.home");
 	private static long contextCounter = 0L;
 	private static int maxLimitScrape = 5; //Default setting if none is set on the application.properties file
-	private static boolean isDynamic = true; //Default setting if none is set on the application.properties file
+	private static boolean dynamic = true; //Default setting if none is set on the application.properties file
 
 	private static ArrayList<String> urlsToScrape = new ArrayList<>();
 
@@ -79,7 +79,7 @@ public class FileScraper extends ScraperFilteredCore {
 		contextCounter = Long.parseLong(properties.getProperty("contextCounter").trim());
 		logger.info(configurationProperties.getProperty("maxLimitScrape").trim());
 		maxLimitScrape = Integer.parseInt(configurationProperties.getProperty("maxLimitScrape").trim());
-		isDynamic = Boolean.parseBoolean(configurationProperties.getProperty("isDynamic").trim());
+		dynamic = Boolean.parseBoolean(configurationProperties.getProperty("dynamic").trim());
 
 		
 		displayPropertyValues();
@@ -94,7 +94,7 @@ public class FileScraper extends ScraperFilteredCore {
 		logger.info("locationOfSitesFile: " + locationOfSitesFile);
 		logger.info("contextCounter: " + contextCounter);
 		logger.info("Max limit of URLs to scrape: " + maxLimitScrape);
-		logger.info("Dynamic scrape: " + isDynamic);
+		logger.info("Dynamic scrape: " + dynamic);
 		logger.info("\n\n\n");
 	}
 	
@@ -205,7 +205,7 @@ public class FileScraper extends ScraperFilteredCore {
 			properties.setProperty("outputFolder", outputFolderOriginal);
 			properties.setProperty("contextCounter", Long.toString(contextCounter));
 			properties.setProperty("maxLimitScrape", Integer.toString(maxLimitScrape));
-			properties.setProperty("isDynamic", Boolean.toString(isDynamic));
+			properties.setProperty("dynamic", Boolean.toString(dynamic));
 			
 			properties.store(writer, "updating contextCounter");
 		} catch (IOException e) {
@@ -267,7 +267,8 @@ public class FileScraper extends ScraperFilteredCore {
 	 */
 	public Elements getSitemapList(String url, String sitemapURLKey) throws IOException {
 
-		Document doc = null;
+		Document doc = new Document(url);
+		Elements elements = new Elements();
 
 		try {
 			doc = Jsoup.connect(url).get();
@@ -275,8 +276,12 @@ public class FileScraper extends ScraperFilteredCore {
 			logger.error(e.getMessage());
 		}
 
-		Elements elements = doc.select(sitemapURLKey);
-		//Document doc = Jsoup.parse(html, "", Parser.xmlParser());
+
+		try {
+			elements = doc.select(sitemapURLKey);
+		} catch (NullPointerException e) {
+			logger.error(e.getMessage());
+		}
 
 		return elements;
 	}
@@ -303,7 +308,7 @@ public class FileScraper extends ScraperFilteredCore {
 			// Check if the word sitemap is part of the URL (assumes that the URL is a sitemap if true)
 			if (url.toLowerCase().indexOf("sitemap") != -1) {
 				int sitemapCount = 0;
-				Elements sitemapList = null;
+				Elements sitemapList = new Elements();
 				try {
 					sitemapList = getSitemapList(url, "loc"); //loc will only parse the url of the sample
 				} catch (IOException e) {
@@ -316,7 +321,7 @@ public class FileScraper extends ScraperFilteredCore {
 				for (Element sitemapURL : sitemapList){
 					logger.info("Attempting to scrape: " + sitemapURL.text());
 					try {
-						result = scrape(sitemapURL.text(), outputFolder, null, contextCounter++);
+						result = scrape(sitemapURL.text(), outputFolder, null, contextCounter++, dynamic);
 					} catch (FourZeroFourException e) {
 						logger.error(url + "returned a 404.");
 					} catch (JsonLDInspectionException e) {
@@ -337,7 +342,7 @@ public class FileScraper extends ScraperFilteredCore {
 
 			} else {
 				try {
-					result = scrape(url, outputFolder, null, contextCounter++);
+					result = scrape(url, outputFolder, null, contextCounter++, dynamic);
 				} catch (FourZeroFourException e) {
 					logger.error(url + "returned a 404.");
 				} catch (JsonLDInspectionException e) {
