@@ -79,9 +79,9 @@ public abstract class ScraperCore {
 	 */
 	public void shutdown() {
 		if (driver != null) {
-			logger.info("driver is not null... trying to close!");
+			logger.info("Closing driver...");
 			driver.quit();
-			logger.info("driver closed?!");
+			logger.info("Driver closed.");
 		} else {
 			logger.info("Driver is null... no need to close.");
 		}
@@ -90,7 +90,7 @@ public abstract class ScraperCore {
 	/**
 	 * 
 	 * Wraps methods to obtain HTML; can be changed for different types of scraper.
-	 *  This is the entry point to the ScraperCore abstract class
+	 * This is the entry point to the ScraperCore abstract class
 	 * 
 	 * @param url
 	 * @return
@@ -160,7 +160,7 @@ public abstract class ScraperCore {
 			try {
 				// Try dynamic page
 				driver.get(url);
-			} catch(NoSuchSessionException e) {
+			} catch (NoSuchSessionException e) {
 				System.out.println("TRY AGAIN!");
 				driver = ChromeDriverCreator.killAndReopen();
 				
@@ -221,7 +221,6 @@ public abstract class ScraperCore {
 		} else {
 			logger.error(url + " was NOT successfully scraped.");
 		}
-		logger.info("\n\n");
 	}
 
 	/**

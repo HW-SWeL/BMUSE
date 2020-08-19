@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -126,7 +127,7 @@ public class FileScraper extends ScraperFilteredCore {
 				logger.info("Sitemap found in URL: " + url);
 				// get sitemap list
 				// for url in sitemap list
-				for (Element sitemapURL : sitemapList){
+				for (Element sitemapURL : sitemapList) {
 					logger.info("Attempting to scrape: " + sitemapURL.text());
 					try {
 						result = scrape(sitemapURL.text(), properties.getOutputFolder(), null, contextCounter++);
@@ -163,22 +164,22 @@ public class FileScraper extends ScraperFilteredCore {
 				displayResult(url, result, properties.getOutputFolder());
 			}
 
-
 		}
 		logger.info("Scraping over.");
 		properties.setContextCounter(contextCounter);
 		properties.updateConfig();
 		shutdown();
 	}
-	
+
 	public static void main(String[] args) throws FourZeroFourException, JsonLDInspectionException {
-		logger.info("STARTING SCRAPE: " + formatter.format(new Date(System.currentTimeMillis())));
+		logger.info("*************************** STARTING SCRAPE: " + formatter.format(new Date(System.currentTimeMillis())));
+		logger.info("Default charset: " + Charset.defaultCharset());
 		FileScraper core = new FileScraper();
-	
+
 		// to scrape all URLs in the file specified in applications.properties
 		core.scrapeAllUrls();
-		
-		logger.info("ENDING SCRAPE: " + formatter.format(new Date(System.currentTimeMillis())));
+
+		logger.info("*************************** ENDING SCRAPE: " + formatter.format(new Date(System.currentTimeMillis())));
 		System.exit(0);
 	}
 

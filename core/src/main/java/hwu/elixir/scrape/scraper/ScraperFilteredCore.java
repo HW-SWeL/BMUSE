@@ -58,7 +58,7 @@ public class ScraperFilteredCore extends ScraperCore {
 	
 	/**
 	 * Orchestrates the scraping of a given URL and writes the output (as quads) to
-	 * a file specified in the arguments. If the fileName is not specified, ie null,
+	 * a file specified in the arguments. If the outputFileName is not specified, ie null,
 	 * the contextCounter will be used to name the file.
 	 * 
 	 * contextCounter is used a way of keeping track of which URL in a list is being
@@ -67,7 +67,7 @@ public class ScraperFilteredCore extends ScraperCore {
 	 * The file will be located in the location specified in application.properties
 	 * 
 	 * @param url              URL to scrape
-	 * @param outputFileName   name of file the output will be written to
+	 * @param outputFileName   name of file the output will be written to (may be null)
 	 * @param contextCounter   The value of the counter used to record which number
 	 *                         of URL is being scraped
 	 * @param outputFolderName Folder where output is written to
@@ -189,7 +189,7 @@ public class ScraperFilteredCore extends ScraperCore {
 		// This block of code does some simple string manipulation to extract domain name and local name
 		// Please note that these 2 methods i.e. getNamespace and getLocalName have been deprecated, so
 		// at some point they will be removed and must take into account if a later version of rdf4j is used
-		String tempNSS = sourceIRI.getNamespace();
+		//String tempNSS = sourceIRI.getNamespace();
 		String domLN = sourceIRI.getLocalName();
 		String IRItoString = sourceIRI.toString();
 		// adjust position by 2 to not include "//"
@@ -438,6 +438,7 @@ public class ScraperFilteredCore extends ScraperCore {
 	 * @param url   The URL from which the markup was scraped
 	 * @return The corrected markup stringified; will still be in array
 	 */
+	@SuppressWarnings("unchecked")
 	protected String fixAJsonLdArray(JSONArray array, String url) {
 		for (int i = 0; i < array.size(); i++) {
 			JSONObject correctedObj = fixASingleJSONLdObject((JSONObject) array.get(i), url);
@@ -475,6 +476,7 @@ public class ScraperFilteredCore extends ScraperCore {
 	 * @param url     The URL of the site the markup was scraped from
 	 * @return Amended JSON-LD markup as a {@link JSONObject}
 	 */
+	@SuppressWarnings("unchecked")
 	protected JSONObject fixASingleJSONLdObject(JSONObject jsonObj, String url) {
 		if (jsonObj.containsKey("@context")) {
 			String contextValue = jsonObj.get("@context").toString();
