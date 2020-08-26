@@ -87,14 +87,14 @@ public class ScraperFilteredCore extends ScraperCore {
 
 		if (html == null || html.contentEquals(""))
 			return false;
-		if (logger.isDebugEnabled() ) {
+		if (logger.isTraceEnabled() ) {
 			logger.trace("Read following html ==============================================================");
 			logger.trace(html);
 		}
 		
 		try {
 			html = injectId(html, url);
-			if (logger.isDebugEnabled() ) {
+			if (logger.isTraceEnabled() ) {
 				logger.trace("Same HTML after injecting ID ==============================================================");
 				logger.trace(html);
 			}
