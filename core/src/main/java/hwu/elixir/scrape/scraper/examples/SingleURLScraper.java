@@ -18,7 +18,7 @@ import hwu.elixir.scrape.scraper.ScraperFilteredCore;
 public class SingleURLScraper extends ScraperFilteredCore {
 
 	private static String outputFolder = System.getProperty("user.home");
-	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(SingleURLScraper.class.getName());
 
 	/**
 	 * Scrape a given URL and write to file in the home directory. Output will be in NQuads format.

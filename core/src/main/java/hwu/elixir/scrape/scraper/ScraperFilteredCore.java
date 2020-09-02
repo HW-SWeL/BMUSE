@@ -53,12 +53,12 @@ import hwu.elixir.utils.Helpers;
  */
 public class ScraperFilteredCore extends ScraperCore {
 
-	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(ScraperFilteredCore.class.getName());
 	private int countOfJSONLD = 0; // number of JSON-LD blocks found in HTML
 	
 	/**
 	 * Orchestrates the scraping of a given URL and writes the output (as quads) to
-	 * a file specified in the arguments. If the fileName is not specified, ie null,
+	 * a file specified in the arguments. If the outputFileName is not specified, ie null,
 	 * the contextCounter will be used to name the file.
 	 * 
 	 * contextCounter is used a way of keeping track of which URL in a list is being
@@ -67,7 +67,7 @@ public class ScraperFilteredCore extends ScraperCore {
 	 * The file will be located in the location specified in application.properties
 	 * 
 	 * @param url              URL to scrape
-	 * @param outputFileName   name of file the output will be written to
+	 * @param outputFileName   name of file the output will be written to (may be null)
 	 * @param contextCounter   The value of the counter used to record which number
 	 *                         of URL is being scraped
 	 * @param outputFolderName Folder where output is written to
@@ -190,9 +190,17 @@ public class ScraperFilteredCore extends ScraperCore {
 
 		if (html == null || html.contentEquals(""))
 			return false;
-
+		if (logger.isTraceEnabled() ) {
+			logger.trace("Read following html ==============================================================");
+			logger.trace(html);
+		}
+		
 		try {
 			html = injectId(html, url);
+			if (logger.isTraceEnabled() ) {
+				logger.trace("Same HTML after injecting ID ==============================================================");
+				logger.trace(html);
+			}
 		} catch (MissingHTMLException e) {
 			logger.error(e.toString());
 			return false;
@@ -506,6 +514,7 @@ public class ScraperFilteredCore extends ScraperCore {
 	 * @param url   The URL from which the markup was scraped
 	 * @return The corrected markup stringified; will still be in array
 	 */
+	@SuppressWarnings("unchecked")
 	protected String fixAJsonLdArray(JSONArray array, String url) {
 		for (int i = 0; i < array.size(); i++) {
 			JSONObject correctedObj = fixASingleJSONLdObject((JSONObject) array.get(i), url);
@@ -543,29 +552,25 @@ public class ScraperFilteredCore extends ScraperCore {
 	 * @param url     The URL of the site the markup was scraped from
 	 * @return Amended JSON-LD markup as a {@link JSONObject}
 	 */
+	@SuppressWarnings("unchecked")
 	protected JSONObject fixASingleJSONLdObject(JSONObject jsonObj, String url) {
 		if (jsonObj.containsKey("@context")) {
 			String contextValue = jsonObj.get("@context").toString();
+			
 			if (!(contextValue.equalsIgnoreCase("https://schema.org"))) {
 				jsonObj.remove("@context");
-				//TODO This was added to replace https://schema.org temporary fix only
-				jsonObj.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
-				//jsonObj.put("@context", "https://schema.org");
+				jsonObj.put("@context", properties.getSchemaContext());
 			}
 			//TODO This was added to replace https://schema.org temporary fix only
 			if ((contextValue.equalsIgnoreCase("https://schema.org"))) {
 				jsonObj.remove("@context");
-				//TODO This was added to replace https://schema.org temporary fix only
-				jsonObj.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
-				//jsonObj.put("@context", "https://schema.org");
+				jsonObj.put("@context", properties.getSchemaContext());
 			}
 
 			contextValue = jsonObj.get("@context").toString();
 
 		} else {
-			//TODO This was added to replace https://schema.org temporary fix only
-			jsonObj.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
-			//jsonObj.put("@context", "https://schema.org");
+			jsonObj.put("@context", properties.getSchemaContext());
 		}
 
 		if (!jsonObj.containsKey("@id")) {

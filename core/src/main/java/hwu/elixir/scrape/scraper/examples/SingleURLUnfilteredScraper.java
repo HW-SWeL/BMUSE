@@ -11,7 +11,7 @@ import hwu.elixir.scrape.scraper.ScraperUnFilteredCore;
 
 public class SingleURLUnfilteredScraper extends ScraperUnFilteredCore {
 	
-	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(SingleURLUnfilteredScraper.class.getName());
 	
 	public void scrapeASingleUnfilteredURL(String url) {
 		String jsonLD = "nothing scraped";

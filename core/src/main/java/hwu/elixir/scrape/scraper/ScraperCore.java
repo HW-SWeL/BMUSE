@@ -45,6 +45,7 @@ import hwu.elixir.scrape.exceptions.SeleniumException;
 import hwu.elixir.scrape.scraper.examples.FileScraper;
 import hwu.elixir.scrape.scraper.examples.SingleURLScraper;
 import hwu.elixir.utils.ChromeDriverCreator;
+import hwu.elixir.utils.ScraperProperties;
 
 /**
  * Provides core functionality for scraping, but is not an actual scraper. See
@@ -59,9 +60,12 @@ public abstract class ScraperCore {
 
 	private WebDriver driver;
  
-	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
-	
+	private static Logger logger = LoggerFactory.getLogger(ScraperCore.class.getName());
+
+	protected ScraperProperties properties;
+
 	public ScraperCore() {
+		properties = ScraperProperties.getInstance(); 
 		driver = ChromeDriverCreator.getInstance();
 	}
 	
@@ -75,9 +79,9 @@ public abstract class ScraperCore {
 	 */
 	public void shutdown() {
 		if (driver != null) {
-			logger.info("driver is not null... trying to close!");
+			logger.info("Closing driver...");
 			driver.quit();
-			logger.info("driver closed?!");
+			logger.info("Driver closed.");
 		} else {
 			logger.info("Driver is null... no need to close.");
 		}
@@ -109,7 +113,6 @@ public abstract class ScraperCore {
 	 * Wraps methods to obtain HTML; can be changed for different types of scraper.
 	 *  This is the entry point to the ScraperCore abstract class
 	 *  Please note that both these calls are to get HTML in a dynamic way
-	 * 
 	 * @param url
 	 * @return
 	 * @throws FourZeroFourException
@@ -178,7 +181,7 @@ public abstract class ScraperCore {
 			try {
 				// Try dynamic page
 				driver.get(url);
-			} catch(NoSuchSessionException e) {
+			} catch (NoSuchSessionException e) {
 				System.out.println("TRY AGAIN!");
 				driver = ChromeDriverCreator.killAndReopen();
 				
@@ -239,7 +242,6 @@ public abstract class ScraperCore {
 		} else {
 			logger.error(url + " was NOT successfully scraped.");
 		}
-		logger.info("\n\n");
 	}
 
 	/**

@@ -31,7 +31,7 @@ import hwu.elixir.scrape.exceptions.SeleniumException;
  */
 public class ScraperUnFilteredCore extends ScraperCore {
 	
-	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(ScraperUnFilteredCore.class.getName());
 
 	/**
 	 * Extract schema markup in JSON-LD form from a given URL. Will ignore all other
