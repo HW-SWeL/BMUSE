@@ -57,7 +57,7 @@ public class ScraperProperties extends Properties {
 			properties.put("chromiumDriverLocation", props.getProperty("chromiumDriverLocation").trim());
 			properties.put("locationOfSitesFile", props.getProperty("locationOfSitesFile").trim());
 			properties.put("maxLimitScrape", props.getProperty("maxLimitScrape").trim());
-			properties.put("isDynamic", props.getProperty("isDynamic").trim());
+			properties.put("dynamic", props.getProperty("dynamic").trim());
 			properties.put("schemaContext", props.getProperty("schemaContext").trim());
 
 			if (props.containsKey("contextCounter"))
@@ -81,7 +81,7 @@ public class ScraperProperties extends Properties {
 		logger.info("contextCounter:         " + this.getContextCounter());
 		logger.info("Max no. URLs to scrape: " + this.getMaxLimitScrape());
 		logger.info("Schema.org context URL: " + this.getSchemaContext());
-		logger.info("Dynamic scrape:         " + this.isDynamic());
+		logger.info("Dynamic scrape:         " + this.dynamic());
 	}
 
 	/**
@@ -165,8 +165,8 @@ public class ScraperProperties extends Properties {
 		return Integer.parseInt(properties.getProperty("maxLimitScrape"));
 	}
 
-	public boolean isDynamic() {
-		return Boolean.parseBoolean(properties.getProperty("isDynamic"));
+	public boolean dynamic() {
+		return Boolean.parseBoolean(properties.getProperty("dynamic"));
 	}
 
 	public String getChromiumDriverLocation() {

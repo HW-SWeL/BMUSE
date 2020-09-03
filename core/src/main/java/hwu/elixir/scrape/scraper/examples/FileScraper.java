@@ -36,184 +36,6 @@ public class FileScraper extends ScraperFilteredCore {
 	private static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
 	private static Logger logger = LoggerFactory.getLogger(FileScraper.class.getName());
 
-	private static final String propertiesJarFile = "application.properties";
-	private static final String configurationJarFile = "configuration.properties";
-	private static final String propertiesLocalFile = "localProperties.properties";
-
-	private static String locationOfSitesFile = "";
-	private static String outputFolderOriginal = "";
-	private static String outputFolder = System.getProperty("user.home");
-	private static long contextCounter = 0L;
-	private static int maxLimitScrape = 5; //Default setting if none is set on the application.properties file
-	private static boolean dynamic = true; //Default setting if none is set on the application.properties file
-
-	/**
-	 * Updates properties based on properties file in src > main > resources
-	 * Please note that this will only read the properties from the file
-	 * only the first time it is executed, after that it will always read
-	 * from local file and any changes to the application.properties will not be picked up
-	 */
-	private void readProperties() {
-		Properties properties = null;
-		Properties configurationProperties = null;
-
-		configurationProperties = readConfigurationPropertiesFromJar();
-
-		File contextCounterFile = new File(propertiesLocalFile);
-		if (contextCounterFile.exists()) {
-			properties = readPropertiesFromLocalFile();
-		} else {
-			properties = readPropertiesFromJar();
-		}
-		
-		outputFolderOriginal = properties.getProperty("outputFolder").trim();
-		outputFolder = outputFolderOriginal + "_" + Helpers.getDateForName() + "/";
-		locationOfSitesFile = properties.getProperty("locationOfSitesFile").trim();
-		contextCounter = Long.parseLong(properties.getProperty("contextCounter").trim());
-		logger.info(configurationProperties.getProperty("maxLimitScrape").trim());
-		maxLimitScrape = Integer.parseInt(configurationProperties.getProperty("maxLimitScrape").trim());
-		dynamic = Boolean.parseBoolean(configurationProperties.getProperty("dynamic").trim());
-
-		
-		displayPropertyValues();
-	}
-
-	
-	/** 
-	 * Displays values of properties read from properties file.
-	 */
-	private void displayPropertyValues() {
-		logger.info("outputFolder: " + outputFolder);
-		logger.info("locationOfSitesFile: " + locationOfSitesFile);
-		logger.info("contextCounter: " + contextCounter);
-		logger.info("Max limit of URLs to scrape: " + maxLimitScrape);
-		logger.info("Dynamic scrape: " + dynamic);
-		logger.info("\n\n\n");
-	}
-	
-	
-	/**
-	 * Read properties from local file. 
-	 * 
-	 * @return
-	 */
-	private Properties readPropertiesFromLocalFile() {
-		logger.info("Reading properties from local file");
-		Properties properties = null;
-		Reader reader = null;
-		try {
-			reader = new FileReader(propertiesLocalFile);
-			properties = new Properties();
-			properties.load(reader);
-		} catch (IOException e) {
-			return readPropertiesFromJar();
-		} finally {
-			if (reader != null) {
-				try {
-					reader.close();
-				} catch (IOException e) {
-					// ignoring
-				}
-			}
-		}
-		return properties;
-	}
-	
-	/**
-	 * Read properties from JAR. Will be called if no local properties file exists.
-	 * 
-	 * @return
-	 */
-	private Properties readPropertiesFromJar() {
-		logger.info("Reading properties from jar file");
-		ClassLoader classLoader = ScraperCore.class.getClassLoader();
-		InputStream is = classLoader.getResourceAsStream(propertiesJarFile);
-		if (is == null) {
-			logger.error("     Cannot find " + propertiesJarFile + " file");
-			throw new IllegalArgumentException(propertiesJarFile + "file is not found!");
-		}
-
-		Properties properties = new Properties();
-		try {
-			properties.load(is);
-			properties.setProperty("contextCounter", "0");
-		} catch (IOException e) {
-			logger.error("Cannot load application.properties ", e);
-			shutdown();
-			System.exit(-1);
-		} finally {
-			try {
-				is.close();
-			} catch (IOException e) {
-				// ignoring 
-			}
-		}
-		return properties;
-	}
-
-
-	/**
-	 * Read configuration properties from JAR. Will be called every time you run the scraper.
-	 *
-	 * @return
-	 */
-	private Properties readConfigurationPropertiesFromJar() {
-		logger.info("Reading configuration properties from jar file");
-		ClassLoader classLoader = ScraperCore.class.getClassLoader();
-		InputStream is = classLoader.getResourceAsStream(configurationJarFile);
-		if (is == null) {
-			logger.error("     Cannot find " + configurationJarFile + " file");
-			throw new IllegalArgumentException(configurationJarFile + "file is not found!");
-		}
-
-		Properties properties = new Properties();
-		try {
-			properties.load(is);
-			properties.setProperty("contextCounter", "0");
-		} catch (IOException e) {
-			logger.error("Cannot load configuration.properties ", e);
-			shutdown();
-			System.exit(-1);
-		} finally {
-			try {
-				is.close();
-			} catch (IOException e) {
-				// ignoring
-			}
-		}
-		return properties;
-	}
-
-	/**
-	 * Write contextCounter to local properties file
-	 * 
-	 */
-	private void updateContextCounter() {
-		Properties properties = null;
-		Writer writer = null;
-		try {
-			writer = new FileWriter(propertiesLocalFile);
-			properties = new Properties();
-			properties.setProperty("locationOfSitesFile", locationOfSitesFile);
-			properties.setProperty("outputFolder", outputFolderOriginal);
-			properties.setProperty("contextCounter", Long.toString(contextCounter));
-			properties.setProperty("maxLimitScrape", Integer.toString(maxLimitScrape));
-			properties.setProperty("dynamic", Boolean.toString(dynamic));
-			
-			properties.store(writer, "updating contextCounter");
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			if (writer != null) {
-				try {
-					writer.close();
-				} catch (IOException e) {
-					// ignoring
-				}
-			}
-		}		
-	}
-
 	/**
 	 * Read the file (specified in application.properties) and puts each URL into a
 	 * list for later scraping
@@ -313,7 +135,7 @@ public class FileScraper extends ScraperFilteredCore {
 				for (Element sitemapURL : sitemapList) {
 					logger.info("Attempting to scrape: " + sitemapURL.text());
 					try {
-						result = scrape(sitemapURL.text(), outputFolder, null, contextCounter++, dynamic);
+						result = scrape(sitemapURL.text(), properties.getOutputFolder(), null, contextCounter++, properties.dynamic());
 					} catch (FourZeroFourException e) {
 						logger.error(url + "returned a 404.");
 					} catch (JsonLDInspectionException e) {
@@ -333,7 +155,7 @@ public class FileScraper extends ScraperFilteredCore {
 				}
 			} else {
 				try {
-					result = scrape(url, outputFolder, null, contextCounter++, dynamic);
+					result = scrape(url, properties.getOutputFolder(), null, contextCounter++, properties.dynamic());
 				} catch (FourZeroFourException e) {
 					logger.error(url + "returned a 404.");
 				} catch (JsonLDInspectionException e) {
