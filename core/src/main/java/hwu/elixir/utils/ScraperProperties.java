@@ -75,13 +75,13 @@ public class ScraperProperties extends Properties {
 	 * Displays values of properties read from properties file.
 	 */
 	private void displayPropertyValues() {
-		logger.info("outputFolder:           " + this.getOutputFolder());
-		logger.info("chromiumDriverLocation: " + this.getChromiumDriverLocation());
-		logger.info("locationOfSitesFile:    " + this.getLocationOfSitesFile());
-		logger.info("contextCounter:         " + this.getContextCounter());
-		logger.info("Max no. URLs to scrape: " + this.getMaxLimitScrape());
-		logger.info("Schema.org context URL: " + this.getSchemaContext());
-		logger.info("Dynamic scrape:         " + this.dynamic());
+		logger.info("outputFolder:                    " + this.getOutputFolder());
+		logger.info("chromiumDriverLocation:          " + this.getChromiumDriverLocation());
+		logger.info("locationOfSitesFile:             " + this.getLocationOfSitesFile());
+		logger.info("contextCounter:                  " + this.getContextCounter());
+		logger.info("Max no. URLs to scrape:          " + this.getMaxLimitScrape());
+		logger.info("Schema.org context URL:          " + this.getSchemaContext());
+		logger.info("Dynamic scrape (global setting): " + this.dynamic());
 	}
 
 	/**
@@ -111,7 +111,7 @@ public class ScraperProperties extends Properties {
 	 * Read configuration properties from JAR. Will be called every time you run the
 	 * scraper.
 	 *
-	 * @return
+	 *
 	 */
 	private void readPropertiesFromJar() {
 		ClassLoader classLoader = ScraperProperties.class.getClassLoader();

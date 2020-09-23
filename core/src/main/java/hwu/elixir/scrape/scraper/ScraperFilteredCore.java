@@ -84,15 +84,16 @@ public class ScraperFilteredCore extends ScraperCore {
 		url = fixURL(url);
 
 		String html = "";
-		//TODO this dynamic boolean determines if the scraper should start using selenium or use JSOUP to scrape the information (dynamic and static respectively)
-		// This method defaults to dynamic approach and it is left for now as it is used by services and web services that are dynamic/static agnostic
+		// This dynamic boolean determines if the scraper should start using selenium or use JSOUP to scrape the information (dynamic and static respectively)
+		// This method signature does not take the dynamic parameter and always defaults to dynamic approach and it is left for now as it is used by services and web services that are dynamic/static agnostic
 		Boolean dynamic = true;
 
-		logger.info("dynamic scraping setting");
 
 		if (dynamic) {
+			logger.info("dynamic scraping setting");
 			html = wrapHTMLExtraction(url);
 		} else {
+			logger.info("static scraping setting");
 			html = wrapHTMLExtractionStatic(url);
 		}
 
@@ -178,12 +179,13 @@ public class ScraperFilteredCore extends ScraperCore {
 		url = fixURL(url);
 
 		String html = "";
-		//TODO this dynamic boolean determines if the scraper should start using selenium or JSOUP to scrape the information (dynamic and static respectively)
+		// The dynamic boolean determines if the scraper should start using selenium or JSOUP to scrape the information (dynamic and static respectively)
 
-		logger.info("static scraping setting");
 		if (dynamic) {
+			logger.info("dynamic scraping setting");
 			html = wrapHTMLExtraction(url);
 		} else {
+			logger.info("static scraping setting");
 			html = wrapHTMLExtractionStatic(url);
 		}
 

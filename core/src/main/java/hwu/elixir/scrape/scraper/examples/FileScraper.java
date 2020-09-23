@@ -1,14 +1,13 @@
 package hwu.elixir.scrape.scraper.examples;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -77,7 +76,7 @@ public class FileScraper extends ScraperFilteredCore {
 	 *
 	 *
 	 */
-	public Elements getSitemapList(String url, String sitemapURLKey) throws IOException {
+	private Elements getSitemapList(String url, String sitemapURLKey) throws IOException {
 
 		Document doc = new Document(url);
 		Elements elements = new Elements();
@@ -98,7 +97,61 @@ public class FileScraper extends ScraperFilteredCore {
 		return elements;
 	}
 
-	
+	private String getURLFromTextLine(String url) {
+		String URL = url.substring(0, url.indexOf(",")-1);
+		return URL;
+	}
+
+	private String getDynamicStaticFlag (String url) {
+		String flag = "unknown";
+
+		if (url.substring(url.indexOf(","), url.length()).trim().equalsIgnoreCase("static")){
+			flag = "static";
+			//we have a static option on the file after the comma
+		} else if (url.substring(url.indexOf(","), url.length()).trim().equalsIgnoreCase("dynamic")) {
+			flag = "dynamic";
+		} else {
+			flag = "unknown";
+		}
+
+		return flag;
+	}
+
+	/**
+	 * Method that writes URLs that have not been successfully scraped for possible future scraping
+	 * The method creates a new text file in the same directory that the nQuads are stored
+	 */
+	private void unscrapedURLsToFile (String outFolderName, String outFileName, String unscrapedURL, long contextCounter) {
+
+		FileWriter fw = null;
+		BufferedWriter bw = null;
+		PrintWriter out = null;
+		File outputDirectory = new File(outFolderName);
+
+		// If folder does not exist, create the folder
+		if (!outputDirectory.exists()){
+			outputDirectory.mkdir();
+		}
+
+		if (outFileName == null) {
+			outFileName = outFolderName + "/" + "unscraped_" + contextCounter + ".txt";
+		} else {
+			outFileName = outFolderName + "/" + "unscraped_" + outFileName + ".txt";
+		}
+
+		try {
+			fw = new FileWriter(outFileName, true);
+			bw = new BufferedWriter(fw);
+			out = new PrintWriter(bw);
+			out.println(unscrapedURL);
+			out.close();
+		} catch (Exception e) {
+			logger.error("Problem writing to unscraped file for " + unscrapedURL, e);
+			e.printStackTrace();
+		}
+	}
+
+
 	/**
 	 * Reads a list of URLs from a specified file; scrapes each one sequentially and writes the parsed (bio)schema 
 	 * markup to a NQuads file inside a specified directory. 
@@ -113,9 +166,37 @@ public class FileScraper extends ScraperFilteredCore {
 		readFileList();
 
 		long contextCounter = properties.getContextCounter();
-		
+		String outputFolder = properties.getOutputFolder();
+		boolean dynamicScrape = properties.dynamic();
+
+		//TODO set this to to properties.dynamic and change if there is a flag on the url line of the file
+
+
+
 		for (String url : urlsToScrape) {
 			boolean result = false;
+
+
+
+			// If there is a comma on the URL, which indicates a dynamic/static flag
+			// or maybe just a mistake, check if static/dynamic is setup as flag and
+			// scrape the URL accordingly, if some other text as flag just ignore text and
+			// scrape URL with the default approach (dynamic), this is done on a per URL function
+
+			if (url.indexOf(",") != -1){
+				String tempFlag = getDynamicStaticFlag(url);
+				if (tempFlag.equalsIgnoreCase("static")){
+					dynamicScrape = false;
+				} else if (tempFlag.equalsIgnoreCase("dynamic")){
+					dynamicScrape = true;
+				} else if (tempFlag.equalsIgnoreCase("unknown")) {
+					//This case is when the flag in not set to dynamic or static, because it is
+					//not known what is the case the safest option will be to set it to dynamic
+					dynamicScrape = true;
+				}
+
+				url = getURLFromTextLine(url);
+			}
 
 			logger.info("Attempting to scrape: " + url);
 
@@ -135,15 +216,19 @@ public class FileScraper extends ScraperFilteredCore {
 				for (Element sitemapURL : sitemapList) {
 					logger.info("Attempting to scrape: " + sitemapURL.text());
 					try {
-						result = scrape(sitemapURL.text(), properties.getOutputFolder(), null, contextCounter++, properties.dynamic());
+						result = scrape(sitemapURL.text(), properties.getOutputFolder(), null, contextCounter++, dynamicScrape);
 					} catch (FourZeroFourException e) {
 						logger.error(url + "returned a 404.");
+						unscrapedURLsToFile(outputFolder, null, url, contextCounter);
 					} catch (JsonLDInspectionException e) {
 						logger.error("The JSON-LD could be not parsed for " + url);
+						unscrapedURLsToFile(outputFolder, null, url, contextCounter);
 					} catch (CannotWriteException e) {
 						logger.error("Problem writing file for " + url + " to the " + properties.getOutputFolder() + " directory.");
+						unscrapedURLsToFile(outputFolder, null, url, contextCounter);
 					} catch (MissingMarkupException e) {
 						logger.error("Problem obtaining markup from " + url + ".");
+						unscrapedURLsToFile(outputFolder, null, url, contextCounter);
 					}
 					displayResult(sitemapURL.text(), result, properties.getOutputFolder());
 					sitemapCount++;
@@ -155,15 +240,19 @@ public class FileScraper extends ScraperFilteredCore {
 				}
 			} else {
 				try {
-					result = scrape(url, properties.getOutputFolder(), null, contextCounter++, properties.dynamic());
+					result = scrape(url, properties.getOutputFolder(), null, contextCounter++, dynamicScrape);
 				} catch (FourZeroFourException e) {
 					logger.error(url + "returned a 404.");
+					unscrapedURLsToFile(outputFolder, null, url, contextCounter);
 				} catch (JsonLDInspectionException e) {
 					logger.error("The JSON-LD could be not parsed for " + url);
+					unscrapedURLsToFile(outputFolder, null, url, contextCounter);
 				} catch (CannotWriteException e) {
 					logger.error("Problem writing file for " + url + " to the " + properties.getOutputFolder() + " directory.");
+					unscrapedURLsToFile(outputFolder, null, url, contextCounter);
 				} catch (MissingMarkupException e) {
 					logger.error("Problem obtaining markup from " + url + ".");
+					unscrapedURLsToFile(outputFolder, null, url, contextCounter);
 				}
 
 				displayResult(url, result, properties.getOutputFolder());
@@ -181,7 +270,7 @@ public class FileScraper extends ScraperFilteredCore {
 		logger.info("Default charset: " + Charset.defaultCharset());
 		FileScraper core = new FileScraper();
 
-		// to scrape all URLs in the file specified in applications.properties
+		// to scrape all URLs in the file specified in configuration.properties
 		core.scrapeAllUrls();
 
 		logger.info("*************************** ENDING SCRAPE: " + formatter.format(new Date(System.currentTimeMillis())));
