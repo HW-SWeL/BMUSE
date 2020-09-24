@@ -169,10 +169,6 @@ public class FileScraper extends ScraperFilteredCore {
 		String outputFolder = properties.getOutputFolder();
 		boolean dynamicScrape = properties.dynamic();
 
-		//TODO set this to to properties.dynamic and change if there is a flag on the url line of the file
-
-
-
 		for (String url : urlsToScrape) {
 			boolean result = false;
 
