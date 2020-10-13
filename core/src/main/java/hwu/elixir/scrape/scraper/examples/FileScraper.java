@@ -98,7 +98,7 @@ public class FileScraper extends ScraperFilteredCore {
 	}
 
 	private String getURLFromTextLine(String url) {
-		String URL = url.substring(0, url.indexOf(",")-1);
+		String URL = url.substring(0, url.indexOf(","));
 		return URL;
 	}
 
