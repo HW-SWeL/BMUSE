@@ -308,7 +308,7 @@ public class ScraperFilteredCoreTest {
 		JSONObject obj = new JSONObject();
 		obj.put("key1", "value1");
 		String fixedJSON = scraperCore.fixASingleJsonLdBlock(obj.toJSONString(), "http://www.myId.org");
-		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org\""));
+		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org/docs/jsonldcontext.jsonld\""));
 		assertTrue(fixedJSON.contains("\"@id\":\"http://www.myId.org\""));
 	}
 	
@@ -319,8 +319,7 @@ public class ScraperFilteredCoreTest {
 		
 		JSONObject obj2 = new JSONObject();
 		obj2.put("key2", "value2");
-		obj2.put("@context", "https://schema.org");
-		
+		obj2.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
 		JSONObject obj3 = new JSONObject();
 		obj3.put("key3", "value3");
 		obj3.put("@context", "http://www.macs.hw.ac.uk");
@@ -333,14 +332,14 @@ public class ScraperFilteredCoreTest {
 		String fixedJSON = scraperCore.fixASingleJsonLdBlock(array.toJSONString(), "http://www.myId.org");
 		//
 		obj1.put("@id", "http://www.myId.org");
-		obj1.put("@context", "https://schema.org");
-		
+		obj1.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
+
 		obj2.put("@id", "http://www.myId.org");
-		obj2.put("@context", "https://schema.org");
-		
+		obj2.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
+
 		obj3.put("@id", "http://www.myId.org");
-		obj3.put("@context", "https://schema.org");
-		
+		obj3.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
+
 		array = new JSONArray();
 		array.add(obj1);
 		array.add(obj2);
@@ -362,8 +361,8 @@ public class ScraperFilteredCoreTest {
 		
 		JSONObject obj2 = new JSONObject();
 		obj2.put("key2", "value2");
-		obj2.put("@context", "https://schema.org");
-		
+		obj2.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
+
 		JSONObject obj3 = new JSONObject();
 		obj3.put("key3", "value3");
 		obj3.put("@context", "http://www.macs.hw.ac.uk");
@@ -376,14 +375,14 @@ public class ScraperFilteredCoreTest {
 		String fixedJSON = scraperCore.fixAJsonLdArray(array, "http://www.myId.org");
 		//
 		obj1.put("@id", "http://www.myId.org");
-		obj1.put("@context", "https://schema.org");
-		
+		obj1.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
+
 		obj2.put("@id", "http://www.myId.org");
-		obj2.put("@context", "https://schema.org");
-		
+		obj2.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
+
 		obj3.put("@id", "http://www.myId.org");
-		obj3.put("@context", "https://schema.org");
-		
+		obj3.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
+
 		array = new JSONArray();
 		array.add(obj1);
 		array.add(obj2);
@@ -400,29 +399,29 @@ public class ScraperFilteredCoreTest {
 		JSONObject obj = new JSONObject();
 		obj.put("key1", "value1");
 		String fixedJSON = scraperCore.fixASingleJsonLdObject(obj, "http://www.myId.org");
-		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org\""));
+		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org/docs/jsonldcontext.jsonld\""));
 		assertTrue(fixedJSON.contains("\"@id\":\"http://www.myId.org\""));
 
 		obj = new JSONObject();
 		obj.put("key1", "value1");
-		obj.put("@context", "https://schema.org");
+		obj.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
 		fixedJSON = scraperCore.fixASingleJsonLdObject(obj, "http://www.myId.org");
-		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org\""));
+		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org/docs/jsonldcontext.jsonld\""));
 		assertTrue(fixedJSON.contains("\"@id\":\"http://www.myId.org\""));
 
 		obj = new JSONObject();
 		obj.put("key1", "value1");
 		obj.put("@context", "http://www.macs.hw.ac.uk");
 		fixedJSON = scraperCore.fixASingleJsonLdObject(obj, "http://www.myId.org");
-		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org\""));
+		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org/docs/jsonldcontext.jsonld\""));
 		assertTrue(fixedJSON.contains("\"@id\":\"http://www.myId.org\""));
 
 		obj = new JSONObject();
 		obj.put("key1", "value1");
-		obj.put("@context", "https://schema.org");
+		obj.put("@context", "https://schema.org/docs/jsonldcontext.jsonld");
 		obj.put("@id", "http://www.myId.org");
 		fixedJSON = scraperCore.fixASingleJsonLdObject(obj, "http://www.myId.org");
-		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org\""));
+		assertTrue(fixedJSON.contains("\"@context\":\"https://schema.org/docs/jsonldcontext.jsonld\""));
 		assertTrue(fixedJSON.contains("\"@id\":\"http://www.myId.org\""));
 	}
 	
@@ -471,8 +470,8 @@ public class ScraperFilteredCoreTest {
 			assertTrue(outHtml.contains("\"@id\":\"https://myId.com\","));
 
 			// got a trailing /
-			String html2 = html.replaceFirst("\"@context\": \"http://schema.org\"",
-					"\"@context\": \"http://schema.org/\"");
+			String html2 = html.replaceFirst("\"@context\": \"http://schema.org/docs/jsonldcontext.jsonld\"",
+					"\"@context\": \"http://schema.org/docs/jsonldcontext.jsonld/\"");
 			outHtml = scraperCore.injectId(html2, "https://myId.com");
 			assertTrue(outHtml.contains("\"@id\":\"https://myId.com\","));
 
@@ -560,7 +559,7 @@ public class ScraperFilteredCoreTest {
 
 			html = scraperCore.injectId(html, "https://myId.com");
 
-			assertTrue(html.contains("\"@context\":\"https://schema.org\""));
+			assertTrue(html.contains("\"@context\":\"https://schema.org/docs/jsonldcontext.jsonld\""));
 			assertTrue(html.contains("\"@id\":\"https://myId.com\""));
 
 		} catch (FileNotFoundException e) {

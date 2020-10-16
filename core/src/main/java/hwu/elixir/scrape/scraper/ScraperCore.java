@@ -45,6 +45,7 @@ import hwu.elixir.scrape.exceptions.SeleniumException;
 import hwu.elixir.scrape.scraper.examples.FileScraper;
 import hwu.elixir.scrape.scraper.examples.SingleURLScraper;
 import hwu.elixir.utils.ChromeDriverCreator;
+import hwu.elixir.utils.ScraperProperties;
 
 /**
  * Provides core functionality for scraping, but is not an actual scraper. See
@@ -59,9 +60,12 @@ public abstract class ScraperCore {
 
 	private WebDriver driver;
  
-	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
-	
+	private static Logger logger = LoggerFactory.getLogger(ScraperCore.class.getName());
+
+	protected ScraperProperties properties;
+
 	public ScraperCore() {
+		properties = ScraperProperties.getInstance(); 
 		driver = ChromeDriverCreator.getInstance();
 	}
 	
@@ -75,18 +79,40 @@ public abstract class ScraperCore {
 	 */
 	public void shutdown() {
 		if (driver != null) {
-			logger.info("driver is not null... trying to close!");
+			logger.info("Closing driver...");
 			driver.quit();
-			logger.info("driver closed?!");
+			logger.info("Driver closed.");
 		} else {
 			logger.info("Driver is null... no need to close.");
 		}
 	}
 
 	/**
+	 *
+	 * Wraps methods to obtain HTML; can be changed for different types of scraper.
+	 *  This is the entry point to the ScraperCore abstract class
+	 *  Please note that both these calls are to get HTML in a static way
+	 *
+	 * @param url
+	 * @return
+	 * @throws FourZeroFourException
+	 */
+	protected String wrapHTMLExtractionStatic(String url) throws FourZeroFourException {
+		String html = "";
+
+		try {
+			html = getHtml(url);
+		} catch (FourZeroFourException e) {
+			logger.error("404 error " + e);
+		}
+		return html;
+	}
+
+	/**
 	 * 
 	 * Wraps methods to obtain HTML; can be changed for different types of scraper.
-	 * 
+	 *  This is the entry point to the ScraperCore abstract class
+	 *  Please note that both these calls are to get HTML in a dynamic way
 	 * @param url
 	 * @return
 	 * @throws FourZeroFourException
@@ -94,6 +120,7 @@ public abstract class ScraperCore {
 	protected String wrapHTMLExtraction(String url) throws FourZeroFourException {
 
 		String html = "";
+
 		try {
 			html = getHtmlViaSelenium(url);
 		} catch (SeleniumException e) {
@@ -109,7 +136,7 @@ public abstract class ScraperCore {
 
 	/**
 	 * Uses JSoup to pull the HTML of a NON dynamic web page. Much faster than
-	 * Selenium BUT will not execute JS.
+	 * 	 * Selenium BUT will not execute JS.
 	 * 
 	 * @param url The address of the site to parse
 	 * @return The HTML as a string
@@ -152,8 +179,9 @@ public abstract class ScraperCore {
 			}
 
 			try {
+				// Try dynamic page
 				driver.get(url);
-			} catch(NoSuchSessionException e) {
+			} catch (NoSuchSessionException e) {
 				System.out.println("TRY AGAIN!");
 				driver = ChromeDriverCreator.killAndReopen();
 				
@@ -173,6 +201,7 @@ public abstract class ScraperCore {
 
 		} catch (TimeoutException to) {
 			logger.error("URL timed out: " + url + ". Trying JSoup.");
+			// Try static page
 			return getHtml(url);
 
 		} catch (org.openqa.selenium.WebDriverException crashed) {
@@ -213,7 +242,6 @@ public abstract class ScraperCore {
 		} else {
 			logger.error(url + " was NOT successfully scraped.");
 		}
-		logger.info("\n\n");
 	}
 
 	/**
@@ -247,10 +275,10 @@ public abstract class ScraperCore {
 			return out.toString("UTF-8");
 		} catch (ExtractionException e) {
 			logger.error("Cannot extract triples", e);
-		} catch (IOException e) {
-			logger.error(" IO error whilst extracting triples", e);
-		} catch (TripleHandlerException e1) {
-			logger.error("TripleHanderException", e1);
+		} catch (IOException e1) {
+			logger.error(" IO error whilst extracting triples", e1);
+		} catch (TripleHandlerException e2) {
+			logger.error("TripleHanderException", e2);
 		}
 
 		return null;
@@ -387,6 +415,7 @@ public abstract class ScraperCore {
 		try {
 			return createModelFromNTriples2(nTriples);
 		} catch (RDFParseException e) {
+			logger.error("RDFParseException, the exception is dealt with by removing some characters and trying again: " + e);
 			// RDF4J doesn't like | (ie character U+7C) inside URLs.
 			// this removes | from everywhere in the doc...
 			nTriples = nTriples.replaceAll("\\|", "");

@@ -2,6 +2,8 @@ package hwu.elixir.scrape.scraper;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
@@ -51,12 +53,12 @@ import hwu.elixir.utils.Helpers;
  */
 public class ScraperFilteredCore extends ScraperCore {
 
-	private static Logger logger = LoggerFactory.getLogger(System.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(ScraperFilteredCore.class.getName());
 	private int countOfJSONLD = 0; // number of JSON-LD blocks found in HTML
 	
 	/**
 	 * Orchestrates the scraping of a given URL and writes the output (as quads) to
-	 * a file specified in the arguments. If the fileName is not specified, ie null,
+	 * a file specified in the arguments. If the outputFileName is not specified, ie null,
 	 * the contextCounter will be used to name the file.
 	 * 
 	 * contextCounter is used a way of keeping track of which URL in a list is being
@@ -65,7 +67,7 @@ public class ScraperFilteredCore extends ScraperCore {
 	 * The file will be located in the location specified in application.properties
 	 * 
 	 * @param url              URL to scrape
-	 * @param outputFileName   name of file the output will be written to
+	 * @param outputFileName   name of file the output will be written to (may be null)
 	 * @param contextCounter   The value of the counter used to record which number
 	 *                         of URL is being scraped
 	 * @param outputFolderName Folder where output is written to
@@ -81,13 +83,126 @@ public class ScraperFilteredCore extends ScraperCore {
 			throws FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
 		url = fixURL(url);
 
-		String html = wrapHTMLExtraction(url);
+		String html = "";
+		// This dynamic boolean determines if the scraper should start using selenium or use JSOUP to scrape the information (dynamic and static respectively)
+		// This method signature does not take the dynamic parameter and always defaults to dynamic approach and it is left for now as it is used by services and web services that are dynamic/static agnostic
+		Boolean dynamic = true;
+
+
+		if (dynamic) {
+			logger.info("dynamic scraping setting");
+			html = wrapHTMLExtraction(url);
+		} else {
+			logger.info("static scraping setting");
+			html = wrapHTMLExtractionStatic(url);
+		}
+
 
 		if (html == null || html.contentEquals(""))
 			return false;
 
 		try {
 			html = injectId(html, url);
+		} catch (MissingHTMLException e) {
+			logger.error(e.toString());
+			return false;
+		}
+
+		DocumentSource source = new StringDocumentSource(html, url);
+		IRI sourceIRI = SimpleValueFactory.getInstance().createIRI(source.getDocumentIRI());
+
+		String n3 = getTriplesInNTriples(source);
+		if (n3 == null)
+			throw new MissingMarkupException(url);
+
+		Model updatedModel = null;
+		try {
+			updatedModel = processTriples(n3, sourceIRI, contextCounter);
+		} catch (NTriplesParsingException e1) {
+			logger.error("Failed to process triples into model; the NTriples generated from the URL (" + url
+					+ ") could not be parsed into a model.");
+			return false;
+		}
+		if (updatedModel == null)
+			return false;
+
+		File directory = new File(outputFolderName);
+		if (!directory.exists())
+			directory.mkdir();
+
+		if (outputFileName == null) {
+			outputFileName = outputFolderName + "/" + contextCounter + ".nq";
+		} else {
+			outputFileName = outputFolderName + "/" + outputFileName + ".nq";
+		}
+
+		try (PrintWriter out = new PrintWriter(new File(outputFileName))) {
+			Rio.write(updatedModel, out, RDFFormat.NQUADS);
+		} catch (Exception e) {
+			logger.error("Problem writing file for " + url, e);
+			throw new CannotWriteException(url);
+		}
+
+		if (!new File(outputFileName).exists())
+			System.exit(0);
+
+		return true;
+	}
+
+
+	/**
+	 * Orchestrates the scraping of a given URL and writes the output (as quads) to
+	 * a file specified in the arguments. If the fileName is not specified, ie null,
+	 * the contextCounter will be used to name the file.
+	 *
+	 * contextCounter is used a way of keeping track of which URL in a list is being
+	 * scraped. This is managed by the calling class.
+	 *
+	 * The file will be located in the location specified in application.properties
+	 *
+	 * @param url              URL to scrape
+	 * @param outputFileName   name of file the output will be written to
+	 * @param contextCounter   The value of the counter used to record which number
+	 *                         of URL is being scraped
+	 * @param outputFolderName Folder where output is written to
+	 * @param dynamic boolean that determines if JSOUP of Selenium is used to parse the HTML document
+	 * @return FALSE if failed else TRUE
+	 * @throws FourZeroFourException
+	 * @throws JsonLDInspectionException
+	 * @throws CannotWriteException      Cannot write the markup to the specified
+	 *                                   file
+	 * @throws MissingMarkupException    Can retrieve HTML from URL, but cannot
+	 *                                   obtain triples from that HTML
+	 */
+	public boolean scrape(String url, String outputFolderName, String outputFileName, Long contextCounter, Boolean dynamic)
+			throws FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
+		url = fixURL(url);
+
+		String html = "";
+		// The dynamic boolean determines if the scraper should start using selenium or JSOUP to scrape the information (dynamic and static respectively)
+
+		if (dynamic) {
+			logger.info("dynamic scraping setting");
+			html = wrapHTMLExtraction(url);
+		} else {
+			logger.info("static scraping setting");
+			html = wrapHTMLExtractionStatic(url);
+		}
+
+
+		if (html == null || html.contentEquals(""))
+			return false;
+		if (logger.isTraceEnabled() ) {
+			logger.trace("Read following html ==============================================================");
+			logger.trace(html);
+		}
+		
+		try {
+			html = injectId(html, url);
+			if (logger.isTraceEnabled() ) {
+				logger.trace("Same HTML after injecting ID ==============================================================");
+				logger.trace(html);
+			}
 		} catch (MissingHTMLException e) {
 			logger.error(e.toString());
 			return false;
@@ -171,6 +286,34 @@ public class ScraperFilteredCore extends ScraperCore {
 		Iterator<Statement> it = model.iterator();
 
 		String nSpace = "https://bioschemas.org/crawl/v1/";
+
+		// Relating to issue #1 COVID-19 repo
+		SimpleDateFormat dateF = new SimpleDateFormat("yyyyMMdd");
+		Date date = new Date();
+
+		// This block of code does some simple string manipulation to extract domain name and local name
+		// Please note that these 2 methods i.e. getNamespace and getLocalName have been deprecated, so
+		// at some point they will be removed and must take into account if a later version of rdf4j is used
+		String domainLocalName = sourceIRI.getLocalName();
+		String IRItoString = sourceIRI.toString();
+		// adjust position by 2 to not include "//"
+		int tempNSSSoD = IRItoString.indexOf("//") + 2;
+		String domainName =  IRItoString.substring(tempNSSSoD, IRItoString.indexOf(".", tempNSSSoD));
+
+		if (domainName.equalsIgnoreCase("www")){
+			// adjust position by 4 to not include "www" and "."
+			tempNSSSoD = IRItoString.indexOf("www") + 4;
+			domainName =  IRItoString.substring(tempNSSSoD, IRItoString.indexOf(".", tempNSSSoD));
+		}
+
+		// remove . from local domain name
+		if (domainLocalName.indexOf('.') != -1) {
+			int lnEnd = domainLocalName.indexOf('.');
+			domainLocalName = domainLocalName.substring(0, lnEnd);
+		}
+		nSpace = nSpace.concat(domainName + "/" + domainLocalName + "/");
+		nSpace = nSpace.concat(dateF.format(date) + "/");
+
 		String nGraph = nSpace + contextCounter++;
 
 		ModelBuilder builder = new ModelBuilder();
@@ -361,8 +504,7 @@ public class ScraperFilteredCore extends ScraperCore {
 			throw new JsonLDInspectionException("Unkown object obtained from JSON parser :" + url);
 
 		} catch (ParseException e) {
-			logger.error("Failed to parse JSONArray from :" + url);
-			throw new JsonLDInspectionException("Failed to parse JSON from :" + url);
+			throw new JsonLDInspectionException("JSON ParseException. Failed to parse JSON from :" + url + " Parser Error: " + e);
 		}
 	}
 
@@ -374,6 +516,7 @@ public class ScraperFilteredCore extends ScraperCore {
 	 * @param url   The URL from which the markup was scraped
 	 * @return The corrected markup stringified; will still be in array
 	 */
+	@SuppressWarnings("unchecked")
 	protected String fixAJsonLdArray(JSONArray array, String url) {
 		for (int i = 0; i < array.size(); i++) {
 			JSONObject correctedObj = fixASingleJSONLdObject((JSONObject) array.get(i), url);
@@ -411,17 +554,25 @@ public class ScraperFilteredCore extends ScraperCore {
 	 * @param url     The URL of the site the markup was scraped from
 	 * @return Amended JSON-LD markup as a {@link JSONObject}
 	 */
+	@SuppressWarnings("unchecked")
 	protected JSONObject fixASingleJSONLdObject(JSONObject jsonObj, String url) {
 		if (jsonObj.containsKey("@context")) {
 			String contextValue = jsonObj.get("@context").toString();
+			
 			if (!(contextValue.equalsIgnoreCase("https://schema.org"))) {
 				jsonObj.remove("@context");
-				jsonObj.put("@context", "https://schema.org");
+				jsonObj.put("@context", properties.getSchemaContext());
 			}
+			//TODO This was added to replace https://schema.org temporary fix only
+			if ((contextValue.equalsIgnoreCase("https://schema.org"))) {
+				jsonObj.remove("@context");
+				jsonObj.put("@context", properties.getSchemaContext());
+			}
+
 			contextValue = jsonObj.get("@context").toString();
 
 		} else {
-			jsonObj.put("@context", "https://schema.org");
+			jsonObj.put("@context", properties.getSchemaContext());
 		}
 
 		if (!jsonObj.containsKey("@id")) {
