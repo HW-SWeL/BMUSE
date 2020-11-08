@@ -18,6 +18,7 @@ public class Helpers {
 
 	/**
 	 * Method that takes a byte array compressed gz file and returns the decompressed contents of the file
+	 * in a Jsoup Document format
 	 * @param compressedSourceFile
 	 * @return output
 	 */
