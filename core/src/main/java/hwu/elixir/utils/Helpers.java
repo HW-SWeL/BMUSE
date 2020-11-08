@@ -1,8 +1,9 @@
 package hwu.elixir.utils;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -16,26 +17,22 @@ import javax.xml.datatype.XMLGregorianCalendar;
 public class Helpers {
 
 	/**
-	 * Method that takes a gz file and returns the decompressed contents of the file
-	 * @param sourceFile
-	 * @return decomressedFile
+	 * Method that takes a byte array compressed gz file and returns the decompressed contents of the file
+	 * @param compressedSourceFile
+	 * @return output
 	 */
-	public static String gzipFileDecompression(String sourceFile) {
+	public static Document gzipFileDecompression(byte[] compressedSourceFile) {
 
 
-		String decompressedFile = sourceFile.substring(0, sourceFile.length() - 3);
-
-		//String content = new String(new GZIP().decompresGzipToBytes(FileUtils.readFileToByteArray(fileName)), "UTF-8");
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
 
 		try{
+
+			InputStream compressedSourceFileLocal = new ByteArrayInputStream(compressedSourceFile);
 			// Create a file input stream to read the source file.
 			// Create a gzip input stream to decompress the source
 			// file defined by the file input stream.
-			GZIPInputStream gzis = new GZIPInputStream(new FileInputStream(sourceFile));
-
-			// Create file output stream where the decompress result
-			// will be stored.
-			FileOutputStream fos = new FileOutputStream(decompressedFile);
+			GZIPInputStream gzis = new GZIPInputStream(compressedSourceFileLocal);
 
 			// Create a buffer and temporary variable used during the
 			// file decompress process.
@@ -45,17 +42,16 @@ public class Helpers {
 			// Read from the compressed source file and write the
 			// decompress file.
 			while ((length = gzis.read(buffer)) > 0) {
-				fos.write(buffer, 0, length);
+				output.write(buffer, 0, length);
 			}
 
-			//gzis.close();
-			//fos.close();
-
-		} catch(IOException e){
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
-		return decompressedFile;
+		return Jsoup.parse(output.toString());
 	}
 
 	/**

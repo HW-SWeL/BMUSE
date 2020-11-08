@@ -21,6 +21,8 @@ import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingMarkupException;
 import hwu.elixir.scrape.scraper.ScraperFilteredCore;
 
+import hwu.elixir.utils.Helpers;
+
 /**
  * Scrapes a list of URLs which come from a given file OR
  * scrapes a single specified URL.
@@ -82,9 +84,17 @@ public class FileScraper extends ScraperFilteredCore {
 		Elements elements = new Elements();
 
 		try {
-			doc = Jsoup.connect(url).get();
+			logger.info("parse sitemap list");
+			if (url.indexOf(".gz") != -1){
+				logger.info("compressed sitemap");
+				byte[] bytes = Jsoup.connect(url).ignoreContentType(true).execute().bodyAsBytes();
+				doc = Helpers.gzipFileDecompression(bytes);
+			} else {
+				doc = Jsoup.connect(url).get();
+			}
+
 		} catch (IOException e) {
-			logger.error(e.getMessage());
+			logger.error("Jsoup parsing exception: " + e.getMessage());
 		}
 
 
