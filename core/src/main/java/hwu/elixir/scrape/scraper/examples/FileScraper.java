@@ -85,7 +85,9 @@ public class FileScraper extends ScraperFilteredCore {
 
 		try {
 			logger.info("parse sitemap list");
-			if (url.indexOf(".gz") != -1){
+			int urlLength = url.length();
+			String sitemapExt = url.substring(urlLength - 3, urlLength);
+			if (sitemapExt.equalsIgnoreCase(".gz")){ // this checks only the extension at the ending
 				logger.info("compressed sitemap");
 				byte[] bytes = Jsoup.connect(url).ignoreContentType(true).execute().bodyAsBytes();
 				doc = Helpers.gzipFileDecompression(bytes);
