@@ -82,9 +82,8 @@ public class SimpleServlet extends HttpServlet {
 			logger.info("Output type requested: " + allOutputTypes[0]);
 			
 			if(allOutputTypes[0].equalsIgnoreCase("turtle")) outputType = ScraperOutput.TURTLE;
-		}		
+		}
 		
-
 		Validation validation = new Validation();
 		if (!validation.validateURI(url2Scrape)) {
 			jsonObject = new JSONObject();
@@ -108,10 +107,10 @@ public class SimpleServlet extends HttpServlet {
 		JSONArray result = new JSONArray();
 		boolean success = true;
 		try {
-			logger.info("About to scrape");
+			logger.info("About to scrape URL: " + "'" + url2Scrape + "'");
 			result = scraper.scrape(url2Scrape, outputType);
-			logger.info("RESULT: " +result);
-			logger.info("Scraped");
+			logger.info("RESULT: " + result);
+			logger.info("Scraped url: " + "'" + url2Scrape + "'");
 		} catch (Exception e) {
 			logger.severe(e.getMessage());
 			jsonObject.put("result", "error");
