@@ -21,11 +21,7 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import hwu.elixir.scrape.exceptions.CannotWriteException;
 import hwu.elixir.scrape.exceptions.FourZeroFourException;
@@ -71,6 +67,7 @@ public class ScraperFilteredCoreTest {
 
 	//
 	
+	@Ignore
 	@Test
 	public void test_scrape_pass() throws FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
 		String chemblURLOnGitHub = "https://raw.githubusercontent.com/HW-SWeL/Scraper/master/core/src/test/resources/testHtml/chembl.html";
@@ -100,6 +97,7 @@ public class ScraperFilteredCoreTest {
 	
 	//
 	
+	@Ignore
 	@Test
 	public void processTriples_chembl() throws NTriplesParsingException {
 		String html = "";
@@ -154,6 +152,7 @@ public class ScraperFilteredCoreTest {
 		}
 	}	
 
+	@Ignore
 	@Test
 	public void processTriples_biosamples() throws NTriplesParsingException {
 		String html = "";
@@ -208,6 +207,7 @@ public class ScraperFilteredCoreTest {
 		}
 	}
 	
+	@Ignore
 	@Test
 	public void processTriples_hamap() throws NTriplesParsingException {
 		String html = "";

@@ -81,6 +81,7 @@ public class ScraperUnFilteredCoreTest {
 	
 	//
 	
+	@Ignore
 	@Test
 	public void test_processTriplesLeaveBlankNodes_chembl() throws NTriplesParsingException {
 		ScraperUnFilteredCore scraperCore = new ScraperUnFilteredCore();
@@ -138,7 +139,8 @@ public class ScraperUnFilteredCoreTest {
 	
 	//
 
-	@Test 
+	@Ignore
+	@Test
 	public void test_scrapeUnfilteredMarkupAsNTriplesFromUrl() throws FourZeroFourException, MissingHTMLException, MissingMarkupException, NTriplesParsingException {
 		ScraperUnFilteredCore scraperCore = new ScraperUnFilteredCore();
 		
