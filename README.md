@@ -46,7 +46,7 @@ Provides the core functionality as an abstract class. Additionally, two example 
 
 To use this:
 
-1/ Default configuration is read from `core > src > main > resources > applications.properties`. To override some properties, create file `localconfig.properties` in the directory where you will run the application, and give the new values of the properties as needed:
+1/ Default configuration is read from `core > src > main > resources > configuration.properties`. To override some properties, create file `localconfig.properties` in the directory where you will run the application, and give the new values of the properties as needed:
 * `outputFolder`: currently all RDF is saved as NQuads to a folder.
 * `locationOfSitesFile`: location of the list of URLs you wish to scrape located. There is an example in `core > src > main > resources > urls2scrape.txt`. Please note that you can set dynamic or static parsing on a per URL basis by adding a comma and static or dynamic after that to change the way that URL is scraped on the `urls2scrape.txt` file.
 * `chromiumDriverLocation`: full path to the Chrome driver file. On Windows this will be called `chromedriver.exe`
