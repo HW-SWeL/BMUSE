@@ -30,10 +30,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchSessionException;
-import org.openqa.selenium.TimeoutException;
-import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.*;
+import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
@@ -182,7 +180,7 @@ public abstract class ScraperCore {
 				// Try dynamic page
 				driver.get(url);
 			} catch (NoSuchSessionException e) {
-				System.out.println("TRY AGAIN!");
+				logger.info("SELENIUM DRIVER ISSUE, KILL AND REOPEN TO TRY AGAIN");
 				driver = ChromeDriverCreator.killAndReopen();
 				
 				driver.get(url);
@@ -195,9 +193,18 @@ public abstract class ScraperCore {
 				throw new FourZeroFourException(url);
 			}
 
+			ExpectedCondition<Boolean> loadPageExpectation = new
+					ExpectedCondition<Boolean>() {
+						public Boolean apply(WebDriver driver) {
+							return ((JavascriptExecutor) driver).executeScript("return document.readyState").toString().equals("complete");
+						}
+					};
+
 			WebDriverWait wait = new WebDriverWait(driver, 10);
-			wait.until(ExpectedConditions
-					.presenceOfAllElementsLocatedBy(By.xpath("//script[@type=\"application/ld+json\"]")));
+			//wait.until(ExpectedConditions
+					//.presenceOfAllElementsLocatedBy(By.xpath("//script[@type=\"application/ld+json\"]")));
+			//TODO check that this can provide a solution to load the jsonld contents from scholia pages
+			wait.until(loadPageExpectation);
 
 		} catch (TimeoutException to) {
 			logger.error("URL timed out: " + url + ". Trying JSoup.");
