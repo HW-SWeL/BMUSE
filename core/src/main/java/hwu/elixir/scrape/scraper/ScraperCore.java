@@ -444,7 +444,7 @@ public abstract class ScraperCore {
 	 */
 	protected String[] getOnlyUnfilteredJSONLDFromHtml(String html) {
 		Document doc = Jsoup.parse(html);
-		Elements jsonElements = doc.getElementsByTag("script").attr("type", "application/ld+json");
+		Elements jsonElements = doc.getElementsByTag("script").select("[type=application/ld+json]");
 
 		ArrayList<String> jsonMarkup = new ArrayList<String>();
 		for (Element jsonElement : jsonElements) {
