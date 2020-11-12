@@ -229,7 +229,7 @@ public class FileScraper extends ScraperFilteredCore {
 						logger.error(url + "returned a 404.");
 						unscrapedURLsToFile(outputFolder, null, url, contextCounter);
 					} catch (JsonLDInspectionException e) {
-						logger.error("The JSON-LD could be not parsed for " + url);
+						logger.error("The JSON-LD could not be parsed for " + url);
 						unscrapedURLsToFile(outputFolder, null, url, contextCounter);
 					} catch (CannotWriteException e) {
 						logger.error("Problem writing file for " + url + " to the " + properties.getOutputFolder() + " directory.");
@@ -253,7 +253,7 @@ public class FileScraper extends ScraperFilteredCore {
 					logger.error(url + "returned a 404.");
 					unscrapedURLsToFile(outputFolder, null, url, contextCounter);
 				} catch (JsonLDInspectionException e) {
-					logger.error("The JSON-LD could be not parsed for " + url);
+					logger.error("The JSON-LD could not be parsed for " + url);
 					unscrapedURLsToFile(outputFolder, null, url, contextCounter);
 				} catch (CannotWriteException e) {
 					logger.error("Problem writing file for " + url + " to the " + properties.getOutputFolder() + " directory.");
