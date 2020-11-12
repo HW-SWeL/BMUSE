@@ -538,8 +538,8 @@ public class ScraperFilteredCore extends ScraperCore {
 	 * @return A stringified version of the corrected {@link JSONObject}
 	 */
 	protected String fixASingleJsonLdObject(JSONObject jsonObj, String url) {
-
-		return fixASingleJSONLdObject(jsonObj, url).toJSONString().replaceAll("\\\\", "");
+		//TODO fix issue that removes escape character \" in json strings used replace rather than replaceAll but still to do more tests for the solution
+		return fixASingleJSONLdObject(jsonObj, url).toJSONString().replace("\\\\", "");
 	}
 
 	/**
