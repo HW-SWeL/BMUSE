@@ -9,6 +9,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.Properties;
 
+import hwu.elixir.scrape.scraper.ScraperCore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +24,7 @@ public class ScraperProperties extends Properties {
 	private static final String configurationLocalFile = "localconfig.properties";
 
 	private static Logger logger = LoggerFactory.getLogger(ScraperProperties.class.getName());
+	private static String appVersion = ScraperCore.class.getPackage().getImplementationVersion();
 
 	private String dateTime;
 
@@ -75,6 +77,7 @@ public class ScraperProperties extends Properties {
 	 * Displays values of properties read from properties file.
 	 */
 	private void displayPropertyValues() {
+		logger.info("scraper implementation version:  " + appVersion);
 		logger.info("outputFolder:                    " + this.getOutputFolder());
 		logger.info("chromiumDriverLocation:          " + this.getChromiumDriverLocation());
 		logger.info("locationOfSitesFile:             " + this.getLocationOfSitesFile());
