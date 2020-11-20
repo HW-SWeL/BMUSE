@@ -321,6 +321,7 @@ public class ScraperFilteredCore extends ScraperCore {
 		builder.setNamespace("bsc", nSpace);
 		builder.namedGraph(nGraph).add(nGraph, "http://purl.org/pav/retrievedFrom", sourceIRI);
 		builder.namedGraph(nGraph).add(nGraph, "http://purl.org/pav/retrievedOn", Helpers.getFullDateWithTime());
+		builder.namedGraph(nGraph).add(nGraph, "http://purl.org/pav/createdWith", properties.getScraperVersion());
 
 		HashMap<String, String> replaceBlankNodes = new HashMap<String, String>();
 
