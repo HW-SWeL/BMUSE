@@ -9,9 +9,17 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.Properties;
 
+
 import hwu.elixir.scrape.scraper.ScraperCore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 public class ScraperProperties extends Properties {
 
@@ -20,11 +28,14 @@ public class ScraperProperties extends Properties {
 	/** Singleton Properties object */
 	private static ScraperProperties properties = null;
 
+	//the configuration.properties file is only parsed the first time the scraper starts
 	private static final String configurationJarFile = "configuration.properties";
+	//after the initial setup the information is stored to the localconfig.properties file, to re-
+	//set the system you can delete the file and then it will be created again when you run the scraper
+	//with the new desired setup
 	private static final String configurationLocalFile = "localconfig.properties";
 
 	private static Logger logger = LoggerFactory.getLogger(ScraperProperties.class.getName());
-	private static String appVersion = ScraperCore.class.getPackage().getImplementationVersion();
 
 	private String dateTime;
 
@@ -55,6 +66,7 @@ public class ScraperProperties extends Properties {
 			if (localConfigFile.exists())
 				props.readPropertiesFromLocalFile();
 
+			properties.put("scraperVersion", setScraperVersion());
 			properties.put("outputFolder", props.getProperty("outputFolder").trim());
 			properties.put("chromiumDriverLocation", props.getProperty("chromiumDriverLocation").trim());
 			properties.put("locationOfSitesFile", props.getProperty("locationOfSitesFile").trim());
@@ -73,11 +85,14 @@ public class ScraperProperties extends Properties {
 		return properties;
 	}
 
+
+
 	/**
 	 * Displays values of properties read from properties file.
 	 */
 	private void displayPropertyValues() {
-		logger.info("scraper implementation version:  " + appVersion);
+
+		logger.info("scraper implementation version:  " + this.getScraperVersion());
 		logger.info("outputFolder:                    " + this.getOutputFolder());
 		logger.info("chromiumDriverLocation:          " + this.getChromiumDriverLocation());
 		logger.info("locationOfSitesFile:             " + this.getLocationOfSitesFile());
@@ -85,6 +100,7 @@ public class ScraperProperties extends Properties {
 		logger.info("Max no. URLs to scrape:          " + this.getMaxLimitScrape());
 		logger.info("Schema.org context URL:          " + this.getSchemaContext());
 		logger.info("Dynamic scrape (global setting): " + this.dynamic());
+
 	}
 
 	/**
@@ -148,12 +164,45 @@ public class ScraperProperties extends Properties {
 		}
 	}
 
-	public long getContextCounter() {
-		return Long.parseLong(properties.getProperty("contextCounter"));
+	/**
+	 * method that parses the jar or pom.xml file and gets the version of BMUSE
+	 */
+	private static String setScraperVersion() {
+		String appVersion = ScraperCore.class.getPackage().getImplementationVersion();
+
+		if (appVersion == null) {
+			try {
+				//This will only read from the pom file of the projects root directory, please note that the core,
+				//service and webapp pom are not read
+				File fXmlFile = new File("./pom.xml");
+				DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+				DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+				Document doc = dBuilder.parse(fXmlFile);
+
+				//optional, but recommended to normalise the document
+				//read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
+				doc.getDocumentElement().normalize();
+
+				appVersion = doc.getElementsByTagName("version").item(0).getTextContent();
+
+			} catch (ParserConfigurationException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (SAXException e) {
+				e.printStackTrace();
+			}
+		}
+
+		return appVersion;
 	}
 
 	public void setContextCounter(long contextCounter) {
 		properties.put("contextCounter", Long.toString(contextCounter));
+	}
+
+	public long getContextCounter() {
+		return Long.parseLong(properties.getProperty("contextCounter"));
 	}
 
 	public String getLocationOfSitesFile() {
@@ -178,5 +227,9 @@ public class ScraperProperties extends Properties {
 
 	public String getSchemaContext() {
 		return properties.getProperty("schemaContext");
+	}
+
+	public String getScraperVersion() {
+		return properties.getProperty("scraperVersion");
 	}
 }
