@@ -24,11 +24,15 @@ import hwu.elixir.scrape.exceptions.SeleniumException;
  */
 public class WebScraper extends ScraperUnFilteredCore {
 
-	private static final Logger logger = LoggerFactory.getLogger(System.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(WebScraper.class.getName());
+	private String appVer = properties.getScraperVersion();
+
+
 
 	public JSONArray scrape(String url, ScraperOutput scraperOutputType) throws FourZeroFourException,
 			JsonLDInspectionException, MissingHTMLException, SeleniumException, Exception {				
-			
+
+		logger.info("Scraper Version: " + appVer);
 		//remove http/s://schema.org from source and replace with the direct link
 		String tempSource = getHtmlViaSelenium(fixURL(url));
 		tempSource = removeSchemaORG(tempSource);
