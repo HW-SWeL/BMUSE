@@ -539,7 +539,7 @@ public class ScraperFilteredCore extends ScraperCore {
 	 * @return A stringified version of the corrected {@link JSONObject}
 	 */
 	protected String fixASingleJsonLdObject(JSONObject jsonObj, String url) {
-		//TODO fix issue that removes escape character \" in json strings used replace rather than replaceAll but still to do more tests for the solution
+		//FIXME fix issue that removes escape character \" in json strings used replace rather than replaceAll but still to do more tests for the solution
 		return fixASingleJSONLdObject(jsonObj, url).toJSONString().replace("\\\\", "");
 	}
 
@@ -564,7 +564,7 @@ public class ScraperFilteredCore extends ScraperCore {
 				jsonObj.remove("@context");
 				jsonObj.put("@context", properties.getSchemaContext());
 			}
-			//TODO This was added to replace https://schema.org temporary fix only
+			//FIXME This was added to replace https://schema.org temporary fix only
 			if ((contextValue.equalsIgnoreCase("https://schema.org"))) {
 				jsonObj.remove("@context");
 				jsonObj.put("@context", properties.getSchemaContext());
