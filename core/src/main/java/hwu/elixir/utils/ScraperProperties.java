@@ -173,9 +173,6 @@ public class ScraperProperties extends Properties {
 
 		String appVersion = ScraperCore.class.getPackage().getImplementationVersion();
 
-		logger.info("app version: " + appVersion);
-		appVersion = "0.0.4";
-
 		if (appVersion == null) {
 			try {
 				//This will only read from the pom file of the projects root directory, please note that the core,
