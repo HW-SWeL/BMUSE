@@ -65,7 +65,7 @@ public abstract class ScraperCore {
 	protected ScraperProperties properties;
 
 	public ScraperCore() {
-		properties = ScraperProperties.getInstance(); 
+		properties = ScraperProperties.getInstance();
 		driver = ChromeDriverCreator.getInstance();
 	}
 	
