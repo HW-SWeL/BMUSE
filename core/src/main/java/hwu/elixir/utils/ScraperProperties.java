@@ -34,9 +34,7 @@ public class ScraperProperties extends Properties {
 	//set the system you can delete the file and then it will be created again when you run the scraper
 	//with the new desired setup
 	private static final String configurationLocalFile = "localconfig.properties";
-
 	private static Logger logger = LoggerFactory.getLogger(ScraperProperties.class.getName());
-
 	private String dateTime;
 
 	/**
@@ -55,6 +53,7 @@ public class ScraperProperties extends Properties {
 	 * exist.
 	 */
 	public static synchronized ScraperProperties getInstance() {
+
 		if (properties == null) {
 			properties = new ScraperProperties();
 			properties.dateTime = Helpers.getDateForName();
@@ -62,6 +61,7 @@ public class ScraperProperties extends Properties {
 			// Read the default configuration and optionally override it with a local file
 			ScraperProperties props = new ScraperProperties();
 			props.readPropertiesFromJar();
+			logger.info("scraper properties" + props.toString());
 			File localConfigFile = new File(configurationLocalFile);
 			if (localConfigFile.exists())
 				props.readPropertiesFromLocalFile();
@@ -134,9 +134,11 @@ public class ScraperProperties extends Properties {
 	 */
 	private void readPropertiesFromJar() {
 		ClassLoader classLoader = ScraperProperties.class.getClassLoader();
+		logger.info("class loader name" + classLoader.getClass().getName());
 		try {
 			InputStream is = classLoader.getResourceAsStream(configurationJarFile);
 			this.load(is);
+			logger.info(is.toString());
 			logger.info("Default configuration read from jar file");
 		} catch (Exception e) {
 			logger.error("Cannot load " + configurationJarFile, e);
@@ -168,13 +170,18 @@ public class ScraperProperties extends Properties {
 	 * method that parses the jar or pom.xml file and gets the version of BMUSE
 	 */
 	private static String setScraperVersion() {
+
 		String appVersion = ScraperCore.class.getPackage().getImplementationVersion();
+
+		logger.info("app version: " + appVersion);
+		appVersion = "0.0.4";
 
 		if (appVersion == null) {
 			try {
 				//This will only read from the pom file of the projects root directory, please note that the core,
 				//service and webapp pom are not read
-				File fXmlFile = new File("./pom.xml");
+				// File.separator will work both in windows and linux
+				File fXmlFile = new File("." + File.separator +"pom.xml");
 				DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 				DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 				Document doc = dBuilder.parse(fXmlFile);
@@ -193,8 +200,7 @@ public class ScraperProperties extends Properties {
 				e.printStackTrace();
 			}
 		}
-
-		return appVersion;
+		return  appVersion;
 	}
 
 	public void setContextCounter(long contextCounter) {
