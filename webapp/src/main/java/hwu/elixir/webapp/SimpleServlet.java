@@ -2,8 +2,10 @@ package hwu.elixir.webapp;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
-import java.util.logging.Logger;
+//import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -11,12 +13,18 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import hwu.elixir.utils.ScraperProperties;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import hwu.elixir.scrape.scraper.ScraperOutput;
 import hwu.elixir.scrape.scraper.WebScraper;
 import hwu.elixir.utils.Validation;
+import hwu.elixir.utils.ScraperProperties;
+
 
 /**
  * 
@@ -30,8 +38,10 @@ import hwu.elixir.utils.Validation;
 public class SimpleServlet extends HttpServlet {
 
 	private static final long serialVersionUID = 1L;
+	private static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
+	private static Logger logger = LoggerFactory.getLogger(SimpleServlet.class.getName());
 
-	private static final Logger logger = Logger.getLogger(System.class.getName());
+	//private static final Logger logger = Logger.getLogger(System.class.getName());
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -71,20 +81,19 @@ public class SimpleServlet extends HttpServlet {
 		}
 
 		for (String url : allUrls) {
-			logger.info("URL received by scrape service: " + url);
+			logger.info("URL to scrape: " + url);
 		}
 
 		String url2Scrape = allUrls[0];
 		
 		String[] allOutputTypes = allParams.get("output");
-		ScraperOutput outputType = ScraperOutput.JSONLD; 
+		ScraperOutput outputType = ScraperOutput.JSONLD;
 		if (allOutputTypes != null) {
 			logger.info("Output type requested: " + allOutputTypes[0]);
 			
 			if(allOutputTypes[0].equalsIgnoreCase("turtle")) outputType = ScraperOutput.TURTLE;
-		}		
+		}
 		
-
 		Validation validation = new Validation();
 		if (!validation.validateURI(url2Scrape)) {
 			jsonObject = new JSONObject();
@@ -102,25 +111,28 @@ public class SimpleServlet extends HttpServlet {
 			logger.info(jsonObject.toJSONString());
 		}
 
-		logger.info("About to create scraper");
+		logger.info("Creating scraper");
 		WebScraper scraper = new WebScraper();
 		jsonObject = new JSONObject();
 		JSONArray result = new JSONArray();
 		boolean success = true;
 		try {
-			logger.info("About to scrape");
+			logger.info("Start scrape: " + "TIMESTAMP" + formatter.format(new Date(System.currentTimeMillis())));
+			logger.info("URL: " + url2Scrape);
 			result = scraper.scrape(url2Scrape, outputType);
-			logger.info("RESULT: " +result);
-			logger.info("Scraped");
+			logger.info("End scrape: " + "TIMESTAMP" + formatter.format(new Date(System.currentTimeMillis())));
+			//logger.info("RESULT: " + result);
 		} catch (Exception e) {
-			logger.severe(e.getMessage());
+			//logger.severe(e.getMessage());
+			logger.error(e.getMessage());
 			jsonObject.put("result", "error");
 			jsonObject.put("message", e.getMessage());
 			success = false;
 		}
 
 		if (result == null) {
-			logger.severe("no markup!");
+			//logger.severe("no markup!");
+			logger.error("no markup");
 			jsonObject.put("result", "error");
 			jsonObject.put("message", "cannot find any markup");
 			success = false;

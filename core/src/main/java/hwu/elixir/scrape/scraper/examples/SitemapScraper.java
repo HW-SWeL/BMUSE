@@ -26,7 +26,7 @@ import hwu.elixir.scrape.scraper.ScraperFilteredCore;
 public class SitemapScraper extends ScraperFilteredCore {
 
     private static String outputFolder = System.getProperty("user.home");
-    private static Logger logger = LoggerFactory.getLogger(System.class.getName());
+    private static Logger logger = LoggerFactory.getLogger(SitemapScraper.class.getName());
 
     /**
      * Scrape a given URL and write to file in the home directory. Output will be in NQuads format.

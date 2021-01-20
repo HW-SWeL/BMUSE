@@ -28,6 +28,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -228,7 +229,8 @@ public class ScraperCoreTest {
 	}
 
 	//
-	
+
+	@Ignore
 	@Test
 	public void test_wrapHTMLExtraction_fail() throws FourZeroFourException, SeleniumException {
 		String url = "https://www.apJ7G2m!.com";

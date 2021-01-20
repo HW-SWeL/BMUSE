@@ -65,7 +65,7 @@ public abstract class ScraperCore {
 	protected ScraperProperties properties;
 
 	public ScraperCore() {
-		properties = ScraperProperties.getInstance(); 
+		properties = ScraperProperties.getInstance();
 		driver = ChromeDriverCreator.getInstance();
 	}
 	
@@ -418,6 +418,7 @@ public abstract class ScraperCore {
 			logger.error("RDFParseException, the exception is dealt with by removing some characters and trying again: " + e);
 			// RDF4J doesn't like | (ie character U+7C) inside URLs.
 			// this removes | from everywhere in the doc...
+			//TODO monitor any possible issues by character # inside a URL, relevant issue number 43
 			nTriples = nTriples.replaceAll("\\|", "");
 			try {
 				return createModelFromNTriples2(nTriples);

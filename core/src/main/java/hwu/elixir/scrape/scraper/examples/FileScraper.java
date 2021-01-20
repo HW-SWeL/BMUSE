@@ -21,6 +21,8 @@ import hwu.elixir.scrape.exceptions.JsonLDInspectionException;
 import hwu.elixir.scrape.exceptions.MissingMarkupException;
 import hwu.elixir.scrape.scraper.ScraperFilteredCore;
 
+import hwu.elixir.utils.Helpers;
+
 /**
  * Scrapes a list of URLs which come from a given file OR
  * scrapes a single specified URL.
@@ -82,9 +84,19 @@ public class FileScraper extends ScraperFilteredCore {
 		Elements elements = new Elements();
 
 		try {
-			doc = Jsoup.connect(url).get();
+			logger.info("parse sitemap list");
+			int urlLength = url.length();
+			String sitemapExt = url.substring(urlLength - 3, urlLength);
+			if (sitemapExt.equalsIgnoreCase(".gz")){ // this checks only the extension at the ending
+				logger.info("compressed sitemap");
+				byte[] bytes = Jsoup.connect(url).ignoreContentType(true).execute().bodyAsBytes();
+				doc = Helpers.gzipFileDecompression(bytes);
+			} else {
+				doc = Jsoup.connect(url).get();
+			}
+
 		} catch (IOException e) {
-			logger.error(e.getMessage());
+			logger.error("Jsoup parsing exception: " + e.getMessage());
 		}
 
 
@@ -217,7 +229,7 @@ public class FileScraper extends ScraperFilteredCore {
 						logger.error(url + "returned a 404.");
 						unscrapedURLsToFile(outputFolder, null, url, contextCounter);
 					} catch (JsonLDInspectionException e) {
-						logger.error("The JSON-LD could be not parsed for " + url);
+						logger.error("The JSON-LD could not be parsed for " + url);
 						unscrapedURLsToFile(outputFolder, null, url, contextCounter);
 					} catch (CannotWriteException e) {
 						logger.error("Problem writing file for " + url + " to the " + properties.getOutputFolder() + " directory.");
@@ -241,7 +253,7 @@ public class FileScraper extends ScraperFilteredCore {
 					logger.error(url + "returned a 404.");
 					unscrapedURLsToFile(outputFolder, null, url, contextCounter);
 				} catch (JsonLDInspectionException e) {
-					logger.error("The JSON-LD could be not parsed for " + url);
+					logger.error("The JSON-LD could not be parsed for " + url);
 					unscrapedURLsToFile(outputFolder, null, url, contextCounter);
 				} catch (CannotWriteException e) {
 					logger.error("Problem writing file for " + url + " to the " + properties.getOutputFolder() + " directory.");

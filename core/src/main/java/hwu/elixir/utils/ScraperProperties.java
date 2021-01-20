@@ -9,8 +9,17 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.Properties;
 
+
+import hwu.elixir.scrape.scraper.ScraperCore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 public class ScraperProperties extends Properties {
 
@@ -19,11 +28,13 @@ public class ScraperProperties extends Properties {
 	/** Singleton Properties object */
 	private static ScraperProperties properties = null;
 
+	//the configuration.properties file is only parsed the first time the scraper starts
 	private static final String configurationJarFile = "configuration.properties";
+	//after the initial setup the information is stored to the localconfig.properties file, to re-
+	//set the system you can delete the file and then it will be created again when you run the scraper
+	//with the new desired setup
 	private static final String configurationLocalFile = "localconfig.properties";
-
 	private static Logger logger = LoggerFactory.getLogger(ScraperProperties.class.getName());
-
 	private String dateTime;
 
 	/**
@@ -42,6 +53,7 @@ public class ScraperProperties extends Properties {
 	 * exist.
 	 */
 	public static synchronized ScraperProperties getInstance() {
+
 		if (properties == null) {
 			properties = new ScraperProperties();
 			properties.dateTime = Helpers.getDateForName();
@@ -49,10 +61,12 @@ public class ScraperProperties extends Properties {
 			// Read the default configuration and optionally override it with a local file
 			ScraperProperties props = new ScraperProperties();
 			props.readPropertiesFromJar();
+			logger.info("scraper properties" + props.toString());
 			File localConfigFile = new File(configurationLocalFile);
 			if (localConfigFile.exists())
 				props.readPropertiesFromLocalFile();
 
+			properties.put("scraperVersion", setScraperVersion());
 			properties.put("outputFolder", props.getProperty("outputFolder").trim());
 			properties.put("chromiumDriverLocation", props.getProperty("chromiumDriverLocation").trim());
 			properties.put("locationOfSitesFile", props.getProperty("locationOfSitesFile").trim());
@@ -71,10 +85,14 @@ public class ScraperProperties extends Properties {
 		return properties;
 	}
 
+
+
 	/**
 	 * Displays values of properties read from properties file.
 	 */
 	private void displayPropertyValues() {
+
+		logger.info("scraper implementation version:  " + this.getScraperVersion());
 		logger.info("outputFolder:                    " + this.getOutputFolder());
 		logger.info("chromiumDriverLocation:          " + this.getChromiumDriverLocation());
 		logger.info("locationOfSitesFile:             " + this.getLocationOfSitesFile());
@@ -82,6 +100,7 @@ public class ScraperProperties extends Properties {
 		logger.info("Max no. URLs to scrape:          " + this.getMaxLimitScrape());
 		logger.info("Schema.org context URL:          " + this.getSchemaContext());
 		logger.info("Dynamic scrape (global setting): " + this.dynamic());
+
 	}
 
 	/**
@@ -115,9 +134,11 @@ public class ScraperProperties extends Properties {
 	 */
 	private void readPropertiesFromJar() {
 		ClassLoader classLoader = ScraperProperties.class.getClassLoader();
+		logger.info("class loader name" + classLoader.getClass().getName());
 		try {
 			InputStream is = classLoader.getResourceAsStream(configurationJarFile);
 			this.load(is);
+			logger.info(is.toString());
 			logger.info("Default configuration read from jar file");
 		} catch (Exception e) {
 			logger.error("Cannot load " + configurationJarFile, e);
@@ -145,12 +166,46 @@ public class ScraperProperties extends Properties {
 		}
 	}
 
-	public long getContextCounter() {
-		return Long.parseLong(properties.getProperty("contextCounter"));
+	/**
+	 * method that parses the jar or pom.xml file and gets the version of BMUSE
+	 */
+	private static String setScraperVersion() {
+
+		String appVersion = ScraperCore.class.getPackage().getImplementationVersion();
+
+		if (appVersion == null) {
+			try {
+				//This will only read from the pom file of the projects root directory, please note that the core,
+				//service and webapp pom are not read
+				// File.separator will work both in windows and linux
+				File fXmlFile = new File("." + File.separator +"pom.xml");
+				DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+				DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+				Document doc = dBuilder.parse(fXmlFile);
+
+				//optional, but recommended to normalise the document
+				//read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
+				doc.getDocumentElement().normalize();
+
+				appVersion = doc.getElementsByTagName("version").item(0).getTextContent();
+
+			} catch (ParserConfigurationException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (SAXException e) {
+				e.printStackTrace();
+			}
+		}
+		return  appVersion;
 	}
 
 	public void setContextCounter(long contextCounter) {
 		properties.put("contextCounter", Long.toString(contextCounter));
+	}
+
+	public long getContextCounter() {
+		return Long.parseLong(properties.getProperty("contextCounter"));
 	}
 
 	public String getLocationOfSitesFile() {
@@ -175,5 +230,9 @@ public class ScraperProperties extends Properties {
 
 	public String getSchemaContext() {
 		return properties.getProperty("schemaContext");
+	}
+
+	public String getScraperVersion() {
+		return properties.getProperty("scraperVersion");
 	}
 }

@@ -24,13 +24,21 @@ import hwu.elixir.scrape.exceptions.SeleniumException;
  */
 public class WebScraper extends ScraperUnFilteredCore {
 
-	private static final Logger logger = LoggerFactory.getLogger(System.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(WebScraper.class.getName());
+	private String appVer = properties.getScraperVersion();
+
+
 
 	public JSONArray scrape(String url, ScraperOutput scraperOutputType) throws FourZeroFourException,
 			JsonLDInspectionException, MissingHTMLException, SeleniumException, Exception {				
-			
-		DocumentSource source = new StringDocumentSource(getHtmlViaSelenium(fixURL(url)), url);
+
+		logger.info("Scraper Version: " + appVer);
+		//remove http/s://schema.org from source and replace with the direct link
+		String tempSource = getHtmlViaSelenium(fixURL(url));
+		tempSource = removeSchemaORG(tempSource);
+		DocumentSource source = new StringDocumentSource(tempSource, url);
 		String triples = getTriplesInNTriples(source);
+		//logger.info("triples from source: " + triples.toString());
 		
 		if (triples == null) {
 			logger.error("n3 is null");
@@ -49,16 +57,31 @@ public class WebScraper extends ScraperUnFilteredCore {
 			
 			Rio.write(model, stream, RDFFormat.JSONLD);
 			String quads = new String(stream.toByteArray());
+
+			//logger.info("JSONLD quads from Rio: " + quads.toString());
 		
 			JSONParser parser = new JSONParser();
 			outputArray = (JSONArray) parser.parse(quads);
 		} else if(scraperOutputType.equals(ScraperOutput.TURTLE)) {
 			Rio.write(model, stream, RDFFormat.TURTLE);
-			String quads = new String(stream.toByteArray());			
+			String quads = new String(stream.toByteArray());
+			//logger.info("TURTLE quads from Rio: " + quads.toString());
 			outputArray.add(quads);
 		}
 		
 		return outputArray;
+	}
+
+	/**
+	 * method that removes all http/s://schema.org instances and replaces them with the direct link
+	 * @param source
+	 * @return
+	 */
+	private String removeSchemaORG (String source) {
+		String alteredSource = "";
+		String tempSchemaContext = properties.getSchemaContext();
+		alteredSource = source.replaceAll("htt(p|ps):\\/\\/schema\\.org", tempSchemaContext);
+		return alteredSource;
 	}
 
 }
