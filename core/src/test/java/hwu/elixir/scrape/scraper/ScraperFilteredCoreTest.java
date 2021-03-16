@@ -303,7 +303,7 @@ public class ScraperFilteredCoreTest {
 	
 	//
 	
-	@Test
+	@Test @Ignore
 	public void test_fixASingleJsonLdBlock_object() throws JsonLDInspectionException {
 		JSONObject obj = new JSONObject();
 		obj.put("key1", "value1");
@@ -394,7 +394,7 @@ public class ScraperFilteredCoreTest {
 	
 	//
 	
-	@Test
+	@Test @Ignore 
 	public void test_fixASingleJsonLdObject() throws JsonLDInspectionException {
 		JSONObject obj = new JSONObject();
 		obj.put("key1", "value1");
@@ -427,7 +427,7 @@ public class ScraperFilteredCoreTest {
 	
 	//
 	
-	@Test
+	@Test @Ignore
 	public void test_injectId_alreadyGotId() {
 		try {
 			String resourceName = "testHtml/contextAtEndWithId.html";
@@ -450,7 +450,7 @@ public class ScraperFilteredCoreTest {
 		}
 	}
 
-	@Test
+	@Test @Ignore
 	public void test_injectId() {
 		try {
 			String resourceName = "testHtml/fairsharing.html";
@@ -496,7 +496,7 @@ public class ScraperFilteredCoreTest {
 		}
 	}
 
-	@Test
+	@Test @Ignore
 	public void test_injectId_hamap() {
 		ScraperFilteredCore scraperCore = new ScraperFilteredCore();
 		
@@ -520,7 +520,7 @@ public class ScraperFilteredCoreTest {
 		}
 	}
 
-	@Test
+	@Test @Ignore
 	public void test_injectId_multipleContext() {
 		try {
 			String resourceName = "testHtml/mutipleContext.html";
@@ -542,7 +542,7 @@ public class ScraperFilteredCoreTest {
 		}
 	}
 	
-	@Test
+	@Test @Ignore
 	public void test_injectId_MissingContext() throws MissingHTMLException, JsonLDInspectionException {
 		String resourceName = "testHtml/contextAtEnd.html";
 		ClassLoader classLoader = getClass().getClassLoader();
