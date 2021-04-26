@@ -171,7 +171,18 @@ public class ScraperProperties extends Properties {
 	 */
 	private static String setScraperVersion() {
 
+		// try to get the version from the jar file, if a jar file is generated
 		String appVersion = ScraperCore.class.getPackage().getImplementationVersion();
+
+		/*if (appVersion == null) {
+			Properties prop = new Properties();
+			try {
+				prop.load(getServletContext().getResourceAsStream("/META-INF/MANIFEST.MF"));
+				appVersion = prop.getProperty("Implementation-Version");
+			} catch (IOException e) {
+				logger.error(e.toString());
+			}
+		}*/
 
 		if (appVersion == null) {
 			try {
@@ -197,6 +208,15 @@ public class ScraperProperties extends Properties {
 				e.printStackTrace();
 			}
 		}
+
+		// if version not in jar or pom then it must be from war file
+		// TODO find a better way of dealing with the method been called from the web service
+		if (appVersion == null){
+			// This is only set in case the scraper core is called from the web service,
+			// otherwise it will be overwritten by the jar or pom entry
+			appVersion = "0.4.0";
+		}
+		
 		return  appVersion;
 	}
 
