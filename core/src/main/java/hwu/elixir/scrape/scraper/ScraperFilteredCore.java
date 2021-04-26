@@ -79,6 +79,8 @@ public class ScraperFilteredCore extends ScraperCore {
 	 * @throws MissingMarkupException    Can retrieve HTML from URL, but cannot
 	 *                                   obtain triples from that HTML
 	 */
+
+	// FIXME possible redundancy of the 2 scrape methods with the different signature using the @nullble notation instead to make sure that the dynamic boolean value can be null
 	public boolean scrape(String url, String outputFolderName, String outputFileName, Long contextCounter)
 			throws FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
 		url = fixURL(url);
