@@ -321,8 +321,9 @@ public class ScraperFilteredCore extends ScraperCore {
 		ModelBuilder builder = new ModelBuilder();
 		builder.setNamespace(" ", nSpace);
 		builder.setNamespace("bsc", nSpace);
-		builder.namedGraph(nGraph).add(nGraph, "http://purl.org/pav/retrievedFrom", sourceIRI);
-		builder.namedGraph(nGraph).add(nGraph, "http://purl.org/pav/retrievedOn", Helpers.getFullDateWithTime());
+		// add triples that relate to scraped data on the default graph
+		builder.defaultGraph().add(nGraph, "http://purl.org/pav/retrievedFrom", sourceIRI);
+		builder.defaultGraph().add(nGraph, "http://purl.org/pav/retrievedOn", Helpers.getFullDateWithTime());
 		builder.namedGraph(nGraph).add(nGraph, "http://purl.org/pav/createdWith", "https://github.com/HW-SWeL/BMUSE/releases/tag/" + properties.getScraperVersion());
 
 		HashMap<String, String> replaceBlankNodes = new HashMap<String, String>();
