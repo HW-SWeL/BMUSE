@@ -36,6 +36,7 @@ public class ScraperProperties extends Properties {
 	private static final String configurationLocalFile = "localconfig.properties";
 	private static Logger logger = LoggerFactory.getLogger(ScraperProperties.class.getName());
 	private String dateTime;
+	private static String finalAppVersion = "0.5.0";
 
 	/**
 	 * Non public constructor: this class should be instantiated only using
@@ -174,19 +175,9 @@ public class ScraperProperties extends Properties {
 		// try to get the version from the jar file, if a jar file is generated
 		String appVersion = ScraperCore.class.getPackage().getImplementationVersion();
 
-		/*if (appVersion == null) {
-			Properties prop = new Properties();
-			try {
-				prop.load(getServletContext().getResourceAsStream("/META-INF/MANIFEST.MF"));
-				appVersion = prop.getProperty("Implementation-Version");
-			} catch (IOException e) {
-				logger.error(e.toString());
-			}
-		}*/
-
 		if (appVersion == null) {
 			try {
-				//This will only read from the pom file of the projects root directory, please note that the core,
+				//This will only read from the pom file of the project's root directory, please note that the core,
 				//service and webapp pom are not read
 				// File.separator will work both in windows and linux
 				File fXmlFile = new File("." + File.separator +"pom.xml");
@@ -214,7 +205,7 @@ public class ScraperProperties extends Properties {
 		if (appVersion == null){
 			// This is only set in case the scraper core is called from the web service,
 			// otherwise it will be overwritten by the jar or pom entry
-			appVersion = "0.4.0";
+			appVersion = finalAppVersion;
 		}
 		
 		return  appVersion;
