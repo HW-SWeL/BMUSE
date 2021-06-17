@@ -322,9 +322,10 @@ public class ScraperFilteredCore extends ScraperCore {
 		builder.setNamespace(" ", nSpace);
 		builder.setNamespace("bsc", nSpace);
 		// add triples that relate to scraped data on the default graph
+		IRI bmuseIRI = SimpleValueFactory.getInstance().createIRI("https://github.com/HW-SWeL/BMUSE/releases/tag/" + properties.getScraperVersion());
 		builder.defaultGraph().add(nGraph, "http://purl.org/pav/retrievedFrom", sourceIRI);
 		builder.defaultGraph().add(nGraph, "http://purl.org/pav/retrievedOn", Helpers.getFullDateWithTime());
-		builder.defaultGraph().add(nGraph, "http://purl.org/pav/createdWith", "https://github.com/HW-SWeL/BMUSE/releases/tag/" + properties.getScraperVersion());
+		builder.defaultGraph().add(nGraph, "http://purl.org/pav/createdWith", bmuseIRI);
 
 		HashMap<String, String> replaceBlankNodes = new HashMap<String, String>();
 
