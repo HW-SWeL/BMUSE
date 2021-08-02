@@ -73,7 +73,7 @@ public class ScraperFilteredCoreTest {
 		String chemblURLOnGitHub = "https://raw.githubusercontent.com/HW-SWeL/Scraper/master/core/src/test/resources/testHtml/chembl.html";
 		String outputFileName = "chemblGitHub";
 		
-		scraperCore.scrape(chemblURLOnGitHub, outputLoction, outputFileName, 100000L);
+		scraperCore.scrape(chemblURLOnGitHub, outputLoction, outputFileName, 100000L, true);
 		String fileName = outputLoction+outputFileName+".nq";		
 		File liveQuads = new File(fileName);
 		

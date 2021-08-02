@@ -35,6 +35,8 @@ import hwu.elixir.scrape.exceptions.MissingMarkupException;
 import hwu.elixir.scrape.exceptions.NTriplesParsingException;
 import hwu.elixir.utils.Helpers;
 
+import javax.annotation.Nullable;
+
 /**
  * Extends {@link ScraperCore} by adding methods to extract (bio)schema markup
  * which is then filtered.
@@ -80,8 +82,8 @@ public class ScraperFilteredCore extends ScraperCore {
 	 *                                   obtain triples from that HTML
 	 */
 
-	// FIXME possible redundancy of the 2 scrape methods with the different signature using the @nullble notation instead to make sure that the dynamic boolean value can be null
-	public boolean scrape(String url, String outputFolderName, String outputFileName, Long contextCounter)
+	// FIXME possible redundancy of the 2 scrape methods with the different signature using the @Nullable notation instead to make sure that the dynamic boolean value can be null
+	/*public boolean scrape(String url, String outputFolderName, String outputFileName, Long contextCounter)
 			throws FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
 		url = fixURL(url);
 
@@ -150,7 +152,7 @@ public class ScraperFilteredCore extends ScraperCore {
 
 		return true;
 	}
-
+	*/
 
 	/**
 	 * Orchestrates the scraping of a given URL and writes the output (as quads) to
@@ -176,7 +178,7 @@ public class ScraperFilteredCore extends ScraperCore {
 	 * @throws MissingMarkupException    Can retrieve HTML from URL, but cannot
 	 *                                   obtain triples from that HTML
 	 */
-	public boolean scrape(String url, String outputFolderName, String outputFileName, Long contextCounter, Boolean dynamic)
+	public boolean scrape(String url, String outputFolderName, String outputFileName, Long contextCounter, @Nullable Boolean dynamic)
 			throws FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
 		url = fixURL(url);
 

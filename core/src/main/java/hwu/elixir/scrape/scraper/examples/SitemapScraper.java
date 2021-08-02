@@ -39,7 +39,7 @@ public class SitemapScraper extends ScraperFilteredCore {
      */
     public void scrapeSitemap(String url, String outputFileName) {
         try {
-            displayResult(url, scrape(url, outputFolder, outputFileName, 0L), outputFolder);
+            displayResult(url, scrape(url, outputFolder, outputFileName, 0L, true), outputFolder);
         } catch (FourZeroFourException | JsonLDInspectionException e) {
             logger.error("Cannot scrape site; error thrown", e);
         } catch (CannotWriteException e) {

@@ -3,6 +3,7 @@ package hwu.elixir.scrape.scraper;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -20,10 +21,8 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFParseException;
-import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
+import org.eclipse.rdf4j.rio.*;
+import org.eclipse.rdf4j.rio.jsonld.JSONLDParser;
 import org.jsoup.Connection.Response;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
@@ -53,7 +52,7 @@ import hwu.elixir.utils.ScraperProperties;
  * this.
  * 
  * @see FileScraper
- * @see hwu.elixir.scrape.ServiceScrapeDriver
+ * @see package.hwu.elixir.scrape.ServiceScrapeDriver
  * 
  */
 public abstract class ScraperCore {
@@ -75,7 +74,7 @@ public abstract class ScraperCore {
 	 * of the scrape.
 	 * 
 	 * @see ChromeDriverCreator
-	 * @see https://github.com/HW-SWeL/Scraper/issues/42
+	 * @see <a href="https://github.com/HW-SWeL/Scraper/issues/42">BMUSE issue 42</a>
 	 */
 	public void shutdown() {
 		if (driver != null) {
@@ -255,6 +254,63 @@ public abstract class ScraperCore {
 			url = url.substring(0, url.length() - 1);
 
 		return url;
+	}
+
+	private String getJSONLD(InputStream is, String URI) throws IOException, RDFParseException, RDFHandlerException {
+		JSONLDParser LDParser = new JSONLDParser();
+
+		try {
+			LDParser.parse(is, URI);
+		} catch (RDFParseException e) {
+			logger.error(e.getMessage());
+		} catch (RDFHandlerException e) {
+			logger.error(e.getMessage());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		;
+
+
+
+		return LDParser.toString();
+	}
+
+	protected String getTripelsInNTriplesRDF4J(DocumentSource source, RDFFormat inFormat, RDFFormat outFormat) throws IOException, RDFParseException, RDFHandlerException {
+
+		OutputStream os = new OutputStream() {
+			@Override
+			public void write(int i) throws IOException {
+
+			}
+		};
+		RDFParser rdfParser = Rio.createParser(inFormat);
+		RDFWriter rdfWriter = Rio.createWriter(outFormat, os);
+		String baseURI = "";
+		InputStream is = new InputStream() {
+			@Override
+			public int read() throws IOException {
+				return 0;
+			}
+		};
+
+
+		rdfParser.setRDFHandler(rdfWriter);
+
+		try {
+
+			rdfParser.parse(is, source.toString());
+
+		} catch (RDFParseException e) {
+			System.out.println(e);
+		} catch (RDFHandlerException e) {
+			System.out.println(e);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		;
+
+
+		return os.toString();
 	}
 
 	/**
