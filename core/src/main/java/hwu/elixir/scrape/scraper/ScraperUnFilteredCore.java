@@ -29,6 +29,7 @@ import hwu.elixir.scrape.exceptions.SeleniumException;
  * amending that markup in anyway.
  *
  */
+@Deprecated
 public class ScraperUnFilteredCore extends ScraperCore {
 	
 	private static Logger logger = LoggerFactory.getLogger(ScraperUnFilteredCore.class.getName());
