@@ -45,7 +45,7 @@ import javax.annotation.Nullable;
  * the following predicates:
  * <ol>
  * <li>nofollow</li>
- * <li>{@link https://ogp.me/}</li>
+ * <li>{@link "https://ogp.me/"}</li>
  * <li>xhtml/vocab</li>
  * <li>vocab.sindice</li>
  * </ol>
