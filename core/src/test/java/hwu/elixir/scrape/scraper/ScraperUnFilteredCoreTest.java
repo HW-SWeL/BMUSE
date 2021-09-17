@@ -27,7 +27,7 @@ import hwu.elixir.scrape.exceptions.MissingMarkupException;
 import hwu.elixir.scrape.exceptions.NTriplesParsingException;
 import hwu.elixir.scrape.exceptions.SeleniumException;
 import hwu.elixir.utils.CompareNQ;
-
+@Deprecated
 public class ScraperUnFilteredCoreTest {
 	
 	private static ScraperUnFilteredCore scraperCore;

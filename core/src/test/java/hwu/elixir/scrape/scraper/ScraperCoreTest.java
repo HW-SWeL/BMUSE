@@ -227,7 +227,7 @@ public class ScraperCoreTest {
 		
 		assertEquals(html2, html1);
 	}
-	
+
 
 	@Test
 	public void test_wrapHTMLExtraction_fail() throws FourZeroFourException, SeleniumException {
