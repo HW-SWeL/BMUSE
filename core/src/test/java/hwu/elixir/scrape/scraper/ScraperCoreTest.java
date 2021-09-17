@@ -227,15 +227,13 @@ public class ScraperCoreTest {
 		
 		assertEquals(html2, html1);
 	}
+	
 
-	//
-
-	@Ignore
 	@Test
 	public void test_wrapHTMLExtraction_fail() throws FourZeroFourException, SeleniumException {
 		String url = "https://www.apJ7G2m!.com";
-		String html1 = scraperCore.wrapHTMLExtraction(url);	
-		assertNull(html1);
+		String html1 = scraperCore.wrapHTMLExtraction(url);
+		assertEquals("", html1);
 	}
 	
 	//
