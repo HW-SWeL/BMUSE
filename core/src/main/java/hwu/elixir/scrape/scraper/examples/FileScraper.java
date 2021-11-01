@@ -238,7 +238,7 @@ public class FileScraper extends ScraperFilteredCore {
 						logger.error("Problem obtaining markup from " + url + ".");
 						unscrapedURLsToFile(outputFolder, null, url, contextCounter);
 					}
-					displayResult(sitemapURL.text(), result, properties.getOutputFolder(), contextCounter);
+					displayResult(sitemapURL.text(), result, properties.getOutputFolder(), contextCounter - 1L);
 					sitemapCount++;
 					if (properties.getMaxLimitScrape() < sitemapCount) {
 						logger.info("MAX SITEMAP LIMIT REACHED: " + properties.getMaxLimitScrape());
@@ -262,8 +262,7 @@ public class FileScraper extends ScraperFilteredCore {
 					logger.error("Problem obtaining markup from " + url + ".");
 					unscrapedURLsToFile(outputFolder, null, url, contextCounter);
 				}
-
-				displayResult(url, result, properties.getOutputFolder(), contextCounter);
+				displayResult(url, result, properties.getOutputFolder(), contextCounter - 1L);
 			}
 
 		}
