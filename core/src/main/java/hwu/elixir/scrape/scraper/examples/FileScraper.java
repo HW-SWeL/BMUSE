@@ -246,7 +246,7 @@ public class FileScraper extends ScraperFilteredCore {
 						break;
 					}
 				}
-			} else {
+			} else { // else just scrape as a website that has markup
 				try {
 					result = scrape(url, properties.getOutputFolder(), null, contextCounter++, dynamicScrape);
 				} catch (FourZeroFourException e) {
