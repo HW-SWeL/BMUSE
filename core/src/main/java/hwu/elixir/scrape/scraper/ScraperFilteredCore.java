@@ -1,6 +1,7 @@
 package hwu.elixir.scrape.scraper;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -8,6 +9,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.openjson.JSONException;
 import org.apache.any23.source.DocumentSource;
 import org.apache.any23.source.StringDocumentSource;
 import org.eclipse.rdf4j.model.BNode;
@@ -563,6 +566,10 @@ public class ScraperFilteredCore extends ScraperCore {
 	 */
 	@SuppressWarnings("unchecked")
 	protected JSONObject fixASingleJSONLdObject(JSONObject jsonObj, String url) {
+		boolean isValid = isJSONValid(jsonObj.toString());
+		if (!isValid){
+			logger.error("invalid JSON-LD syntax");
+		}
 		if (jsonObj.containsKey("@context")) {
 			String contextValue = jsonObj.get("@context").toString();
 			
@@ -606,5 +613,19 @@ public class ScraperFilteredCore extends ScraperCore {
 		String newHtml = html.substring(0, oldPosition) + newMarkup + html.substring(oldPosition + oldMarkup.length());
 
 		return newHtml;
+	}
+
+	// fixme some problem with checking if JSON syntax is valid
+	private static boolean isJSONValid(String jsonInString){
+
+		try {
+			final ObjectMapper mapper = new ObjectMapper();
+			mapper.readTree(jsonInString);
+			return true;
+		} catch (IOException e) {
+			logger.error("INVALID JSON-LD SYNTAX");
+			return false;
+		}
+
 	}
 }
