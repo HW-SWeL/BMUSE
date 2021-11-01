@@ -211,6 +211,8 @@ public class FileScraper extends ScraperFilteredCore {
 			// Check if the word sitemap is part of the URL (assumes that the URL is a sitemap if true)
 			if (url.toLowerCase().indexOf("sitemap") != -1) {
 				int sitemapCount = 0;
+				int maximumLimit = properties.getMaxLimitScrape();
+				boolean scraped = false;
 				Elements sitemapList = new Elements();
 				try {
 					sitemapList = getSitemapList(url, "loc"); //loc will only parse the url of the sample
@@ -225,23 +227,32 @@ public class FileScraper extends ScraperFilteredCore {
 					logger.info("Attempting to scrape: " + sitemapURL.text());
 					try {
 						result = scrape(sitemapURL.text(), properties.getOutputFolder(), null, contextCounter++, dynamicScrape);
+						scraped = true;
 					} catch (FourZeroFourException e) {
 						logger.error(url + "returned a 404.");
 						unscrapedURLsToFile(outputFolder, null, sitemapURL.text(), contextCounter - 1L);
+						scraped = false;
 					} catch (JsonLDInspectionException e) {
-						logger.error("The JSON-LD could not be parsed for " + url);
+						logger.error("The JSON-LD could not be parsed for " + sitemapURL.text());
 						unscrapedURLsToFile(outputFolder, null, sitemapURL.text(), contextCounter - 1L);
+						scraped = false;
 					} catch (CannotWriteException e) {
 						logger.error("Problem writing file for " + sitemapURL.text() + " to the " + properties.getOutputFolder() + " directory.");
 						unscrapedURLsToFile(outputFolder, null, sitemapURL.text(), contextCounter - 1L);
+						scraped = false;
 					} catch (MissingMarkupException e) {
 						logger.error("Problem obtaining markup from " + sitemapURL.text() + ".");
 						unscrapedURLsToFile(outputFolder, null, sitemapURL.text(), contextCounter - 1L);
+						scraped = false;
 					}
-					displayResult(sitemapURL.text(), result, properties.getOutputFolder(), contextCounter - 1L);
+					if (scraped) {
+						displayResult(sitemapURL.text(), result, properties.getOutputFolder(), contextCounter - 1L);
+					} else {
+						logger.error("URL " + sitemapURL.text() + " NOT SCRAPED, added to unscraped list");
+					}
 					sitemapCount++;
-					if (properties.getMaxLimitScrape() < sitemapCount) {
-						logger.info("MAX SITEMAP LIMIT REACHED: " + properties.getMaxLimitScrape());
+					if (maximumLimit < sitemapCount) {
+						logger.info("MAX SITEMAP LIMIT REACHED: " + maximumLimit);
 						logger.info("Scraping over");
 						break;
 					}
