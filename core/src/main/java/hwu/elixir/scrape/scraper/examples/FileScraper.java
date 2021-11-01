@@ -227,16 +227,16 @@ public class FileScraper extends ScraperFilteredCore {
 						result = scrape(sitemapURL.text(), properties.getOutputFolder(), null, contextCounter++, dynamicScrape);
 					} catch (FourZeroFourException e) {
 						logger.error(url + "returned a 404.");
-						unscrapedURLsToFile(outputFolder, null, url, contextCounter);
+						unscrapedURLsToFile(outputFolder, null, sitemapURL.text(), contextCounter - 1L);
 					} catch (JsonLDInspectionException e) {
 						logger.error("The JSON-LD could not be parsed for " + url);
-						unscrapedURLsToFile(outputFolder, null, url, contextCounter);
+						unscrapedURLsToFile(outputFolder, null, sitemapURL.text(), contextCounter - 1L);
 					} catch (CannotWriteException e) {
-						logger.error("Problem writing file for " + url + " to the " + properties.getOutputFolder() + " directory.");
-						unscrapedURLsToFile(outputFolder, null, url, contextCounter);
+						logger.error("Problem writing file for " + sitemapURL.text() + " to the " + properties.getOutputFolder() + " directory.");
+						unscrapedURLsToFile(outputFolder, null, sitemapURL.text(), contextCounter - 1L);
 					} catch (MissingMarkupException e) {
-						logger.error("Problem obtaining markup from " + url + ".");
-						unscrapedURLsToFile(outputFolder, null, url, contextCounter);
+						logger.error("Problem obtaining markup from " + sitemapURL.text() + ".");
+						unscrapedURLsToFile(outputFolder, null, sitemapURL.text(), contextCounter - 1L);
 					}
 					displayResult(sitemapURL.text(), result, properties.getOutputFolder(), contextCounter - 1L);
 					sitemapCount++;
