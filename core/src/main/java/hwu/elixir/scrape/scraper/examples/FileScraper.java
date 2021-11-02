@@ -82,17 +82,19 @@ public class FileScraper extends ScraperFilteredCore {
 
 		Document doc = new Document(url);
 		Elements elements = new Elements();
+		boolean sitemapindex = false;
+		boolean urlset = false;
 
 		try {
-			logger.info("parse sitemap list");
 			int urlLength = url.length();
+			logger.info("parse sitemap list");
 			String sitemapExt = url.substring(urlLength - 3, urlLength);
 			if (sitemapExt.equalsIgnoreCase(".gz")){ // this checks only the extension at the ending
 				logger.info("compressed sitemap");
 				byte[] bytes = Jsoup.connect(url).ignoreContentType(true).execute().bodyAsBytes();
 				doc = Helpers.gzipFileDecompression(bytes);
 			} else {
-				doc = Jsoup.connect(url).get();
+				doc = Jsoup.connect(url).maxBodySize(0).get();
 			}
 
 		} catch (IOException e) {
@@ -102,6 +104,8 @@ public class FileScraper extends ScraperFilteredCore {
 
 		try {
 			elements = doc.select(sitemapURLKey);
+			sitemapindex = doc.outerHtml().contains("sitemapindex");
+			urlset = doc.outerHtml().contains("urlset");
 		} catch (NullPointerException e) {
 			logger.error(e.getMessage());
 		}
