@@ -36,7 +36,7 @@ public class ScraperProperties extends Properties {
 	private static final String configurationLocalFile = "localconfig.properties";
 	private static Logger logger = LoggerFactory.getLogger(ScraperProperties.class.getName());
 	private String dateTime;
-	private static String finalAppVersion = "0.5.0";
+	private static String finalAppVersion = "0.5.1";
 
 	/**
 	 * Non public constructor: this class should be instantiated only using

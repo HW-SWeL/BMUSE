@@ -6,7 +6,7 @@
 
 	<groupId>hwu.elixir</groupId>
 	<artifactId>Scraper</artifactId>
-	<version>0.5.0</version>
+	<version>0.5.1</version>
 	<packaging>pom</packaging>
 
 	<name>Scraper</name>
