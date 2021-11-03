@@ -81,7 +81,9 @@ public class FileScraper extends ScraperFilteredCore {
 	private Elements getSitemapList(String url, String sitemapURLKey) throws IOException {
 
 		Document doc = new Document(url);
+		Document urlSitemapListsNested;
 		Elements elements = new Elements();
+		Elements sitemaps = new Elements();
 		boolean sitemapindex = false;
 		boolean urlset = false;
 
@@ -103,11 +105,21 @@ public class FileScraper extends ScraperFilteredCore {
 
 
 		try {
+
 			elements = doc.select(sitemapURLKey);
+
+			// check the html if it is a sitemapindex or a urlset
 			sitemapindex = doc.outerHtml().contains("sitemapindex");
 			urlset = doc.outerHtml().contains("urlset");
 		} catch (NullPointerException e) {
 			logger.error(e.getMessage());
+		}
+
+		if (sitemapindex){
+			// if sitemapindex get the loc of all the sitemaps
+			// added warning for sitemap index files
+			logger.warn("please note this is a sitemapindex file which is not currently supported, please use the content (url) of the urlset instead");
+			sitemaps = doc.select("loc");
 		}
 
 		return elements;
@@ -214,6 +226,7 @@ public class FileScraper extends ScraperFilteredCore {
 
 			// Check if the word sitemap is part of the URL (assumes that the URL is a sitemap if true)
 			if (url.toLowerCase().indexOf("sitemap") != -1) {
+				// fixme a good idea would be to check that the word sitemap is not in the URL, if it is, it would mean that this is a sitemap index
 				int sitemapCount = 0;
 				int maximumLimit = properties.getMaxLimitScrape();
 				boolean scraped = false;
