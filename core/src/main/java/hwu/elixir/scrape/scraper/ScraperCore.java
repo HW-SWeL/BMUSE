@@ -237,7 +237,7 @@ public abstract class ScraperCore {
 	 */
 	protected void displayResult(String url, boolean result, String outputFolder, long CC) {
 		if (result) {
-			logger.info(url + " was successfully scraped and written to " + outputFolder + " with filename " + CC + ".nq");
+			logger.info(url + " was successfully scraped and written to " + outputFolder + CC + ".nq");
 		} else {
 			logger.error(url + " was NOT successfully scraped.");
 		}
