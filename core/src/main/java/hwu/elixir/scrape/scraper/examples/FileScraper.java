@@ -74,6 +74,33 @@ public class FileScraper extends ScraperFilteredCore {
 	}
 
 	/**
+	 * Method that parses a sitemap.xml file, compressed (.gz) or uncompressed
+	 *
+	 *
+	 */
+	private Document getSitemap(String url) throws IOException {
+		Document sitemapContent = new Document(url);
+
+		try {
+			int urlLength = url.length();
+			logger.info("parse sitemap list");
+			String sitemapExt = url.substring(urlLength - 3, urlLength);
+			if (sitemapExt.equalsIgnoreCase(".gz")){ // this checks only the extension at the ending
+				logger.info("compressed sitemap");
+				byte[] bytes = Jsoup.connect(url).ignoreContentType(true).execute().bodyAsBytes();
+				sitemapContent = Helpers.gzipFileDecompression(bytes);
+			} else {
+				sitemapContent = Jsoup.connect(url).maxBodySize(0).get();
+			}
+		} catch (IOException e){
+			logger.error("Jsoup parsing exception: " + e.getMessage());
+		}
+
+
+		return sitemapContent;
+	}
+
+	/**
 	 * Method that parses a sitemap and then returns the list of URLs of all samples as Elements
 	 *
 	 *
@@ -109,6 +136,8 @@ public class FileScraper extends ScraperFilteredCore {
 			elements = doc.select(sitemapURLKey);
 
 			// check the html if it is a sitemapindex or a urlset
+			Elements content = doc.select("urlset");
+
 			sitemapindex = doc.outerHtml().contains("sitemapindex");
 			urlset = doc.outerHtml().contains("urlset");
 		} catch (NullPointerException e) {
@@ -130,13 +159,19 @@ public class FileScraper extends ScraperFilteredCore {
 		return URL;
 	}
 
-	private String getDynamicStaticFlag (String url) {
-		String flag = "unknown";
 
-		if (url.substring(url.indexOf(","), url.length()).trim().equalsIgnoreCase("static")){
+	/**
+	 * Method that returns the dynamic/static setting (per url) from the url file list
+	 * @param url
+	 * @return flag
+	 */
+	private String getDynamicStaticFlag (String url) {
+		String flag = url.substring(url.indexOf(",") + 1 ).trim();
+
+		if (flag.equalsIgnoreCase("static")){
 			flag = "static";
 			//we have a static option on the file after the comma
-		} else if (url.substring(url.indexOf(","), url.length()).trim().equalsIgnoreCase("dynamic")) {
+		} else if (flag.equalsIgnoreCase("dynamic")) {
 			flag = "dynamic";
 		} else {
 			flag = "unknown";
@@ -209,14 +244,17 @@ public class FileScraper extends ScraperFilteredCore {
 
 			if (url.indexOf(",") != -1){
 				String tempFlag = getDynamicStaticFlag(url);
-				if (tempFlag.equalsIgnoreCase("static")){
+				if (tempFlag.equals("static")){
 					dynamicScrape = false;
-				} else if (tempFlag.equalsIgnoreCase("dynamic")){
+					logger.info("Static scrape (local setting)");
+				} else if (tempFlag.equals("dynamic")){
 					dynamicScrape = true;
-				} else if (tempFlag.equalsIgnoreCase("unknown")) {
+					logger.info("Dynamic scrape (local setting)");
+				} else if (tempFlag.equals("unknown")) {
 					//This case is when the flag in not set to dynamic or static, because it is
-					//not known what is the case the safest option will be to set it to dynamic
+					//not known what is the case, the safest option is to set to dynamic
 					dynamicScrape = true;
+					logger.info("Unknown local setting, scraper set to default (dynamic)");
 				}
 
 				url = getURLFromTextLine(url);
