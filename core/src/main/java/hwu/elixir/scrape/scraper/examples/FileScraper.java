@@ -165,7 +165,7 @@ public class FileScraper extends ScraperFilteredCore {
 	 * @param url
 	 * @return flag
 	 */
-	private String getDynamicStaticFlag (String url) {
+	private String getDynamicORStaticFlag (String url) {
 		String flag = url.substring(url.indexOf(",") + 1 ).trim();
 
 		if (flag.equalsIgnoreCase("static")){
@@ -243,7 +243,7 @@ public class FileScraper extends ScraperFilteredCore {
 			// scrape URL with the default approach (dynamic), this is done on a per URL function
 
 			if (url.indexOf(",") != -1){
-				String tempFlag = getDynamicStaticFlag(url);
+				String tempFlag = getDynamicORStaticFlag(url);
 				if (tempFlag.equals("static")){
 					dynamicScrape = false;
 					logger.info("Static scrape (local setting)");
