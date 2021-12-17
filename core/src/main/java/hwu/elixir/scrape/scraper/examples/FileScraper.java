@@ -83,9 +83,10 @@ public class FileScraper extends ScraperFilteredCore {
 
 		try {
 			int urlLength = url.length();
-			logger.info("parse sitemap list");
+			logger.info("parse sitemap list (agnostic of sitemap or sitemapindex)");
 			String sitemapExt = url.substring(urlLength - 3, urlLength);
-			if (sitemapExt.equalsIgnoreCase(".gz")){ // this checks only the extension at the ending
+			// this checks only the extension at the ending
+			if (sitemapExt.equalsIgnoreCase(".gz")){
 				logger.info("compressed sitemap");
 				byte[] bytes = Jsoup.connect(url).ignoreContentType(true).execute().bodyAsBytes();
 				sitemapContent = Helpers.gzipFileDecompression(bytes);
@@ -105,51 +106,9 @@ public class FileScraper extends ScraperFilteredCore {
 	 *
 	 *
 	 */
-	private Elements getSitemapList(String url, String sitemapURLKey) throws IOException {
+	private Elements getSitemapURLs(Document sitemapContent, String sitemapKey) {
 
-		Document doc = new Document(url);
-		Document urlSitemapListsNested;
-		Elements elements = new Elements();
-		Elements sitemaps = new Elements();
-		boolean sitemapindex = false;
-		boolean urlset = false;
-
-		try {
-			int urlLength = url.length();
-			logger.info("parse sitemap list");
-			String sitemapExt = url.substring(urlLength - 3, urlLength);
-			if (sitemapExt.equalsIgnoreCase(".gz")){ // this checks only the extension at the ending
-				logger.info("compressed sitemap");
-				byte[] bytes = Jsoup.connect(url).ignoreContentType(true).execute().bodyAsBytes();
-				doc = Helpers.gzipFileDecompression(bytes);
-			} else {
-				doc = Jsoup.connect(url).maxBodySize(0).get();
-			}
-
-		} catch (IOException e) {
-			logger.error("Jsoup parsing exception: " + e.getMessage());
-		}
-
-
-		try {
-
-			elements = doc.select(sitemapURLKey);
-
-			// check the html if it is a sitemapindex or a urlset
-			Elements content = doc.select("urlset");
-
-			sitemapindex = doc.outerHtml().contains("sitemapindex");
-			urlset = doc.outerHtml().contains("urlset");
-		} catch (NullPointerException e) {
-			logger.error(e.getMessage());
-		}
-
-		if (sitemapindex){
-			// if sitemapindex get the loc of all the sitemaps
-			// added warning for sitemap index files
-			logger.warn("please note this is a sitemapindex file which is not currently supported, please use the content (url) of the urlset instead");
-			sitemaps = doc.select("loc");
-		}
+			Elements elements = sitemapContent.select(sitemapKey);
 
 		return elements;
 	}
@@ -223,7 +182,7 @@ public class FileScraper extends ScraperFilteredCore {
 	 * This number is not reset, instead auto-incrementing with each scrape or run of this scraper. 
 	 *  
 	 */
-	public void scrapeAllUrls() {
+	public void scrapeAllUrls(ArrayList<String> urlsToScrape) throws IOException {
 
 		// Load the settings from the application.properties file
 		readFileList();
@@ -264,21 +223,43 @@ public class FileScraper extends ScraperFilteredCore {
 
 			// Check if the word sitemap is part of the URL (assumes that the URL is a sitemap if true)
 			if (url.toLowerCase().indexOf("sitemap") != -1) {
-				// fixme a good idea would be to check that the word sitemap is not in the URL, if it is, it would mean that this is a sitemap index
-				int sitemapCount = 0;
-				int maximumLimit = properties.getMaxLimitScrape();
-				boolean scraped = false;
-				Elements sitemapList = new Elements();
+				int sitemapCount = 0, maximumLimit = properties.getMaxLimitScrape();
+				boolean scraped = false, isSitemapIndex = false, isSitemap = false;
+				Elements sitemapURLs, sitemapIndexList;
+				Document sitemapContent = new Document(url);
 				try {
-					sitemapList = getSitemapList(url, "loc"); //loc will only parse the url of the sample
-				} catch (IOException e) {
-					e.printStackTrace();
+					sitemapContent = getSitemap(url);
+				} catch (IOException e){
+					logger.error(e.getMessage());
 				}
-				sitemapList.toArray();
+
+
+				// check if the parsed sitemapContent is sitemap or sitemap index
+				isSitemapIndex = sitemapContent.outerHtml().contains("sitemapindex");
+				isSitemap = sitemapContent.outerHtml().contains("urlset");
+
+				if (isSitemapIndex){
+					logger.info("SITEMAPINDEX");
+					//get the urls for all the sitemaps and store them
+					ArrayList<String> nestedUrlsToScrape = new ArrayList<>();
+					sitemapIndexList = getSitemapURLs(sitemapContent, "loc");
+					//loop the list of the sitemaps and get all the list of urls
+					//store them in an array and make that into an outer nest
+					for (Element sitemap : sitemapIndexList) {
+						nestedUrlsToScrape.add(getSitemap(sitemap.toString()).toString());
+					}
+					scrapeAllUrls(nestedUrlsToScrape);
+				}
+				if (isSitemap){
+					sitemapURLs = getSitemapURLs(sitemapContent, "loc");
+				}
+
+				sitemapURLs = getSitemapURLs(sitemapContent, "loc");
+				sitemapURLs.toArray();
 				logger.info("Sitemap found in URL: " + url);
 				// get sitemap list
-				// for url in sitemap list
-				for (Element sitemapURL : sitemapList) {
+				// for url in sitemap URLs list
+				for (Element sitemapURL : sitemapURLs) {
 					logger.info("Attempting to scrape: " + sitemapURL.text());
 					try {
 						result = scrape(sitemapURL.text(), properties.getOutputFolder(), null, contextCounter++, dynamicScrape);
@@ -338,13 +319,13 @@ public class FileScraper extends ScraperFilteredCore {
 		shutdown();
 	}
 
-	public static void main(String[] args) throws FourZeroFourException, JsonLDInspectionException {
+	public static void main(String[] args) throws FourZeroFourException, JsonLDInspectionException, IOException {
 		logger.info("*************************** STARTING SCRAPE: " + formatter.format(new Date(System.currentTimeMillis())));
 		logger.info("Default charset: " + Charset.defaultCharset());
 		FileScraper core = new FileScraper();
 
 		// to scrape all URLs in the file specified in configuration.properties
-		core.scrapeAllUrls();
+		core.scrapeAllUrls(urlsToScrape);
 
 		logger.info("*************************** ENDING SCRAPE: " + formatter.format(new Date(System.currentTimeMillis())));
 		System.exit(0);
