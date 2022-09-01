@@ -22,6 +22,12 @@ import hwu.elixir.scrape.exceptions.MissingMarkupException;
 import hwu.elixir.scrape.scraper.ScraperFilteredCore;
 
 import hwu.elixir.utils.Helpers;
+import org.w3c.dom.NodeList;
+
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
 /**
  * Scrapes a list of URLs which come from a given file OR
@@ -237,6 +243,18 @@ public class FileScraper extends ScraperFilteredCore {
 				// check if the parsed sitemapContent is sitemap or sitemap index
 				isSitemapIndex = sitemapContent.outerHtml().contains("sitemapindex");
 				isSitemap = sitemapContent.outerHtml().contains("urlset");
+
+				//TDDO traverse sitemap index using xpath expression
+				Document xmlDocument=null;
+				XPath xPath = XPathFactory.newInstance().newXPath();
+				String expression = "/Tutorials/Tutorial";
+				try {
+					Object res = xPath.compile(expression).evaluate(xmlDocument, XPathConstants.NODESET);
+					NodeList nodes = (NodeList) res;
+				} catch (XPathExpressionException e) {
+					e.printStackTrace();
+				}
+
 
 				if (isSitemapIndex){
 					logger.info("SITEMAPINDEX");
