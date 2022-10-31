@@ -9,6 +9,7 @@ import java.util.Date;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.jsoup.Jsoup;
+import org.jsoup.helper.W3CDom;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -39,9 +40,9 @@ import javax.xml.xpath.XPathFactory;
 public class FileScraper extends ScraperFilteredCore {
 
 	private static ArrayList<String> urlsToScrape = new ArrayList<>();
-
 	private static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
 	private static Logger logger = LoggerFactory.getLogger(FileScraper.class.getName());
+	private static final int maxURLs = 50000;
 
 	/**
 	 * Read the file (specified in application.properties) and puts each URL into a
@@ -89,7 +90,6 @@ public class FileScraper extends ScraperFilteredCore {
 
 		try {
 			int urlLength = url.length();
-			logger.info("parse sitemap list (agnostic of sitemap or sitemapindex)");
 			String sitemapExt = url.substring(urlLength - 3, urlLength);
 			// this checks only the extension at the ending
 			if (sitemapExt.equalsIgnoreCase(".gz")){
@@ -119,6 +119,7 @@ public class FileScraper extends ScraperFilteredCore {
 		return elements;
 	}
 
+	// This method returns only the URL of something to scrape, in case there is a dynamic/static scrape flag
 	private String getURLFromTextLine(String url) {
 		String URL = url.substring(0, url.indexOf(","));
 		return URL;
@@ -197,25 +198,23 @@ public class FileScraper extends ScraperFilteredCore {
 		String outputFolder = properties.getOutputFolder();
 		boolean dynamicScrape = properties.dynamic();
 
+		// Loop through all the URLs in the file
 		for (String url : urlsToScrape) {
 			boolean result = false;
-
-
 
 			// If there is a comma on the URL, which indicates a dynamic/static flag
 			// or maybe just a mistake, check if static/dynamic is setup as flag and
 			// scrape the URL accordingly, if some other text as flag just ignore text and
 			// scrape URL with the default approach (dynamic), this is done on a per URL function
-
 			if (url.indexOf(",") != -1){
 				String tempFlag = getDynamicORStaticFlag(url);
-				if (tempFlag.equals("static")){
+				if (tempFlag.equalsIgnoreCase("static")){
 					dynamicScrape = false;
 					logger.info("Static scrape (local setting)");
-				} else if (tempFlag.equals("dynamic")){
+				} else if (tempFlag.equalsIgnoreCase("dynamic")){
 					dynamicScrape = true;
 					logger.info("Dynamic scrape (local setting)");
-				} else if (tempFlag.equals("unknown")) {
+				} else if (tempFlag.equalsIgnoreCase("unknown")) {
 					//This case is when the flag in not set to dynamic or static, because it is
 					//not known what is the case, the safest option is to set to dynamic
 					dynamicScrape = true;
@@ -241,16 +240,29 @@ public class FileScraper extends ScraperFilteredCore {
 
 
 				// check if the parsed sitemapContent is sitemap or sitemap index
-				isSitemapIndex = sitemapContent.outerHtml().contains("sitemapindex");
-				isSitemap = sitemapContent.outerHtml().contains("urlset");
+				//isSitemapIndex = sitemapContent.outerHtml().contains("sitemapindex");
+				//isSitemap = sitemapContent.outerHtml().contains("urlset");
 
-				//TDDO traverse sitemap index using xpath expression
-				Document xmlDocument=null;
+				// Traverse sitemap index using xpath expression
+				W3CDom w3cDom = new W3CDom();
 				XPath xPath = XPathFactory.newInstance().newXPath();
-				String expression = "/Tutorials/Tutorial";
+				String expression = "/*"; // Select root node
 				try {
-					Object res = xPath.compile(expression).evaluate(xmlDocument, XPathConstants.NODESET);
+					Object res = xPath.compile(expression).evaluate(w3cDom.fromJsoup(sitemapContent), XPathConstants.NODESET);
 					NodeList nodes = (NodeList) res;
+					logger.info("xPath: " + nodes.item(0).getNodeName());
+					if (nodes.item(0).getNodeName().equalsIgnoreCase("sitemapindex")){
+						for (int i=0; i<nodes.getLength(); i++){
+							logger.info(nodes.item(i).getTextContent());
+						}
+					} else if (nodes.item(0).getNodeName().equalsIgnoreCase("urlset")){
+						for (int i=0; i<nodes.getLength(); i++){
+							logger.info(nodes.item(i).getTextContent());
+						}
+					} else {
+						logger.warn("Unknown sitemap type");
+					}
+
 				} catch (XPathExpressionException e) {
 					e.printStackTrace();
 				}
@@ -312,6 +324,7 @@ public class FileScraper extends ScraperFilteredCore {
 					}
 				}
 			} else { // else just scrape as a website that has markup
+				// TODO maybe change this to scrapeWebpage method
 				try {
 					result = scrape(url, properties.getOutputFolder(), null, contextCounter++, dynamicScrape);
 				} catch (FourZeroFourException e) {
@@ -336,6 +349,72 @@ public class FileScraper extends ScraperFilteredCore {
 		properties.updateConfig();
 		shutdown();
 	}
+
+
+	private void scrapeSitemap(Elements sitemapURLs, long contextCounter, boolean dynamicScrape, String outputFolder){
+		boolean scraped = false;
+		boolean result = false;
+
+		if (maxURLs<sitemapURLs.size()){
+			logger.info("MAX SITEMAP LIMIT IS: " + maxURLs + " Please make sure your sitemap does not exceed that limit and adhere to sitemap guidelines");
+			logger.info("Scraping over");
+			properties.setContextCounter(contextCounter);
+			properties.updateConfig();
+			shutdown();
+		}
+
+		for (Element sitemapURL : sitemapURLs) {
+			logger.info("Attempting to scrape: " + sitemapURL.text());
+			try {
+				result = scrape(sitemapURL.text(), properties.getOutputFolder(), null, contextCounter++, dynamicScrape);
+				scraped = true;
+			} catch (FourZeroFourException e) {
+				logger.error(sitemapURL.text() + "returned a 404.");
+				unscrapedURLsToFile(outputFolder, null, sitemapURL.text(), contextCounter - 1L);
+				scraped = false;
+			} catch (JsonLDInspectionException e) {
+				logger.error("The JSON-LD could not be parsed for " + sitemapURL.text());
+				unscrapedURLsToFile(outputFolder, null, sitemapURL.text(), contextCounter - 1L);
+				scraped = false;
+			} catch (CannotWriteException e) {
+				logger.error("Problem writing file for " + sitemapURL.text() + " to the " + properties.getOutputFolder() + " directory.");
+				unscrapedURLsToFile(outputFolder, null, sitemapURL.text(), contextCounter - 1L);
+				scraped = false;
+			} catch (MissingMarkupException e) {
+				logger.error("Problem obtaining markup from " + sitemapURL.text() + ".");
+				unscrapedURLsToFile(outputFolder, null, sitemapURL.text(), contextCounter - 1L);
+				scraped = false;
+			}
+			if (scraped) {
+				displayResult(sitemapURL.text(), result, properties.getOutputFolder(), contextCounter - 1L);
+			} else {
+				logger.error("URL " + sitemapURL.text() + " NOT SCRAPED, added to unscraped list");
+			}
+		}
+	}
+
+	/*
+	public void scrapeWebpage(){
+		try {
+			result = scrape(url, properties.getOutputFolder(), null, contextCounter++, dynamicScrape);
+		} catch (FourZeroFourException e) {
+			logger.error(url + "returned a 404.");
+			unscrapedURLsToFile(outputFolder, null, url, contextCounter);
+		} catch (JsonLDInspectionException e) {
+			logger.error("The JSON-LD could not be parsed for " + url);
+			unscrapedURLsToFile(outputFolder, null, url, contextCounter);
+		} catch (CannotWriteException e) {
+			logger.error("Problem writing file for " + url + " to the " + properties.getOutputFolder() + " directory.");
+			unscrapedURLsToFile(outputFolder, null, url, contextCounter);
+		} catch (MissingMarkupException e) {
+			logger.error("Problem obtaining markup from " + url + ".");
+			unscrapedURLsToFile(outputFolder, null, url, contextCounter);
+		}
+		displayResult(url, result, properties.getOutputFolder(), contextCounter - 1L);
+
+	}
+	
+	 */
 
 	public static void main(String[] args) throws FourZeroFourException, JsonLDInspectionException, IOException {
 		logger.info("*************************** STARTING SCRAPE: " + formatter.format(new Date(System.currentTimeMillis())));
