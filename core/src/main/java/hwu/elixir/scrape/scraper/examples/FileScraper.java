@@ -5,6 +5,7 @@ import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
@@ -260,7 +261,7 @@ public class FileScraper extends ScraperFilteredCore {
 						for (Element indexSitemap : sitemaps){
 							//logger.info(nodes.item(i).getTextContent());
 							sitemapContent = getSitemap(indexSitemap.text());
-							scrapeSitemap(getSitemapURLs(sitemapContent, "loc"), contextCounter, dynamicScrape, outputFolder);
+							scrapeSitemap(getSitemapURLs(sitemapContent, "loc").eachText().toArray(new String[0]), contextCounter, dynamicScrape, outputFolder);
 						}
 						//if true this is a sitemap
 					} else if (nodes.item(0).getNodeName().equalsIgnoreCase("urlset")){
