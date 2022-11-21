@@ -93,10 +93,8 @@ public class ScraperFilteredCore extends ScraperCore {
 		int index = 0;
 
 		for (String url : urls) {
-			index++;
 
 			url = fixURL(url);
-
 
 			String html = "";
 			// The dynamic boolean determines if the scraper should start using selenium or JSOUP to scrape the information (dynamic and static respectively)
@@ -156,27 +154,42 @@ public class ScraperFilteredCore extends ScraperCore {
 
 
 			//FIXME here you have to do the writing in the same folder if it is a sitemap, pass parameter boolean flag and loop until all url are parsed and at the end write to folder
-			File directory = new File(outputFolderName);
-			if (!directory.exists())
-				directory.mkdir();
+			if(index == 0){
+				File directory = new File(outputFolderName);
+				if (!directory.exists())
+					directory.mkdir();
 
-			if (outputFileName == null) {
-				outputFileName = outputFolderName + "/" + contextCounter + ".nq";
+				if (outputFileName == null) {
+					outputFileName = outputFolderName + "/" + contextCounter + ".nq";
+				} else {
+					outputFileName = outputFolderName + "/" + outputFileName + ".nq";
+				}
+
+				try (PrintWriter out = new PrintWriter(new File(outputFileName))) {
+
+					Rio.write(updatedModel, out, RDFFormat.NQUADS);
+				} catch (Exception e) {
+					logger.error("Problem writing file for " + url, e);
+					throw new CannotWriteException(url);
+				}
+
+				if (!new File(outputFileName).exists())
+					System.exit(0);
+
 			} else {
-				outputFileName = outputFolderName + "/" + outputFileName + ".nq";
+				try (PrintWriter out = new PrintWriter(new File(outputFileName))) {
+
+					Rio.write(updatedModel, out, RDFFormat.NQUADS);
+				} catch (Exception e) {
+					logger.error("Problem writing file for " + url, e);
+					throw new CannotWriteException(url);
+				}
 			}
 
-			try (PrintWriter out = new PrintWriter(new File(outputFileName))) {
-				Rio.write(updatedModel, out, RDFFormat.NQUADS);
-			} catch (Exception e) {
-				logger.error("Problem writing file for " + url, e);
-				throw new CannotWriteException(url);
-			}
-
+			index++;
 		}
 
-		if (!new File(outputFileName).exists())
-			System.exit(0);
+
 
 		//return true;
 		return -1;

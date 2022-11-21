@@ -232,17 +232,6 @@ public class FileScraper extends ScraperFilteredCore {
 
 
 			if (sitemap) {
-				/*int sitemapCount = 0, maximumLimit = properties.getMaxLimitScrape();
-				boolean scraped, isSitemapIndex = false, isSitemap = false;
-				Elements sitemapURLs, sitemapIndexList;
-				Document sitemapContent = new Document(url);
-				try {
-					sitemapContent = getSitemap(url);
-				} catch (IOException e){
-					logger.error(e.getMessage());
-				}*/
-
-				//Document sitemapContent = new Document(url);
 
 				Document sitemapContent = getSitemap(url);
 
@@ -278,64 +267,6 @@ public class FileScraper extends ScraperFilteredCore {
 				} catch (XPathExpressionException e) {
 					e.printStackTrace();
 				}
-
-
-				/*if (isSitemapIndex){
-					logger.info("SITEMAPINDEX");
-					//get the urls for all the sitemaps and store them
-					ArrayList<String> nestedUrlsToScrape = new ArrayList<>();
-					sitemapIndexList = getSitemapURLs(sitemapContent, "loc");
-					//loop the list of the sitemaps and get all the list of urls
-					//store them in an array and make that into an outer nest
-					for (Element sitemap : sitemapIndexList) {
-						nestedUrlsToScrape.add(getSitemap(sitemap.toString()).toString());
-					}
-					scrapeAllUrls(nestedUrlsToScrape);
-				}
-				if (isSitemap){
-					sitemapURLs = getSitemapURLs(sitemapContent, "loc");
-				}
-
-				sitemapURLs = getSitemapURLs(sitemapContent, "loc");
-				sitemapURLs.toArray();*/
-
-				// get sitemap list
-				// for url in sitemap URLs list
-				//scrapeSitemap(sitemapURLs, contextCounter, dynamicScrape, outputFolder);
-				/*for (Element sitemapURL : sitemapURLs) {
-					logger.info("Attempting to scrape: " + sitemapURL.text());
-					try {
-						result = scrape(sitemapURL.text(), properties.getOutputFolder(), null, contextCounter++, dynamicScrape);
-						scraped = true;
-					} catch (FourZeroFourException e) {
-						logger.error(url + "returned a 404.");
-						unscrapedURLsToFile(outputFolder, null, sitemapURL.text(), contextCounter - 1L);
-						scraped = false;
-					} catch (JsonLDInspectionException e) {
-						logger.error("The JSON-LD could not be parsed for " + sitemapURL.text());
-						unscrapedURLsToFile(outputFolder, null, sitemapURL.text(), contextCounter - 1L);
-						scraped = false;
-					} catch (CannotWriteException e) {
-						logger.error("Problem writing file for " + sitemapURL.text() + " to the " + properties.getOutputFolder() + " directory.");
-						unscrapedURLsToFile(outputFolder, null, sitemapURL.text(), contextCounter - 1L);
-						scraped = false;
-					} catch (MissingMarkupException e) {
-						logger.error("Problem obtaining markup from " + sitemapURL.text() + ".");
-						unscrapedURLsToFile(outputFolder, null, sitemapURL.text(), contextCounter - 1L);
-						scraped = false;
-					}
-					if (scraped) {
-						displayResult(sitemapURL.text(), result, properties.getOutputFolder(), contextCounter - 1L);
-					} else {
-						logger.error("URL " + sitemapURL.text() + " NOT SCRAPED, added to unscraped list");
-					}
-					sitemapCount++;
-					if (maximumLimit < sitemapCount) {
-						logger.info("MAX SITEMAP LIMIT REACHED: " + maximumLimit);
-						logger.info("Scraping over");
-						break;
-					}
-				}*/
 			} else { // else just scrape as a website that has markup
 				String[] urls = {url};
 				try {
@@ -399,7 +330,7 @@ public class FileScraper extends ScraperFilteredCore {
 				scraped = false;
 			}
 			if (scraped) {
-				displayResult(sitemapURLs[result], result, properties.getOutputFolder(), contextCounter - 1L);
+				displayResult(sitemapURLs[0], result, properties.getOutputFolder(), contextCounter - 1L);
 			} else {
 				logger.error("URL " + sitemapURLs[result] + " NOT SCRAPED, added to unscraped list");
 			}
