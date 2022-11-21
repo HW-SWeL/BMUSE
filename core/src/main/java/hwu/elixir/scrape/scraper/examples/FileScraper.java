@@ -241,7 +241,9 @@ public class FileScraper extends ScraperFilteredCore {
 					logger.error(e.getMessage());
 				}*/
 
-				Document sitemapContent = new Document(url);
+				//Document sitemapContent = new Document(url);
+
+				Document sitemapContent = getSitemap(url);
 
 				// Traverse sitemap index using xpath expression
 				W3CDom w3cDom = new W3CDom();
@@ -257,8 +259,8 @@ public class FileScraper extends ScraperFilteredCore {
 						Elements sitemaps = getSitemapURLs(sitemapContent, "loc");
 						for (Element indexSitemap : sitemaps){
 							//logger.info(nodes.item(i).getTextContent());
-							sitemapContent = getSitemap(indexSitemap.toString());
-							scrapeSitemap((String[]) getSitemapURLs(sitemapContent, "loc").toArray(), contextCounter, dynamicScrape, outputFolder);
+							sitemapContent = getSitemap(indexSitemap.text());
+							scrapeSitemap(getSitemapURLs(sitemapContent, "loc"), contextCounter, dynamicScrape, outputFolder);
 						}
 						//if true this is a sitemap
 					} else if (nodes.item(0).getNodeName().equalsIgnoreCase("urlset")){
