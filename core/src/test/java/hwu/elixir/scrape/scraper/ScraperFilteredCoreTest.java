@@ -69,8 +69,10 @@ public class ScraperFilteredCoreTest {
 	public void test_scrape_pass() throws FourZeroFourException, JsonLDInspectionException, CannotWriteException, MissingMarkupException {
 		String chemblURLOnGitHub = "https://raw.githubusercontent.com/HW-SWeL/Scraper/master/core/src/test/resources/testHtml/chembl.html";
 		String outputFileName = "chemblGitHub";
+
+		String[] chemblURLOnGitHubs = {chemblURLOnGitHub};
 		
-		scraperCore.scrape(chemblURLOnGitHub, outputLoction, outputFileName, 100000L, true);
+		scraperCore.scrape(chemblURLOnGitHubs, outputLoction, outputFileName, 100000L, true);
 		String fileName = outputLoction+outputFileName+".nq";		
 		File liveQuads = new File(fileName);
 		

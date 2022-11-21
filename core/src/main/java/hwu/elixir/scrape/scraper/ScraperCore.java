@@ -235,8 +235,8 @@ public abstract class ScraperCore {
 	 * @param result       TRUE for success; FALSE for fail.
 	 * @param outputFolder Where the output was written.
 	 */
-	protected void displayResult(String url, boolean result, String outputFolder, long CC) {
-		if (result) {
+	protected void displayResult(String url, int result, String outputFolder, long CC) {
+		if (result == -1) {
 			logger.info(url + " was successfully scraped and written to " + outputFolder + " with filename " + CC + ".nq");
 		} else {
 			logger.error(url + " was NOT successfully scraped.");
