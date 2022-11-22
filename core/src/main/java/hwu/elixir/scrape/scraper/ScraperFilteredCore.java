@@ -1,6 +1,7 @@
 package hwu.elixir.scrape.scraper;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
@@ -178,8 +179,9 @@ public class ScraperFilteredCore extends ScraperCore {
 					System.exit(0);
 
 			} else {
-				try (PrintWriter out = new PrintWriter(new File(outputFileName))) {
-					Rio.write(updatedModel, out, RDFFormat.NQUADS, new WriterConfig().set(BasicWriterSettings.INLINE_BLANK_NODES, true));
+				try (FileWriter out = new FileWriter(new File(outputFileName), true)) {
+					//try (PrintWriter out = new PrintWriter(new File(outputFileName))) {
+					Rio.write(updatedModel, out, RDFFormat.NQUADS, new WriterConfig().set(BasicWriterSettings.PRETTY_PRINT, true));
 				} catch (Exception e) {
 					logger.error("Problem writing file for " + url, e);
 					throw new CannotWriteException(url);

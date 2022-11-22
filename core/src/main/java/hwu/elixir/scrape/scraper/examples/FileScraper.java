@@ -329,6 +329,7 @@ public class FileScraper extends ScraperFilteredCore {
 				unscrapedURLsToFile(outputFolder, null, sitemapURLs[result], contextCounter - 1L);
 				scraped = false;
 			}
+
 			if (scraped) {
 				displayResult(sitemapURLs[0], result, properties.getOutputFolder(), contextCounter - 1L);
 			} else {
