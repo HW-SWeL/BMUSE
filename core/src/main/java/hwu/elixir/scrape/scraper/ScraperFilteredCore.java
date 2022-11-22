@@ -22,7 +22,10 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.WriterConfig;
+import org.eclipse.rdf4j.rio.helpers.BasicWriterSettings;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -151,8 +154,6 @@ public class ScraperFilteredCore extends ScraperCore {
 				return index;
 			}
 
-
-
 			//FIXME here you have to do the writing in the same folder if it is a sitemap, pass parameter boolean flag and loop until all url are parsed and at the end write to folder
 			if(index == 0){
 				File directory = new File(outputFolderName);
@@ -178,8 +179,7 @@ public class ScraperFilteredCore extends ScraperCore {
 
 			} else {
 				try (PrintWriter out = new PrintWriter(new File(outputFileName))) {
-
-					Rio.write(updatedModel, out, RDFFormat.NQUADS);
+					Rio.write(updatedModel, out, RDFFormat.NQUADS, new WriterConfig().set(BasicWriterSettings.INLINE_BLANK_NODES, true));
 				} catch (Exception e) {
 					logger.error("Problem writing file for " + url, e);
 					throw new CannotWriteException(url);

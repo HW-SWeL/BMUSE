@@ -36,7 +36,7 @@ public class ScraperProperties extends Properties {
 	private static final String configurationLocalFile = "localconfig.properties";
 	private static Logger logger = LoggerFactory.getLogger(ScraperProperties.class.getName());
 	private String dateTime;
-	private static String finalAppVersion = "0.5.2";
+	private static String finalAppVersion = "0.6.0";
 
 	/**
 	 * Non public constructor: this class should be instantiated only using
@@ -67,7 +67,7 @@ public class ScraperProperties extends Properties {
 			if (localConfigFile.exists())
 				props.readPropertiesFromLocalFile();
 
-			properties.put("scraperVersion", setScraperVersion());
+			properties.put("scraperVersion", finalAppVersion);
 			properties.put("outputFolder", props.getProperty("outputFolder").trim());
 			properties.put("chromiumDriverLocation", props.getProperty("chromiumDriverLocation").trim());
 			properties.put("locationOfSitesFile", props.getProperty("locationOfSitesFile").trim());
@@ -169,6 +169,7 @@ public class ScraperProperties extends Properties {
 
 	/**
 	 * method that parses the jar or pom.xml file and gets the version of BMUSE
+	 * @deprecated
 	 */
 	private static String setScraperVersion() {
 
