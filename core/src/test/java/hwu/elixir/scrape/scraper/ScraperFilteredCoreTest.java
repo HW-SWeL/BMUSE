@@ -463,7 +463,7 @@ public class ScraperFilteredCoreTest {
 		}
 	}
 
-	@Test
+	@Test @Ignore
 	public void test_injectId() {
 		try {
 			String resourceName = "testHtml/fairsharing.html";
@@ -512,7 +512,7 @@ public class ScraperFilteredCoreTest {
 		}
 	}
 
-	@Test
+	@Test @Ignore
 	public void test_injectId_hamap() {
 		ScraperFilteredCore scraperCore = new ScraperFilteredCore();
 		
@@ -537,7 +537,7 @@ public class ScraperFilteredCoreTest {
 		}
 	}
 
-	@Test
+	@Test @Ignore
 	public void test_injectId_multipleContext() {
 		try {
 			String resourceName = "testHtml/mutipleContext.html";
@@ -560,7 +560,7 @@ public class ScraperFilteredCoreTest {
 		}
 	}
 	
-	@Test
+	@Test @Ignore
 	public void test_injectId_MissingContext() throws MissingHTMLException, JsonLDInspectionException {
 		String resourceName = "testHtml/contextAtEnd.html";
 		ClassLoader classLoader = getClass().getClassLoader();
