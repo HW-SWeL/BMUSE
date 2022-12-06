@@ -1,6 +1,6 @@
-# Scraper
+# BMUSE: Bioschemas Mark Up Scraper and Extractor
 
-A scraper designed to scrape [Bioschema's markup](https://www.bioschemas.org), in either JSON-LD or RDFa, from a set of known web pages.
+A scraper designed to harvest [Bioschema's markup](https://www.bioschemas.org), in either JSON-LD or RDFa format, from a set of known web pages.
 Implementation decisions are discussed [here](https://github.com/HW-SWeL/Scraper/wiki/Decisions).
 
 ## Description
@@ -71,7 +71,7 @@ locationOfSitesFile = C\:/Users/username/bmuse/urls2scrape.txt
 outputFolder = C\:/Users/username/bmuse/
 maxLimitScrape = 100
 ```
-    
+
 2/ Create/edit your list of urls file.
 
 3/ Package with maven: `mvn clean package` 
