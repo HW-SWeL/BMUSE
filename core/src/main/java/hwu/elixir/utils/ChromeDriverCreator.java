@@ -20,11 +20,17 @@ public class ChromeDriverCreator {
 	private static Logger logger = LoggerFactory.getLogger(ChromeDriverCreator.class.getName());
 	
 	static {
-		ScraperProperties prop = ScraperProperties.getInstance();
-		String chromiumDriverLoc  = prop.getChromiumDriverLocation().trim();
-		logger.info("Location of chromiun driver: " + chromiumDriverLoc);
-		System.setProperty("webdriver.chrome.driver", chromiumDriverLoc);
-		chromeOptions.addArguments("--headless");
+		try{
+			ScraperProperties prop = ScraperProperties.getInstance();
+			String chromiumDriverLoc  = prop.getChromiumDriverLocation().trim();
+			logger.info("Location of chromiun driver: " + chromiumDriverLoc);
+			System.setProperty("webdriver.chrome.driver", chromiumDriverLoc);
+			chromeOptions.addArguments("--headless");
+		} catch (Throwable t) {
+			logger.error("Failure during static initialization", t);
+			throw t;
+		}
+
 	}
 	
 	

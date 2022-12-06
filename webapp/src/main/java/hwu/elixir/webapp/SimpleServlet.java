@@ -13,7 +13,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import hwu.elixir.utils.ScraperProperties;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -23,8 +22,6 @@ import org.slf4j.LoggerFactory;
 import hwu.elixir.scrape.scraper.ScraperOutput;
 import hwu.elixir.scrape.scraper.WebScraper;
 import hwu.elixir.utils.Validation;
-import hwu.elixir.utils.ScraperProperties;
-
 
 /**
  * 
@@ -50,6 +47,7 @@ public class SimpleServlet extends HttpServlet {
 		Map<String, String[]> allParams = request.getParameterMap();
 		boolean error = false;
 		JSONObject jsonObject = null;
+		// get url to scrape parameter
 		if (allParams == null || !allParams.containsKey("url")) {
 			jsonObject = new JSONObject();
 			jsonObject.put("result", "error");
@@ -85,7 +83,8 @@ public class SimpleServlet extends HttpServlet {
 		}
 
 		String url2Scrape = allUrls[0];
-		
+
+		// get output type parameter
 		String[] allOutputTypes = allParams.get("output");
 		ScraperOutput outputType = ScraperOutput.JSONLD;
 		if (allOutputTypes != null) {
@@ -95,6 +94,7 @@ public class SimpleServlet extends HttpServlet {
 		}
 		
 		Validation validation = new Validation();
+
 		if (!validation.validateURI(url2Scrape)) {
 			jsonObject = new JSONObject();
 			jsonObject.put("result", "error");
@@ -111,7 +111,7 @@ public class SimpleServlet extends HttpServlet {
 			logger.info(jsonObject.toJSONString());
 		}
 
-		logger.info("Creating scraper");
+		logger.info("Creating web scraper");
 		WebScraper scraper = new WebScraper();
 		jsonObject = new JSONObject();
 		JSONArray result = new JSONArray();
@@ -141,7 +141,7 @@ public class SimpleServlet extends HttpServlet {
 		
 		if (!success) {
 			response.setStatus(500);
-		} else {			
+		} else {
 			jsonObject.put("result", "success");
 						
 			jsonObject.put("type", outputType.toString());
@@ -154,7 +154,7 @@ public class SimpleServlet extends HttpServlet {
 		response.setHeader("Access-Control-Allow-Headers", "*");
 		response.setContentType("application/json");
 		response.setCharacterEncoding("UTF-8");
-		PrintWriter out = response.getWriter();		
+		PrintWriter out = response.getWriter();
 		out.print(jsonObject.toJSONString());
 		out.close();
 	}

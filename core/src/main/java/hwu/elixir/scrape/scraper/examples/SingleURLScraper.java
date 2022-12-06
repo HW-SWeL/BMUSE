@@ -30,8 +30,9 @@ public class SingleURLScraper extends ScraperFilteredCore {
 	 * @throws CannotWriteException
 	 */
 	public void scrapeASingleURL(String url, String outputFileName) {
+		String[] urls = {url};
 		try {
-			displayResult(url, scrape(url, outputFolder, outputFileName, 0L), outputFolder);
+			displayResult(url, scrape(urls, outputFolder, outputFileName, 0L, true), outputFolder, 1000L);
 		} catch (FourZeroFourException | JsonLDInspectionException e) {
 			logger.error("Cannot scrape site; error thrown", e);
 		} catch (CannotWriteException e) {

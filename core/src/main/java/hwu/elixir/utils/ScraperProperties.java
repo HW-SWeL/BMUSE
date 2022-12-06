@@ -36,6 +36,7 @@ public class ScraperProperties extends Properties {
 	private static final String configurationLocalFile = "localconfig.properties";
 	private static Logger logger = LoggerFactory.getLogger(ScraperProperties.class.getName());
 	private String dateTime;
+	private static String finalAppVersion = "0.6.0";
 
 	/**
 	 * Non public constructor: this class should be instantiated only using
@@ -66,7 +67,7 @@ public class ScraperProperties extends Properties {
 			if (localConfigFile.exists())
 				props.readPropertiesFromLocalFile();
 
-			properties.put("scraperVersion", setScraperVersion());
+			properties.put("scraperVersion", finalAppVersion);
 			properties.put("outputFolder", props.getProperty("outputFolder").trim());
 			properties.put("chromiumDriverLocation", props.getProperty("chromiumDriverLocation").trim());
 			properties.put("locationOfSitesFile", props.getProperty("locationOfSitesFile").trim());
@@ -168,14 +169,16 @@ public class ScraperProperties extends Properties {
 
 	/**
 	 * method that parses the jar or pom.xml file and gets the version of BMUSE
+	 * @deprecated
 	 */
 	private static String setScraperVersion() {
 
+		// try to get the version from the jar file, if a jar file is generated
 		String appVersion = ScraperCore.class.getPackage().getImplementationVersion();
 
 		if (appVersion == null) {
 			try {
-				//This will only read from the pom file of the projects root directory, please note that the core,
+				//This will only read from the pom file of the project's root directory, please note that the core,
 				//service and webapp pom are not read
 				// File.separator will work both in windows and linux
 				File fXmlFile = new File("." + File.separator +"pom.xml");
@@ -197,6 +200,15 @@ public class ScraperProperties extends Properties {
 				e.printStackTrace();
 			}
 		}
+
+		// if version not in jar or pom then it must be from war file
+		// TODO find a better way of dealing with the method been called from the web service
+		if (appVersion == null){
+			// This is only set in case the scraper core is called from the web service,
+			// otherwise it will be overwritten by the jar or pom entry
+			appVersion = finalAppVersion;
+		}
+		
 		return  appVersion;
 	}
 
